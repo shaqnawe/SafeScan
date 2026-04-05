@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.safescan.weekly-sync</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/npc/Downloads/projects/barcode-safety-scanner/backend/scripts/weekly_sync.sh</string>
+    </array>
+
+    <!-- Run every Sunday at 03:00 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/npc/Downloads/projects/barcode-safety-scanner/backend/logs/launchd_sync.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/npc/Downloads/projects/barcode-safety-scanner/backend/logs/launchd_sync.log</string>
+
+    <!-- Run as soon as possible if a scheduled run was missed (e.g. Mac was asleep) -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
