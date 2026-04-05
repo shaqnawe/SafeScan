@@ -1,6 +1,6 @@
 # SafeScan — Barcode Safety Scanner
 
-A Yuka-like barcode safety scanner that analyzes food and cosmetic products using AI.
+A consumer first barcode safety scanner that analyzes food and cosmetic products using AI.
 
 ## Architecture
 
