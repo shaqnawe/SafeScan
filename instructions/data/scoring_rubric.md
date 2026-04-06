@@ -17,6 +17,10 @@ There is no E grade. D (0–24) is the worst grade.
 | C | 25–49 | Orange | Average — several concerning ingredients, consider frequency of use |
 | D | 0–24 | Red | Poor — significant safety concerns, banned substances, or extreme processing |
 
+> **IMPORTANT — No "E" Grade**: The grade scale is A/B/C/D only. There is no "E" grade.
+> If your model output contains grade "E", it is an error — clamp to "D".
+> The score range for D is 0–24. A score of 0 is still grade D, not E.
+
 ---
 
 ## Base Score

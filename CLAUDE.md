@@ -64,7 +64,7 @@ DELETE FROM safety_reports WHERE barcode = '<barcode>';
 
 - **Backend**: FastAPI + asyncpg (PostgreSQL) + `anthropic` SDK (`AsyncAnthropic`)
 - **Frontend**: React + TypeScript + Vite, `react-zxing` for camera barcode scanning
-- **AI**: Claude Opus 4.6 with adaptive thinking (`thinking: {"type": "adaptive"}`)
+- **AI**: Claude Opus 4.6 (heavy analysis) + Sonnet 4.6 (extraction/classification) with adaptive thinking
 - **DB**: PostgreSQL with 6 tables: `products`, `product_ingredients`, `ingredients`, `ingredient_aliases`, `safety_reports`, `user_submissions`, `recalls`
 
 ### Analysis pipeline (three paths)
@@ -74,8 +74,8 @@ When `POST /api/scan` is called with a barcode:
 1. **Cache hit** → `safety_reports` table (7-day TTL) — instant return
 2. **Local fast path** → `agents/local_analyzer.py` — pure Python scoring from DB data, zero Claude calls. Used when the product is in the local DB. Falls back to Claude if `resolved_ingredients` is empty.
 3. **Claude path** (two phases):
-   - **Phase 1** (tool use loop): Claude calls `lookup_product` tool → fetches from local DB, then Open Food Facts API, then Open Beauty Facts API, then `user_submissions` fallback. **No thinking in Phase 1** — adding `thinking` here generates large blocks that break Phase 2 round-trip.
-   - **Phase 2** (structured output): `client.messages.parse()` with `thinking={"type": "adaptive"}` → returns `SafetyReport` Pydantic model.
+   - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool → fetches from local DB, then Open Food Facts API, then Open Beauty Facts API, then `user_submissions` fallback. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
+   - **Phase 2** (structured output): `MODEL_HEAVY` (Opus 4.6) via `client.messages.parse()` with `thinking={"type": "adaptive"}` → returns `SafetyReport` Pydantic model. Wrapped in `try/except anthropic.APIError` with a fallback report.
 
 ### Ingredient resolution cascade (`db/ingredient_resolver.py`)
 
@@ -90,7 +90,13 @@ Called during local DB lookup to map raw label text to safety data:
 
 **Async client**: Use `anthropic.AsyncAnthropic()` throughout. Never use the sync `anthropic.Anthropic()` client in async FastAPI handlers — it causes `httpx.RemoteProtocolError`. The one exception is `ingredient_resolver.py:_classify_with_claude` which uses the sync client intentionally (called from a background context).
 
-**Phase 1 thinking**: Do NOT add `thinking=` to the Phase 1 `messages.create()` call in `agents/scanner.py`. Adaptive thinking blocks from Phase 1 become large content blocks that, when round-tripped into Phase 2, cause the server to drop the connection.
+**Phase 1 thinking**: Uses `thinking={"type": "adaptive", "display": "omitted"}` — this lets Claude reason during lookup without including thinking content in the response. Never remove `display: "omitted"` or change it to the default; full thinking content in Phase 1 bloats the conversation and causes Phase 2 to drop the connection.
+
+**Model routing**: `MODEL_HEAVY = "claude-opus-4-6"` for Phase 2 safety analysis only. `MODEL_LIGHT = "claude-sonnet-4-6"` for Phase 1 tool loop, image extraction, ingredient parsing, and ingredient classification. Constants are defined at the top of each agent file.
+
+**Prompt caching**: All system prompts are passed as `[{"type": "text", "text": ..., "cache_control": {"type": "ephemeral"}}]` rather than plain strings. This caches the prompt for 5 minutes, saving input tokens on repeated scans. The system prompts are large (loaded from `instructions/`) so this is high-value.
+
+**Grade scale**: A/B/C/D only — there is no "E" grade. The fallback `SafetyReport` in `scanner.py` uses `grade="D"`. The Phase 2 prompt says "A/B/C/D" not "A/B/C/D/E".
 
 **Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`.
 
@@ -98,12 +104,19 @@ Called during local DB lookup to map raw label text to safety data:
 
 ### Agent system prompts
 
-System prompts are loaded from `instructions/` at module import time (not per-request):
-- `instructions/agents/analysis_agent.md` — safety analysis persona + rules
-- `instructions/data/scoring_rubric.md` — A/B/C/D/E grade thresholds and scoring logic
+System prompts are loaded from `instructions/` at module import time (not per-request). Restart the backend after editing any instruction file.
+
+Files used at runtime:
+- `instructions/agents/analysis_agent.md` — safety analysis persona, confidence calibration, output format compliance rules
+- `instructions/data/scoring_rubric.md` — A/B/C/D grade thresholds (no "E"), penalty/bonus tables, score algorithm
 - `instructions/data/eu_regulations.md` — EU cosmetics/food regulatory context
-- `instructions/agents/image_agent.md` — product photo extraction instructions
-- `instructions/agents/ingredient_parser.md` — ingredient list parsing instructions
+- `instructions/agents/image_agent.md` — product photo extraction, OCR challenge guidance
+- `instructions/agents/ingredient_parser.md` — ingredient list parsing, INCI normalization rules
+
+Not used at runtime (reference only):
+- `instructions/agents/barcode_agent.md` — documents the lookup priority and timeout policy
+- `instructions/agents/safety_lookup_agent.md` — documents the resolution cascade
+- `instructions/agents/sync_worker.md` — documents the weekly sync worker
 
 ### Frontend state
 

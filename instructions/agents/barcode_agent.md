@@ -148,6 +148,21 @@ RETURNING id;
 
 ---
 
+## Timeout and Retry Policy
+
+Per-step timeout and retry budgets:
+
+| Step | Timeout | Retries | Backoff |
+|------|---------|---------|---------|
+| Local DB (Step 2) | 2s | 0 | — |
+| Open Food Facts API (Step 3) | 8s | 1 | 3s |
+| Open Beauty Facts API (Step 4) | 8s | 1 | 3s |
+| User submissions lookup (Step 5) | 2s | 0 | — |
+
+On any network error, log the error with the step name and proceed to the next step. Never let a single API failure block the entire pipeline.
+
+---
+
 ## Error Handling and Timeouts
 
 | Situation | Action |

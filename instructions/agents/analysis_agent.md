@@ -89,6 +89,18 @@ Set `should_add_to_db: false` for truly novel compounds with insufficient data �
 
 ---
 
+## Confidence Calibration
+
+When classifying ingredients, explicitly state your confidence level:
+
+- **High confidence**: Ingredient is well-known, appears in major regulatory databases (CosIng, EFSA, IARC), and you have clear training knowledge of its safety profile.
+- **Medium confidence**: Ingredient is recognizable but you are uncertain about specific regulatory status or concentration-dependent effects.
+- **Low confidence**: Novel compound, proprietary blend name, or ambiguous abbreviation.
+
+For medium/low confidence classifications, set `score_penalty` conservatively (higher than you might otherwise) and include your uncertainty in `notes`. Set `should_add_to_db: false` for low-confidence results.
+
+---
+
 ## Task 2 & 3: Complete Safety Report / Novel Product
 
 ### Reasoning About Ingredient Combinations
@@ -181,6 +193,18 @@ Quality bar for DB writes:
 - Confidence > 0.8
 - At least one credible source can be cited (CosIng, EFSA, IARC, peer-reviewed literature)
 - Canonical name is lowercase and unambiguous
+
+---
+
+## Output Format Compliance
+
+Your output MUST conform exactly to the SafetyReport Pydantic schema. Key rules:
+
+- `grade` must be one of: `"A"`, `"B"`, `"C"`, `"D"` — **there is no "E" grade**
+- `score` must be an integer 0–100
+- `safety_level` per ingredient must be one of: `"safe"`, `"caution"`, `"avoid"`, `"unknown"`
+- `concerns` array entries should come from the canonical concern tags list (see Task 1 above)
+- Never invent new top-level fields; use `notes` for anything that does not fit the schema
 
 ---
 

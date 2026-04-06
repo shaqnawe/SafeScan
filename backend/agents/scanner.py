@@ -18,6 +18,9 @@ client = anthropic.AsyncAnthropic(
     timeout=anthropic.Timeout(600.0, connect=10.0),
 )
 
+MODEL_HEAVY = "claude-opus-4-6"    # deep safety analysis (Phase 2)
+MODEL_LIGHT = "claude-sonnet-4-6"  # lookup, extraction, classification
+
 INSTRUCTIONS_DIR = Path(__file__).parent.parent.parent / "instructions"
 
 
@@ -231,14 +234,15 @@ async def analyze_product(barcode: str) -> SafetyReport:
         }
     ]
 
-    # --- Phase 1: tool use loop (no thinking — just a product lookup) ---
+    # --- Phase 1: tool use loop ---
     while True:
         response = await client.messages.create(
-            model="claude-opus-4-6",
+            model=MODEL_LIGHT,
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
+            system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             tools=[LOOKUP_TOOL],
             messages=messages,
+            thinking={"type": "adaptive", "display": "omitted"},
         )
 
         messages.append({"role": "assistant", "content": response.content})
@@ -271,20 +275,24 @@ async def analyze_product(barcode: str) -> SafetyReport:
             "If resolved_ingredients were provided with pre-computed safety levels, incorporate them directly. "
             "Return a complete safety assessment following the scoring guidelines: "
             "A=75-100 (excellent), B=50-74 (good), C=25-49 (average), D=0-24 (poor). "
-            "Compute an appropriate score (0-100) and corresponding grade (A/B/C/D/E)."
+            "Compute an appropriate score (0-100) and corresponding grade (A/B/C/D)."
         )
     })
 
-    structured_response = await client.messages.parse(
-        model="claude-opus-4-6",
-        max_tokens=4096,
-        thinking={"type": "adaptive"},
-        system=SYSTEM_PROMPT,
-        messages=messages,
-        output_format=SafetyReport,
-    )
+    try:
+        structured_response = await client.messages.parse(
+            model=MODEL_HEAVY,
+            max_tokens=4096,
+            thinking={"type": "adaptive"},
+            system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
+            messages=messages,
+            output_format=SafetyReport,  # SDK .parse() translates this to output_config internally
+        )
+        report = structured_response.parsed_output
+    except anthropic.APIError as e:
+        print(f"  [CLAUDE] Structured output failed: {e}")
+        report = None
 
-    report = structured_response.parsed_output
     if report is None:
         return SafetyReport(
             product_name="Unknown Product",
@@ -292,7 +300,7 @@ async def analyze_product(barcode: str) -> SafetyReport:
             product_type="unknown",
             barcode=barcode,
             score=0,
-            grade="E",
+            grade="D",
             summary="Product could not be found or analyzed.",
             ingredients_analysis=[],
             positive_points=[],

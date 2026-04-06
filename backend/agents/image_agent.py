@@ -21,6 +21,8 @@ from db.connection import get_conn
 
 _client = anthropic.AsyncAnthropic()
 
+MODEL_LIGHT = "claude-sonnet-4-6"  # extraction and parsing tasks
+
 INSTRUCTIONS_DIR = Path(__file__).parent.parent.parent / "instructions"
 
 
@@ -30,6 +32,9 @@ def _load(path: str) -> str:
 
 _IMAGE_SYSTEM   = _load("agents/image_agent.md")
 _PARSER_SYSTEM  = _load("agents/ingredient_parser.md")
+
+_IMAGE_SYSTEM_CACHED  = [{"type": "text", "text": _IMAGE_SYSTEM,  "cache_control": {"type": "ephemeral"}}]
+_PARSER_SYSTEM_CACHED = [{"type": "text", "text": _PARSER_SYSTEM, "cache_control": {"type": "ephemeral"}}]
 
 
 # ---------------------------------------------------------------------------
@@ -86,10 +91,10 @@ def _encode_image(image_bytes: bytes, media_type: str = "image/jpeg") -> dict:
 async def _extract_product_info(image_bytes: bytes, media_type: str) -> ExtractedProduct:
     """Call Claude vision to extract brand/name/barcode from a product photo."""
     response = await _client.messages.create(
-        model="claude-opus-4-6",
+        model=MODEL_LIGHT,
         max_tokens=1024,
         thinking={"type": "adaptive"},
-        system=_IMAGE_SYSTEM,
+        system=_IMAGE_SYSTEM_CACHED,
         messages=[{
             "role": "user",
             "content": [
@@ -140,10 +145,10 @@ async def _parse_ingredients(
 ) -> tuple[list[ParsedIngredient], float, Optional[str]]:
     """Call Claude vision to parse an ingredient list photo."""
     response = await _client.messages.create(
-        model="claude-opus-4-6",
+        model=MODEL_LIGHT,
         max_tokens=2048,
         thinking={"type": "adaptive"},
-        system=_PARSER_SYSTEM,
+        system=_PARSER_SYSTEM_CACHED,
         messages=[{
             "role": "user",
             "content": [

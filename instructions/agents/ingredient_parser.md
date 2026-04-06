@@ -118,6 +118,21 @@ Many European products print ingredient lists in multiple languages, separated b
 
 ---
 
+## INCI Name Normalization
+
+Before returning ingredient names, apply these normalizations to the `name` field:
+
+1. Strip leading and trailing whitespace from each ingredient token.
+2. Collapse multiple consecutive spaces to a single space.
+3. Remove trailing periods or semicolons.
+4. Normalize common dual-language notations: `"Aqua/Water"` → `"Aqua (Water)"`.
+5. Preserve meaningful parenthetical qualifiers: `"Tocopherol (Vitamin E)"` stays as-is.
+6. Remove quantity annotations from the name: `"Sugar (15%)"` → `"name": "Sugar"` with `"percentage": 15`.
+7. Split conjunctive entries: `"Sodium Lauryl and Laureth Sulfate"` → two separate entries: `"Sodium Lauryl Sulfate"` and `"Sodium Laureth Sulfate"`, both marked `is_sub_ingredient: false` with a `parsing_notes` entry explaining the split.
+8. Do not convert E-numbers to names or vice versa — preserve the raw label text in `raw_text` and use the normalized form only in `name`.
+
+---
+
 ## Output Format
 
 Return a JSON object with this structure:

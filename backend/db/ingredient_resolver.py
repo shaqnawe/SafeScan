@@ -36,6 +36,7 @@ from db.connection import get_conn
 
 CLAUDE_CAP = 10          # max ingredients to send to Claude per call
 FTS_MIN_RANK = 0.05      # minimum ts_rank to accept a FTS match
+MODEL_LIGHT = "claude-sonnet-4-6"  # classification tasks
 
 # ---------------------------------------------------------------------------
 # Cleaning helpers
@@ -167,12 +168,12 @@ async def _classify_with_claude(names: list[str]) -> list[_IngredientClassificat
 
     try:
         response = client.messages.parse(
-            model="claude-opus-4-6",
+            model=MODEL_LIGHT,
             max_tokens=2048,
             thinking={"type": "adaptive"},
-            system=_CLAUDE_SYSTEM,
+            system=[{"type": "text", "text": _CLAUDE_SYSTEM, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": prompt}],
-            output_format=_ClassificationBatch,
+            output_format=_ClassificationBatch,  # SDK .parse() translates this to output_config internally
         )
         batch = response.parsed_output
         return batch.results if batch else []

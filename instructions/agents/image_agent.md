@@ -142,3 +142,16 @@ When `confidence < 0.5`, set the `notes` field with a plain-language description
 - If the image shows the back of the product without brand/name info, extract what is available.
 - Set `confidence` low and flag `low_confidence_reasons: ["front_panel_not_visible"]`.
 - The Ingredient Parser Agent is better suited for rear-panel images — note this in `notes`.
+
+---
+
+## Common OCR Challenges
+
+Be aware of these frequent failure patterns and how to handle them:
+
+- **Curved surfaces**: Bottles and tubes distort text toward the edges. Focus on the flattest visible area and give lower confidence to text near the edges of curved packaging.
+- **Metallic/holographic packaging**: Glare causes character misrecognition — `8` and `B`, `0` and `O`, `1` and `I` are common confusions. Note this in `low_confidence_reasons` and flag affected fields as uncertain.
+- **Micro text**: Ingredient lists are often printed in very small font, especially on cosmetics. If individual characters are ambiguous, prefer the more common ingredient spelling and note the uncertainty.
+- **Color-on-color**: Light text on a light background or dark text on a dark background significantly reduces legibility. Adjust your confidence accordingly and flag `"low_contrast_text"` in `low_confidence_reasons`.
+- **Embossed or debossed text**: Some brands emboss their name into the packaging rather than printing it. Shadows and lighting direction matter — flag if you are inferring rather than reading printed text.
+- **Wrapped or folded labels**: Packaging that wraps tightly may hide text in the fold. Note `"text_in_fold_not_visible"` if a section appears cut off by folding.
