@@ -39,7 +39,15 @@ python -m db.importers.usda_importer --url
 # OpenFDA OTC drug labels (~17K OTC drugs)
 python -m db.importers.openfda_importer
 
-# All of the above + FDA recall sync (runs via launchd weekly)
+# IARC Monographs — enrich ingredients table with carcinogen group tags
+# (reads db/seed/data/iarc_agents_*.csv — no download needed)
+python -m db.importers.iarc_importer
+
+# California Prop 65 — enrich ingredients table with Prop 65 concern tags
+# (reads db/seed/data/prop65_list_*.csv — no download needed)
+python -m db.importers.prop65_importer
+
+# All of the above + FDA recall sync + IARC + Prop 65 (runs via launchd weekly)
 bash scripts/weekly_sync.sh
 ```
 
@@ -97,6 +105,12 @@ Called during local DB lookup to map raw label text to safety data:
 **Prompt caching**: All system prompts are passed as `[{"type": "text", "text": ..., "cache_control": {"type": "ephemeral"}}]` rather than plain strings. This caches the prompt for 5 minutes, saving input tokens on repeated scans. The system prompts are large (loaded from `instructions/`) so this is high-value.
 
 **Grade scale**: A/B/C/D only — there is no "E" grade. The fallback `SafetyReport` in `scanner.py` uses `grade="D"`. The Phase 2 prompt says "A/B/C/D" not "A/B/C/D/E".
+
+**CAS number column**: `ingredients.cas_number TEXT` (nullable) added in Session A. Indexed via `idx_ingredients_cas` (partial). Used by IARC and Prop 65 importers for preferred-path matching.
+
+**Concern tag vocabulary**: Canonical tags are defined in `instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
+
+**Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`.
 
 **Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`.
 

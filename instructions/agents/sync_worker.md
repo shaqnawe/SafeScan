@@ -128,8 +128,13 @@ When the same product or ingredient exists in multiple sources, use this priorit
 1. user          — manually verified by a human reviewer
 2. cosing        — official EU regulatory database (cosmetics)
 3. efsa          — official EU regulatory database (food additives)
-4. obf           — Open Beauty Facts (crowd-sourced cosmetics)
-5. off           — Open Food Facts (crowd-sourced food)
+4. echa          — ECHA REACH/SVHC database (placeholder — Session B)
+5. iarc          — IARC Monographs carcinogen classifications
+6. prop65        — California Proposition 65 chemical list
+7. rasff         — EU Rapid Alert System for Food and Feed (placeholder — Session B)
+8. obf           — Open Beauty Facts (crowd-sourced cosmetics)
+9. off           — Open Food Facts (crowd-sourced food)
+10. upcitemdb    — UPC barcode lookup fallback (placeholder — Session B)
 ```
 
 ### Rules
@@ -166,7 +171,11 @@ ON CONFLICT (name) DO UPDATE SET
     updated_at    = now();
 ```
 
-Store `source_rank` as a numeric value in the sync context: `user=5`, `cosing=4`, `efsa=3`, `obf=2`, `off=1`. You will need to join or subquery to compare against the existing source rank — consider storing `source` (the text label) in the ingredients table and looking up rank at sync time.
+Store `source_rank` as a numeric value in the sync context:
+`user=10`, `cosing=9`, `efsa=8`, `echa=7`, `iarc=6`, `prop65=5`, `rasff=4`, `obf=3`, `off=2`, `upcitemdb=1`.
+You will need to join or subquery to compare against the existing source rank — consider storing `source` (the text label) in the ingredients table and looking up rank at sync time.
+
+**Note on IARC and Prop 65**: These sources append to the `concerns` array only — they do not set `safety_level`, `eu_status`, or `score_penalty` on rows where a higher-trust source (cosing, efsa) has already classified the ingredient. They rank above obf/off to prevent crowd-sourced data from overwriting regulatory carcinogen/toxin tags.
 
 ---
 

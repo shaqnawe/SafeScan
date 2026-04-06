@@ -80,9 +80,9 @@ Apply penalties first, then bonuses. Clamp the final result: `score = max(0, min
 | EU-banned substance (`eu_status = 'banned'`) | −30 pts AND score floor to D (max 24) | Applied immediately; score cannot exceed 24 |
 | EU-restricted substance (`eu_status = 'restricted'`) | −15 pts | |
 | Endocrine disruptor (`concerns` includes `endocrine_disruptor`) | −20 pts | |
-| IARC Group 1 carcinogen | −25 pts | Confirmed carcinogen in humans |
-| IARC Group 2A carcinogen | −25 pts | Probable carcinogen in humans |
-| IARC Group 2B carcinogen (`concerns` includes `carcinogen`) | −12 pts | Possible carcinogen |
+| IARC Group 1 carcinogen (`concerns` includes `iarc_group_1`) | −25 pts | Confirmed carcinogen in humans |
+| IARC Group 2A carcinogen (`concerns` includes `iarc_group_2a`) | −25 pts | Probable carcinogen in humans |
+| IARC Group 2B carcinogen (`concerns` includes `iarc_group_2b` or legacy `carcinogen`) | −12 pts | Possible carcinogen |
 | Paraben (`concerns` includes `paraben`) | −10 pts | Each distinct paraben type |
 | SLS — Sodium Lauryl Sulfate (`concerns` includes `sls`) | −8 pts | |
 | SLES — Sodium Laureth Sulfate (`concerns` includes `sles`) | −8 pts | |

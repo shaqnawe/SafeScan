@@ -40,6 +40,14 @@ echo "--- FDA Recall Alerts ---" | tee -a "$LOG_FILE"
 "$PYTHON" -m db.recall_store 2>&1 | tee -a "$LOG_FILE"
 
 echo "" | tee -a "$LOG_FILE"
+echo "--- IARC Monographs (enrich ingredients) ---" | tee -a "$LOG_FILE"
+"$PYTHON" -m db.importers.iarc_importer 2>&1 | tee -a "$LOG_FILE"
+
+echo "" | tee -a "$LOG_FILE"
+echo "--- California Prop 65 (enrich ingredients) ---" | tee -a "$LOG_FILE"
+"$PYTHON" -m db.importers.prop65_importer 2>&1 | tee -a "$LOG_FILE"
+
+echo "" | tee -a "$LOG_FILE"
 echo "=============================" | tee -a "$LOG_FILE"
 echo "Sync completed: $(date)"       | tee -a "$LOG_FILE"
 echo "=============================" | tee -a "$LOG_FILE"

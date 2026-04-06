@@ -86,7 +86,9 @@ def _compute_score(
                     score -= 15
                 if 'endocrine_disruptor' in concerns:
                     score -= 20
-                if 'carcinogen' in concerns:
+                if 'iarc_group_1' in concerns or 'iarc_group_2a' in concerns:
+                    score -= 25
+                elif 'iarc_group_2b' in concerns or 'carcinogen' in concerns:
                     score -= 12
                 if 'paraben' in concerns:
                     score -= 10

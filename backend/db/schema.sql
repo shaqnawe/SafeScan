@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS ingredients (
     inci_name       TEXT,
     -- EU E-number if applicable (e.g. 'E211')
     e_number        TEXT,
+    -- CAS Registry Number for chemical identity matching (e.g. '50-00-0')
+    cas_number      TEXT,
     -- Whether this ingredient appears in food, cosmetics, or both
     ingredient_type TEXT        CHECK (ingredient_type IN ('food_additive', 'cosmetic', 'both')),
     -- Overall safety classification driving grade contribution
@@ -83,6 +85,7 @@ COMMENT ON TABLE ingredients IS
 COMMENT ON COLUMN ingredients.name           IS 'Lowercase canonical name. Must be unique. Used for exact-match resolution.';
 COMMENT ON COLUMN ingredients.inci_name      IS 'INCI standard name used in EU cosmetic labelling.';
 COMMENT ON COLUMN ingredients.e_number       IS 'EU E-number (food additives), e.g. E211 for sodium benzoate.';
+COMMENT ON COLUMN ingredients.cas_number     IS 'CAS Registry Number for chemical identity matching, e.g. 50-00-0 (formaldehyde). Used by IARC/Prop65 importers.';
 COMMENT ON COLUMN ingredients.ingredient_type IS 'food_additive | cosmetic | both.';
 COMMENT ON COLUMN ingredients.safety_level   IS 'safe | caution | avoid — drives score penalty application.';
 COMMENT ON COLUMN ingredients.score_penalty  IS 'Points deducted from base score 100. Range 0–30.';
@@ -267,6 +270,11 @@ CREATE INDEX IF NOT EXISTS idx_ingredients_enumber
 CREATE INDEX IF NOT EXISTS idx_ingredients_inci
     ON ingredients (lower(inci_name))
     WHERE inci_name IS NOT NULL;
+
+-- ingredients — CAS number lookup (partial: only rows where cas_number is set)
+CREATE INDEX IF NOT EXISTS idx_ingredients_cas
+    ON ingredients (cas_number)
+    WHERE cas_number IS NOT NULL;
 
 -- ingredients — filter by type and safety level (common query patterns)
 CREATE INDEX IF NOT EXISTS idx_ingredients_type

@@ -58,7 +58,7 @@ After scoring is complete, you are sometimes asked to write the human-readable s
 
 4. **Determine score_penalty** (0–30): Scale with severity. Banned substances → 25–30. Endocrine disruptors → 15–20. Mild irritants → 3–8. Unknown compounds → 5.
 
-5. **Assign concerns array**: Choose from: `endocrine_disruptor`, `carcinogen`, `allergen`, `paraben`, `sls`, `sles`, `formaldehyde_releaser`, `irritant`, `phototoxic`, `neurotoxin`, `aquatic_toxin`, `petrochemical`, `fragrance_allergen`.
+5. **Assign concerns array**: Choose from the canonical tags defined in the **Concern Tag Vocabulary** section below. For IARC-classified substances use `iarc_group_1/2a/2b` rather than the generic `carcinogen` tag. For Prop 65 listings use `prop65_carcinogen`, `prop65_reproductive_toxin`, or `prop65_developmental_toxin`.
 
 6. **Note EU status**: `approved`, `restricted`, `banned`, or `unknown`.
 
@@ -203,7 +203,7 @@ Your output MUST conform exactly to the SafetyReport Pydantic schema. Key rules:
 - `grade` must be one of: `"A"`, `"B"`, `"C"`, `"D"` — **there is no "E" grade**
 - `score` must be an integer 0–100
 - `safety_level` per ingredient must be one of: `"safe"`, `"caution"`, `"avoid"`, `"unknown"`
-- `concerns` array entries should come from the canonical concern tags list (see Task 1 above)
+- `concerns` array entries must come from the Concern Tag Vocabulary section below — do not invent new tags
 - Never invent new top-level fields; use `notes` for anything that does not fit the schema
 
 ---
@@ -249,3 +249,66 @@ When producing a full report, return the complete `SafetyReport` Pydantic model 
 ```
 
 Ensure `score` is consistent with `grade`. Ensure `scoring_breakdown` explains every non-zero penalty and bonus. This breakdown is shown to the user in the app's "score explanation" view.
+
+---
+
+## Concern Tag Vocabulary
+
+All `concerns` array entries must come from this list. Use `notes` for anything that doesn't fit. Do not invent new tags.
+
+### Carcinogenicity — IARC Monographs (source-prefixed)
+
+| Tag | Meaning | Scoring impact |
+|---|---|---|
+| `iarc_group_1` | Confirmed human carcinogen (IARC Group 1) | −25 pts |
+| `iarc_group_2a` | Probably carcinogenic to humans (IARC Group 2A) | −25 pts |
+| `iarc_group_2b` | Possibly carcinogenic to humans (IARC Group 2B) | −12 pts |
+
+> **Note:** IARC Group 3 ("unclassifiable as to carcinogenicity") is **not** added to the concerns array — it carries no safety signal.
+>
+> The legacy tag `carcinogen` (used in pre-IARC-import rows) is equivalent to `iarc_group_2b`. Both are checked by the scorer for the −12 pt penalty. Prefer `iarc_group_2b` for new classifications.
+
+### California Proposition 65 (source-prefixed)
+
+| Tag | Meaning | Prop 65 toxicity type |
+|---|---|---|
+| `prop65_carcinogen` | Listed as known/probable carcinogen under Prop 65 | `cancer` |
+| `prop65_reproductive_toxin` | Listed for male or female reproductive harm | `female`, `male`, `reproductive` |
+| `prop65_developmental_toxin` | Listed for developmental harm | `developmental` |
+
+A single chemical may carry multiple Prop 65 tags (e.g. both `prop65_carcinogen` and `prop65_developmental_toxin`).
+
+### ECHA REACH — placeholder (Session B)
+
+| Tag | Meaning |
+|---|---|
+| `echa_svhc` | Substance of Very High Concern on ECHA REACH Candidate List |
+
+### RASFF — placeholder (Session B)
+
+| Tag | Meaning |
+|---|---|
+| `rasff_alert` | Subject of an active EU Rapid Alert System for Food and Feed notification |
+
+### General safety tags (source-agnostic)
+
+| Tag | Meaning |
+|---|---|
+| `endocrine_disruptor` | Disrupts hormonal signalling |
+| `carcinogen` | Legacy tag — equivalent to `iarc_group_2b`; retained for backwards compatibility |
+| `allergen` | Known allergen (general) |
+| `fragrance_allergen` | EU-listed fragrance allergen (26 listed allergens) |
+| `paraben` | Paraben-class preservative |
+| `sls` | Sodium Lauryl Sulfate |
+| `sles` | Sodium Laureth Sulfate |
+| `formaldehyde_releaser` | Slowly releases formaldehyde as a preservative mechanism |
+| `irritant` | Skin or mucous membrane irritant |
+| `phototoxic` | Increases UV sensitivity / photosensitisation risk |
+| `neurotoxin` | Toxic to the nervous system at relevant doses |
+| `aquatic_toxin` | Harmful to aquatic organisms |
+| `petrochemical` | Derived from petroleum; may carry contaminants |
+| `reproductive_toxin` | Causes reproductive harm (non-Prop-65 context) |
+| `developmental_toxin` | Causes developmental harm (non-Prop-65 context) |
+| `banned_eu` | Banned under EU cosmetics or food regulations |
+| `artificial_color` | Synthetic colorant |
+| `artificial_sweetener` | Synthetic sweetener |

@@ -10,7 +10,7 @@ This document covers two areas: (1) code and agent instruction updates to align 
 |------|--------|---------|
 | Part 1 — Claude API & Code Updates | ✅ Complete | Sessions 1–2 |
 | Part 2 — Agent Instruction Improvements | ✅ Complete | Session 2 |
-| Part 3 — Additional Data Sources | ⏳ Pending | Dedicated session per source |
+| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done, 3–10 pending) | Dedicated session per source |
 | Part 4 — Quick Wins Checklist | ✅ Complete (except IARC/Prop65 deferred to Part 3) | Sessions 1–2 |
 
 **Session 1** (previous): 1.2, 1.3, 1.5, 1.6, Part 4 code quick wins
@@ -448,7 +448,7 @@ These are changes that can be made immediately with minimal risk:
 - [x] Add `thinking.display: "omitted"` to Phase 1 in `scanner.py`
 - [x] Verify `products.source` CHECK constraint includes `'usda'` and `'openfda'`
 - [x] Switch image agent and ingredient resolver to Sonnet 4.6
-- [ ] Download IARC agents list and add to seed data *(deferred → Part 3 session)*
-- [ ] Download Prop 65 list and add to seed data *(deferred → Part 3 session)*
+- [x] Download IARC agents list and add to seed data *(completed Session A — 2026-04-05)*
+- [x] Download Prop 65 list and add to seed data *(completed Session A — 2026-04-05)*
 - [x] Add structured error handling around `messages.parse()` calls
 - [x] Update CLAUDE.md with new best practices after changes
