@@ -10,7 +10,7 @@ This document covers two areas: (1) code and agent instruction updates to align 
 |------|--------|---------|
 | Part 1 — Claude API & Code Updates | ✅ Complete | Sessions 1–2 |
 | Part 2 — Agent Instruction Improvements | ✅ Complete | Session 2 |
-| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done, 3–10 pending) | Dedicated session per source |
+| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done Session A, 5 done Session B, 3+4+6–10 pending) | Dedicated session per source |
 | Part 4 — Quick Wins Checklist | ✅ Complete (except IARC/Prop65 deferred to Part 3) | Sessions 1–2 |
 
 **Session 1** (previous): 1.2, 1.3, 1.5, 1.6, Part 4 code quick wins
@@ -429,7 +429,7 @@ Based on coverage impact and implementation difficulty:
 | 2 | Prop 65 List | Food + Cosmetic | Easy | US safety signal, downloadable Excel |
 | 3 | ECHA REACH/SVHC | Cosmetic | Medium | Authoritative EU chemical safety data |
 | 4 | RASFF Alerts | Food | Medium | EU recall coverage alongside FDA |
-| 5 | UPCitemdb | Food + Cosmetic | Easy | Barcode fallback for unknown products |
+| 5 | ~~UPCitemdb~~ ✅ Session B | Food + Cosmetic | Easy | Runtime fallback in `lookup_product()`; trial endpoint (100/day, no key); name+brand+category only |
 | 6 | Health Canada Hotlist | Cosmetic | Easy | Second regulatory perspective |
 | 7 | SCCS Opinions Index | Cosmetic | Medium | Reference-grade safety evidence |
 | 8 | EWG Skin Deep | Cosmetic | Hard | Large ingredient coverage, no public API |

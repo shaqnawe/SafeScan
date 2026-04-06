@@ -82,7 +82,7 @@ When `POST /api/scan` is called with a barcode:
 1. **Cache hit** → `safety_reports` table (7-day TTL) — instant return
 2. **Local fast path** → `agents/local_analyzer.py` — pure Python scoring from DB data, zero Claude calls. Used when the product is in the local DB. Falls back to Claude if `resolved_ingredients` is empty.
 3. **Claude path** (two phases):
-   - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool → fetches from local DB, then Open Food Facts API, then Open Beauty Facts API, then `user_submissions` fallback. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
+   - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool → fetches from local DB, then Open Food Facts API, then Open Beauty Facts API, then **UPCitemdb** (trial, 100/day, no key required), then `user_submissions` fallback. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
    - **Phase 2** (structured output): `MODEL_HEAVY` (Opus 4.6) via `client.messages.parse()` with `thinking={"type": "adaptive"}` → returns `SafetyReport` Pydantic model. Wrapped in `try/except anthropic.APIError` with a fallback report.
 
 ### Ingredient resolution cascade (`db/ingredient_resolver.py`)
@@ -112,7 +112,11 @@ Called during local DB lookup to map raw label text to safety data:
 
 **Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`.
 
-**Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`.
+**UPCitemdb fallback**: `backend/agents/fetchers/upcitemdb.py` — called at runtime from `lookup_product()` as Step 4, after OFF and OBF miss. Uses the trial endpoint (`https://api.upcitemdb.com/prod/trial/lookup`) — no API key required, rate-limited to 100 lookups/day per IP by UPCitemdb. Returns name + brand + category only; **no ingredient data**. On hit, the product is upserted into the `products` table (`source='upcitemdb'`) so subsequent scans hit the local DB cache. Products upserted from UPCitemdb always go through Claude for analysis (never the local fast path) because `db_source='upcitemdb'` signals zero ingredient data — the local scorer would produce a misleadingly high score.
+
+**Phase 1 message serialization**: Before calling `messages.parse()` in Phase 2, all SDK `ContentBlock` objects in the Phase 1 message history are converted to plain dicts via `_to_dict()`. Passing SDK objects directly causes `RemoteProtocolError: Server disconnected without sending a response` on certain payloads (Anthropic serializes them inconsistently in `messages.parse()` vs `messages.create()`). Also: empty assistant messages (content `[]`) are never appended — they occur when `max_tokens` is hit during adaptive thinking before any visible block is produced, and the API rejects them at the protocol level.
+
+**Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`, `'upcitemdb'`.
 
 **Duplicate ingredient prevention**: `product_ingredients` has a unique index on `(product_id, position)`. All importers use `ON CONFLICT (product_id, position) DO NOTHING`.
 

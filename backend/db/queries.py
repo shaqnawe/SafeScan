@@ -213,6 +213,7 @@ async def get_product_from_db(barcode: str) -> dict[str, Any] | None:
     return {
         "found":                True,
         "source":               "local_db",
+        "db_source":            product["source"] or "",
         "product_type":         product["product_type"] or "unknown",
         "name":                 product["name"] or "",
         "brand":                product["brand"] or "",

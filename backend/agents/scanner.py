@@ -8,8 +8,10 @@ from db.queries import (
     get_product_from_db, get_cached_report, cache_report, get_user_submission,
     set_submission_analyzing, set_submission_complete, set_submission_failed,
 )
+from db.connection import get_conn
 from db.recall_store import check_product_recalls
 from agents.local_analyzer import build_report
+from agents.fetchers import upcitemdb as _upcitemdb
 
 from models import RecallAlert
 
@@ -66,7 +68,7 @@ LOOKUP_TOOL = {
     "description": (
         "Look up product information by barcode. "
         "Checks the local database first (faster, includes pre-resolved ingredient safety data), "
-        "then falls back to Open Food Facts and Open Beauty Facts APIs. "
+        "then falls back to Open Food Facts, Open Beauty Facts, and UPCitemdb APIs. "
         "Returns product name, brand, ingredients list, resolved safety data where available, and category."
     ),
     "input_schema": {
@@ -80,6 +82,35 @@ LOOKUP_TOOL = {
         "required": ["barcode"]
     }
 }
+
+
+_UPSERT_UPCITEMDB_PRODUCT = """
+INSERT INTO products (barcode, name, brand, product_type, image_url, categories, source, last_synced_at)
+VALUES ($1, $2, $3, $4, $5, $6, 'upcitemdb', NOW())
+ON CONFLICT (barcode) DO UPDATE SET
+    name           = EXCLUDED.name,
+    brand          = EXCLUDED.brand,
+    product_type   = EXCLUDED.product_type,
+    image_url      = COALESCE(EXCLUDED.image_url, products.image_url),
+    categories     = EXCLUDED.categories,
+    last_synced_at = NOW()
+"""
+
+
+async def _upsert_upcitemdb_product(barcode: str, data: dict) -> None:
+    """Persist a UPCitemdb hit to the local products table for future cache hits."""
+    raw_cats = data.get("categories") or ""
+    cats = [c.strip() for c in raw_cats.split(">") if c.strip()] if raw_cats else []
+    async with get_conn() as conn:
+        await conn.execute(
+            _UPSERT_UPCITEMDB_PRODUCT,
+            barcode,
+            data["name"],
+            data["brand"],
+            data["product_type"],
+            data["image_url"],
+            cats,
+        )
 
 
 async def lookup_product(barcode: str) -> dict[str, Any]:
@@ -177,7 +208,18 @@ async def lookup_product(barcode: str) -> dict[str, Any]:
         except Exception as e:
             print(f"Beauty Facts API error: {e}")
 
-    # --- Step 4: user submission fallback ---
+    # --- Step 4: UPCitemdb barcode fallback ---
+    upc_result = await _upcitemdb.fetch(barcode)
+    if upc_result is None and ean13:
+        upc_result = await _upcitemdb.fetch(ean13)
+    if upc_result:
+        print(f"  [UPCITEMDB] fallback fired for barcode {barcode}")
+        await _upsert_upcitemdb_product(barcode, upc_result)
+        print(f"  [UPCITEMDB] hit — '{upc_result['name']}' upserted to local DB")
+        return upc_result
+    print(f"  [UPCITEMDB] miss — proceeding to user_submissions fallback")
+
+    # --- Step 5: user submission fallback ---
     submission = await get_user_submission(barcode)
     if submission:
         print(f"  [SUBMISSION] Using user submission for '{submission['name']}'")
@@ -212,7 +254,7 @@ async def analyze_product(barcode: str) -> SafetyReport:
     # --- Local fast path (no Claude) ---
     ean13 = barcode.zfill(13) if len(barcode) == 12 else None
     product_data = await get_product_from_db(barcode) or (await get_product_from_db(ean13) if ean13 else None)
-    if product_data:
+    if product_data and product_data.get("db_source") != "upcitemdb":
         local_report = build_report(product_data, barcode)
         if local_report:
             print(f"  [LOCAL] Built report for '{local_report.product_name}' "
@@ -238,14 +280,25 @@ async def analyze_product(barcode: str) -> SafetyReport:
     while True:
         response = await client.messages.create(
             model=MODEL_LIGHT,
-            max_tokens=1024,
+            max_tokens=2048,
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             tools=[LOOKUP_TOOL],
             messages=messages,
             thinking={"type": "adaptive", "display": "omitted"},
         )
 
-        messages.append({"role": "assistant", "content": response.content})
+        # Strip thinking blocks before storing: display="omitted" removes the
+        # content but leaves the ThinkingBlock wrapper, which the API rejects
+        # if passed back in a subsequent call (causes APIConnectionError).
+        # Also skip empty assistant messages (can occur when max_tokens is hit
+        # during adaptive thinking, leaving no visible blocks) — the Anthropic
+        # API rejects content:[] at the protocol level.
+        content_for_history = [
+            b for b in response.content
+            if getattr(b, "type", None) != "thinking"
+        ]
+        if content_for_history:
+            messages.append({"role": "assistant", "content": content_for_history})
 
         if response.stop_reason != "tool_use":
             break
@@ -265,7 +318,29 @@ async def analyze_product(barcode: str) -> SafetyReport:
             messages.append({"role": "user", "content": tool_results})
 
     # --- Phase 2: structured output ---
-    messages.append({
+    # Serialize any SDK ContentBlock objects to plain dicts so messages.parse()
+    # handles them consistently (SDK objects from Phase 1 can cause serialization
+    # mismatch that results in RemoteProtocolError on certain payloads).
+    def _to_dict(block) -> dict:
+        if isinstance(block, dict):
+            return block
+        t = getattr(block, "type", None)
+        if t == "text":
+            return {"type": "text", "text": block.text}
+        if t == "tool_use":
+            return {"type": "tool_use", "id": block.id, "name": block.name, "input": dict(block.input)}
+        if t == "tool_result":
+            return {"type": "tool_result", "tool_use_id": block.tool_use_id, "content": block.content}
+        return {"type": t}
+
+    serialized_messages = []
+    for m in messages:
+        content = m["content"]
+        if isinstance(content, list):
+            content = [_to_dict(b) for b in content]
+        serialized_messages.append({"role": m["role"], "content": content})
+
+    serialized_messages.append({
         "role": "user",
         "content": (
             f"Based on the product information you retrieved, now provide a structured safety report. "
@@ -285,7 +360,7 @@ async def analyze_product(barcode: str) -> SafetyReport:
             max_tokens=4096,
             thinking={"type": "adaptive"},
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
-            messages=messages,
+            messages=serialized_messages,
             output_format=SafetyReport,  # SDK .parse() translates this to output_config internally
         )
         report = structured_response.parsed_output

@@ -14,8 +14,8 @@ A consumer first barcode safety scanner that analyzes food and cosmetic products
 ```bash
 cd backend
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=your_key_here
-uvicorn backend.main:app --reload
+# Copy .env.example → .env and fill in ANTHROPIC_API_KEY and DATABASE_URL
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API runs at http://localhost:8000
@@ -33,11 +33,9 @@ The app runs at http://localhost:5173
 ## How It Works
 
 1. **Scan a barcode** — use your camera or type it manually
-2. **Product Lookup Agent** — fetches data from Open Food Facts and Open Beauty Facts APIs
-3. **Safety Analysis Agent** — Claude claude-opus-4-6 with adaptive thinking analyzes ingredients using:
-   - EU Cosmetics Regulation for cosmetics
-   - EFSA assessments and NOVA classification for food
-4. **Safety Report** — Yuka-style A–E grade with ingredient breakdown
+2. **Product Lookup** — checks local PostgreSQL DB first, then Open Food Facts, Open Beauty Facts, USDA FoodData Central, OpenFDA OTC drugs, and UPCitemdb (100/day trial) as a final fallback
+3. **Safety Analysis** — Claude Opus 4.6 with adaptive thinking analyzes ingredients using EU Cosmetics Regulation, EFSA assessments, NOVA classification, IARC carcinogen groups, and California Prop 65
+4. **Safety Report** — A/B/C/D grade with ingredient-by-ingredient breakdown, recall alerts, and allergen highlights
 
 ## Example Barcodes
 

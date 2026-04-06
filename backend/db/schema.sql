@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS products (
     -- Free-form category tags from the originating database
     categories      TEXT[],
     -- Where this record originated
-    source          TEXT        CHECK (source IN ('off', 'obf', 'user', 'image_scan')),
+    source          TEXT        CHECK (source IN ('off', 'obf', 'user', 'image_scan', 'usda', 'openfda', 'upcitemdb')),
     -- When the record was last refreshed from an external API or sync
     last_synced_at  TIMESTAMPTZ,
     created_at      TIMESTAMPTZ DEFAULT now()
@@ -43,7 +43,7 @@ COMMENT ON COLUMN products.product_type    IS 'food | cosmetic | unknown — dri
 COMMENT ON COLUMN products.nutriscore      IS 'Nutri-Score letter grade a–e (food only).';
 COMMENT ON COLUMN products.nova_group      IS 'NOVA group 1–4 measuring ultra-processing level (food only).';
 COMMENT ON COLUMN products.categories      IS 'Array of free-form category strings from the originating database.';
-COMMENT ON COLUMN products.source          IS 'off=Open Food Facts, obf=Open Beauty Facts, user=submitted, image_scan=extracted by agent.';
+COMMENT ON COLUMN products.source          IS 'off=Open Food Facts, obf=Open Beauty Facts, user=submitted, image_scan=extracted by agent, usda=USDA FoodData, openfda=OpenFDA OTC, upcitemdb=UPCitemdb barcode fallback.';
 COMMENT ON COLUMN products.last_synced_at  IS 'Timestamp of last successful sync from the upstream source.';
 
 
