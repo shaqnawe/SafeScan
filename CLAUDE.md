@@ -74,6 +74,7 @@ DELETE FROM safety_reports WHERE barcode = '<barcode>';
 - **Frontend**: React + TypeScript + Vite, `react-zxing` for camera barcode scanning
 - **AI**: Claude Opus 4.6 (heavy analysis) + Sonnet 4.6 (extraction/classification) with adaptive thinking
 - **DB**: PostgreSQL with 6 tables: `products`, `product_ingredients`, `ingredients`, `ingredient_aliases`, `safety_reports`, `user_submissions`, `recalls`
+- **Ingredient seed**: ~276 curated entries across 4 JSON files in `backend/db/seed/data/` — see `backend/db/seed/README.md`
 
 ### Analysis pipeline (three paths)
 
@@ -110,7 +111,9 @@ Called during local DB lookup to map raw label text to safety data:
 
 **Concern tag vocabulary**: Canonical tags are defined in `instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
 
-**Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`.
+**Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`. After adding new seed entries (especially with CAS numbers), re-run both importers.
+
+**Ingredient seed files**: `db/seed/data/e_numbers.json` (187 EU additives), `cosing_flagged.json` (59 cosmetic), `food_flagged.json` (15 food contaminants), `fragrance_allergens_flagged.json` (15 EU fragrance allergens). Total ~276 entries. `ingredient_type` CHECK allows: `'food_additive'`, `'cosmetic'`, `'food'`, `'both'`.
 
 **UPCitemdb fallback**: `backend/agents/fetchers/upcitemdb.py` — called at runtime from `lookup_product()` as Step 4, after OFF and OBF miss. Uses the trial endpoint (`https://api.upcitemdb.com/prod/trial/lookup`) — no API key required, rate-limited to 100 lookups/day per IP by UPCitemdb. Returns name + brand + category only; **no ingredient data**. On hit, the product is upserted into the `products` table (`source='upcitemdb'`) so subsequent scans hit the local DB cache. Products upserted from UPCitemdb always go through Claude for analysis (never the local fast path) because `db_source='upcitemdb'` signals zero ingredient data — the local scorer would produce a misleadingly high score.
 

@@ -312,3 +312,4 @@ A single chemical may carry multiple Prop 65 tags (e.g. both `prop65_carcinogen`
 | `banned_eu` | Banned under EU cosmetics or food regulations |
 | `artificial_color` | Synthetic colorant |
 | `artificial_sweetener` | Synthetic sweetener |
+| `process_contaminant` | Not an intentional additive; forms as a byproduct of food processing (e.g. Maillard reaction, heat treatment, fermentation, refining). Use for acrylamide, furan, glycidol, heterocyclic amines, etc. |

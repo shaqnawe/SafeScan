@@ -2,649 +2,1394 @@
   {
     "name": "Methylparaben",
     "inci_name": "METHYLPARABEN",
-    "aliases": ["methyl parahydroxybenzoate", "methyl 4-hydroxybenzoate", "E218", "nipagin", "methyl p-hydroxybenzoate"],
+    "aliases": [
+      "methyl parahydroxybenzoate",
+      "methyl 4-hydroxybenzoate",
+      "E218",
+      "nipagin",
+      "methyl p-hydroxybenzoate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "efsa", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "efsa",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Restricted in EU cosmetics (max 0.4% alone, 0.8% combined). Has weak estrogenic activity. Banned from certain leave-on body products in some markets."
   },
   {
     "name": "Ethylparaben",
     "inci_name": "ETHYLPARABEN",
-    "aliases": ["ethyl parahydroxybenzoate", "ethyl 4-hydroxybenzoate", "E214", "nipagen A"],
+    "aliases": [
+      "ethyl parahydroxybenzoate",
+      "ethyl 4-hydroxybenzoate",
+      "E214",
+      "nipagen A"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "EU restricted paraben. Weak estrogenic activity. Allowed at max 0.4% alone or 0.8% combined in cosmetics."
   },
   {
     "name": "Propylparaben",
     "inci_name": "PROPYLPARABEN",
-    "aliases": ["propyl parahydroxybenzoate", "propyl 4-hydroxybenzoate", "nipasol"],
+    "aliases": [
+      "propyl parahydroxybenzoate",
+      "propyl 4-hydroxybenzoate",
+      "nipasol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity", "reproductive_toxicity_concern"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity",
+      "reproductive_toxicity_concern"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "EU restricted paraben. SCCS concluded it should not be used in cosmetics for children under 3 years. Shows estrogenic and potential reproductive toxicity."
   },
   {
     "name": "Butylparaben",
     "inci_name": "BUTYLPARABEN",
-    "aliases": ["butyl parahydroxybenzoate", "butyl 4-hydroxybenzoate", "nipabutyl"],
+    "aliases": [
+      "butyl parahydroxybenzoate",
+      "butyl 4-hydroxybenzoate",
+      "nipabutyl"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity", "reproductive_toxicity_concern"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity",
+      "reproductive_toxicity_concern"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "EU restricted paraben. Stronger estrogenic activity than methyl/ethylparaben. Not recommended in products for children under 3. Banned from certain applications."
   },
   {
     "name": "Isobutylparaben",
     "inci_name": "ISOBUTYLPARABEN",
-    "aliases": ["isobutyl parahydroxybenzoate", "isobutyl 4-hydroxybenzoate"],
+    "aliases": [
+      "isobutyl parahydroxybenzoate",
+      "isobutyl 4-hydroxybenzoate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity", "banned_certain_uses"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity",
+      "banned_certain_uses"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Banned in EU cosmetics as of 2014 (Regulation 358/2014). Strong estrogenic activity. Also banned in Denmark for children's products."
   },
   {
     "name": "Isopropylparaben",
     "inci_name": "ISOPROPYLPARABEN",
-    "aliases": ["isopropyl parahydroxybenzoate", "isopropyl 4-hydroxybenzoate"],
+    "aliases": [
+      "isopropyl parahydroxybenzoate",
+      "isopropyl 4-hydroxybenzoate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Banned in EU cosmetics as of 2014 (Regulation 358/2014). Strong estrogenic and endocrine disrupting properties."
   },
   {
     "name": "Benzylparaben",
     "inci_name": "BENZYLPARABEN",
-    "aliases": ["benzyl parahydroxybenzoate", "benzyl 4-hydroxybenzoate"],
+    "aliases": [
+      "benzyl parahydroxybenzoate",
+      "benzyl 4-hydroxybenzoate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "paraben", "estrogenic_activity", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "paraben",
+      "estrogenic_activity",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Banned in EU cosmetics as of 2014 (Regulation 358/2014). Significant estrogenic and endocrine disrupting activity."
   },
   {
     "name": "Dibutyl phthalate",
     "inci_name": "DIBUTYL PHTHALATE",
-    "aliases": ["DBP", "di-n-butyl phthalate", "butyl phthalate"],
+    "aliases": [
+      "DBP",
+      "di-n-butyl phthalate",
+      "butyl phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "phthalate", "reproductive_toxin", "developmental_toxin", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate",
+      "reproductive_toxin",
+      "developmental_toxin",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "reach"],
+    "sources": [
+      "cosing",
+      "reach"
+    ],
     "notes": "Banned in EU cosmetics. CMR category 1B reproductive toxin and developmental toxin. SVHC under REACH. Disrupts hormones and development."
   },
   {
     "name": "Diethylhexyl phthalate",
     "inci_name": "DIETHYLHEXYL PHTHALATE",
-    "aliases": ["DEHP", "di(2-ethylhexyl) phthalate", "bis(2-ethylhexyl) phthalate"],
+    "aliases": [
+      "DEHP",
+      "di(2-ethylhexyl) phthalate",
+      "bis(2-ethylhexyl) phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "phthalate", "reproductive_toxin", "carcinogen_suspected", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate",
+      "reproductive_toxin",
+      "carcinogen_suspected",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "iarc", "reach"],
+    "sources": [
+      "cosing",
+      "iarc",
+      "reach"
+    ],
     "notes": "Banned in EU cosmetics. IARC Group 2B possible carcinogen. CMR substance. SVHC under REACH. Significant endocrine disrupting and reproductive toxicity properties."
   },
   {
     "name": "Benzyl butyl phthalate",
     "inci_name": "BENZYL BUTYL PHTHALATE",
-    "aliases": ["BBP", "butyl benzyl phthalate", "1-butyl benzyl phthalate"],
+    "aliases": [
+      "BBP",
+      "butyl benzyl phthalate",
+      "1-butyl benzyl phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "phthalate", "reproductive_toxin", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate",
+      "reproductive_toxin",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "reach"],
+    "sources": [
+      "cosing",
+      "reach"
+    ],
     "notes": "Banned in EU cosmetics. CMR category 1B reproductive toxin. SVHC under REACH."
   },
   {
     "name": "Diethyl phthalate",
     "inci_name": "DIETHYL PHTHALATE",
-    "aliases": ["DEP", "ethyl phthalate", "di-n-ethyl phthalate"],
+    "aliases": [
+      "DEP",
+      "ethyl phthalate",
+      "di-n-ethyl phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "phthalate", "reproductive_concern"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate",
+      "reproductive_concern"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "ewg"],
+    "sources": [
+      "cosing",
+      "ewg"
+    ],
     "notes": "Still permitted in some EU cosmetics as fixative. Some evidence of endocrine disrupting activity. Metabolite (MEP) detected in human urine widely. Subject of ongoing review."
   },
   {
     "name": "Dimethyl phthalate",
     "inci_name": "DIMETHYL PHTHALATE",
-    "aliases": ["DMP", "di-n-methyl phthalate", "methyl phthalate"],
+    "aliases": [
+      "DMP",
+      "di-n-methyl phthalate",
+      "methyl phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "phthalate"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "ewg"],
+    "sources": [
+      "cosing",
+      "ewg"
+    ],
     "notes": "Phthalate plasticiser and fixative. Less studied than DEHP/DBP but shares structural concerns. Regulatory review ongoing."
   },
   {
     "name": "Diisobutyl phthalate",
     "inci_name": "DIISOBUTYL PHTHALATE",
-    "aliases": ["DIBP", "bis(2-methylpropyl) phthalate"],
+    "aliases": [
+      "DIBP",
+      "bis(2-methylpropyl) phthalate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "phthalate", "reproductive_toxin", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "phthalate",
+      "reproductive_toxin",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "reach"],
+    "sources": [
+      "cosing",
+      "reach"
+    ],
     "notes": "Banned in EU cosmetics. CMR category 1B reproductive toxin. SVHC under REACH. Similar toxicity profile to DBP."
   },
   {
     "name": "DMDM Hydantoin",
     "inci_name": "DMDM HYDANTOIN",
-    "aliases": ["dimethylol dimethyl hydantoin", "1,3-bis(hydroxymethyl)-5,5-dimethylhydantoin"],
+    "aliases": [
+      "dimethylol dimethyl hydantoin",
+      "1,3-bis(hydroxymethyl)-5,5-dimethylhydantoin"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions", "potential_carcinogen_via_formaldehyde"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions",
+      "potential_carcinogen_via_formaldehyde"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Formaldehyde-releasing preservative. Restricted in EU (max 0.6%). Formaldehyde is IARC Group 1 carcinogen. Can cause contact allergies and sensitisation."
   },
   {
     "name": "Imidazolidinyl urea",
     "inci_name": "IMIDAZOLIDINYL UREA",
-    "aliases": ["imidurea", "germall 115"],
+    "aliases": [
+      "imidurea",
+      "germall 115"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions", "contact_sensitisation"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions",
+      "contact_sensitisation"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Formaldehyde-releasing preservative. Restricted in EU (max 0.6%). Common cause of contact allergic dermatitis. Releases formaldehyde slowly over time."
   },
   {
     "name": "Diazolidinyl urea",
     "inci_name": "DIAZOLIDINYL UREA",
-    "aliases": ["germall II", "diaz urea"],
+    "aliases": [
+      "germall II",
+      "diaz urea"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions", "contact_sensitisation"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions",
+      "contact_sensitisation"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Formaldehyde-releasing preservative. Restricted in EU (max 0.5%). Releases more formaldehyde than imidazolidinyl urea. Significant sensitisation potential."
   },
   {
     "name": "Quaternium-15",
     "inci_name": "QUATERNIUM-15",
-    "aliases": ["dowicil 200", "chloroallyl methenamine chloride", "1-(3-chloroallyl)-3,5,7-triaza-1-azoniaadamantane chloride"],
+    "aliases": [
+      "dowicil 200",
+      "chloroallyl methenamine chloride",
+      "1-(3-chloroallyl)-3,5,7-triaza-1-azoniaadamantane chloride"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions", "contact_sensitisation"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions",
+      "contact_sensitisation"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "One of the strongest formaldehyde-releasing preservatives. Restricted in EU (max 0.2%). High contact allergy rates; among the most common causes of cosmetic allergies."
   },
   {
     "name": "Bronopol",
     "inci_name": "BRONOPOL",
-    "aliases": ["2-bromo-2-nitropropane-1,3-diol", "bnpd"],
+    "aliases": [
+      "2-bromo-2-nitropropane-1,3-diol",
+      "bnpd"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "nitrosamine_formation", "allergic_reactions"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "nitrosamine_formation",
+      "allergic_reactions"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Broad-spectrum preservative. Releases formaldehyde and can form nitrosamines (potential carcinogens) in combination with amines. EU restricted (max 0.1%)."
   },
   {
     "name": "Sodium hydroxymethylglycinate",
     "inci_name": "SODIUM HYDROXYMETHYLGLYCINATE",
-    "aliases": ["SHG", "nuosept C", "hydroxymethylglycine sodium salt"],
+    "aliases": [
+      "SHG",
+      "nuosept C",
+      "hydroxymethylglycine sodium salt"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions", "contact_sensitisation"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions",
+      "contact_sensitisation"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Formaldehyde-releasing preservative. EU restricted (max 0.5%). SCCS noted potential for formaldehyde-type contact sensitisation."
   },
   {
     "name": "Methenamine",
     "inci_name": "METHENAMINE",
-    "aliases": ["hexamethylenetetramine", "hexamine", "urotropine", "E239"],
+    "aliases": [
+      "hexamethylenetetramine",
+      "hexamine",
+      "urotropine",
+      "E239"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["formaldehyde_releaser", "allergic_reactions"],
+    "concerns": [
+      "formaldehyde_releaser",
+      "allergic_reactions"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Formaldehyde-releasing preservative. EU restricted (max 0.15% in cosmetics). Releases formaldehyde in acidic conditions."
   },
   {
     "name": "Benzophenone-3",
     "inci_name": "BENZOPHENONE-3",
-    "aliases": ["oxybenzone", "2-hydroxy-4-methoxybenzophenone", "eusolex 4360"],
+    "aliases": [
+      "oxybenzone",
+      "2-hydroxy-4-methoxybenzophenone",
+      "eusolex 4360"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "photoallergy", "environmental_harm", "coral_reef_damage"],
+    "concerns": [
+      "endocrine_disruptor",
+      "photoallergy",
+      "environmental_harm",
+      "coral_reef_damage"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety", "efsa"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety",
+      "efsa"
+    ],
     "notes": "UV filter restricted in EU at max 6% (10% for full body sunscreens with label). SCCS noted endocrine disrupting potential. Causes coral reef bleaching. Banned in Hawaii for reef protection."
   },
   {
     "name": "Benzophenone-4",
     "inci_name": "BENZOPHENONE-4",
-    "aliases": ["sulisobenzone", "2-hydroxy-4-methoxybenzophenone-5-sulfonic acid"],
+    "aliases": [
+      "sulisobenzone",
+      "2-hydroxy-4-methoxybenzophenone-5-sulfonic acid"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "photoallergy", "environmental_harm"],
+    "concerns": [
+      "endocrine_disruptor",
+      "photoallergy",
+      "environmental_harm"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Water-soluble UV filter. EU restricted (max 10%). Some evidence of systemic absorption and endocrine disruption."
   },
   {
     "name": "Homosalate",
     "inci_name": "HOMOSALATE",
-    "aliases": ["hms", "3,3,5-trimethylcyclohexyl 2-hydroxybenzoate", "homomenthyl salicylate"],
+    "aliases": [
+      "hms",
+      "3,3,5-trimethylcyclohexyl 2-hydroxybenzoate",
+      "homomenthyl salicylate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "systemic_absorption"],
+    "concerns": [
+      "endocrine_disruptor",
+      "systemic_absorption"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "UV filter. SCCS (2020) concluded not safe above 0.5%; EU has restricted to max 7.34%. Penetrates skin; metabolites show endocrine disrupting activity."
   },
   {
     "name": "Octinoxate",
     "inci_name": "ETHYLHEXYL METHOXYCINNAMATE",
-    "aliases": ["octyl methoxycinnamate", "OMC", "parsol MCX", "2-ethylhexyl 4-methoxycinnamate"],
+    "aliases": [
+      "octyl methoxycinnamate",
+      "OMC",
+      "parsol MCX",
+      "2-ethylhexyl 4-methoxycinnamate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "systemic_absorption", "environmental_harm", "coral_reef_damage"],
+    "concerns": [
+      "endocrine_disruptor",
+      "systemic_absorption",
+      "environmental_harm",
+      "coral_reef_damage"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Most widely used UV-B filter. EU restricted (max 10%). Penetrates skin; estrogenic activity shown in animal studies. Harmful to coral reefs. Banned in Hawaii."
   },
   {
     "name": "Octocrylene",
     "inci_name": "OCTOCRYLENE",
-    "aliases": ["2-ethylhexyl 2-cyano-3,3-diphenyl acrylate", "uvinul N-539"],
+    "aliases": [
+      "2-ethylhexyl 2-cyano-3,3-diphenyl acrylate",
+      "uvinul N-539"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["endocrine_disruptor", "photoallergy", "environmental_harm", "benzophenone_contamination"],
+    "concerns": [
+      "endocrine_disruptor",
+      "photoallergy",
+      "environmental_harm",
+      "benzophenone_contamination"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "UV filter. EU restricted (max 10%). Degrades to benzophenone over time in products. Associated with photoallergic reactions and potential endocrine disruption."
   },
   {
     "name": "4-Methylbenzylidene camphor",
     "inci_name": "4-METHYLBENZYLIDENE CAMPHOR",
-    "aliases": ["4-MBC", "enzacamene", "parsol 5000"],
+    "aliases": [
+      "4-MBC",
+      "enzacamene",
+      "parsol 5000"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "thyroid_disruption", "banned_eu"],
+    "concerns": [
+      "endocrine_disruptor",
+      "thyroid_disruption",
+      "banned_eu"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "UV filter banned in EU (Annex II of Regulation 1223/2009). SCCS concluded it is an endocrine disruptor with thyroid and reproductive effects. Still used in some non-EU markets."
   },
   {
     "name": "Sodium Lauryl Sulfate",
     "inci_name": "SODIUM LAURYL SULFATE",
-    "aliases": ["SLS", "sodium dodecyl sulfate", "SDS", "sodium laurilsulfate"],
+    "aliases": [
+      "SLS",
+      "sodium dodecyl sulfate",
+      "SDS",
+      "sodium laurilsulfate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["skin_irritation", "mucous_membrane_irritation", "barrier_disruption"],
+    "concerns": [
+      "skin_irritation",
+      "mucous_membrane_irritation",
+      "barrier_disruption"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Strong anionic surfactant. Known skin and mucous membrane irritant. Damages skin barrier with prolonged exposure. Controversy around carcinogenicity unfounded; primary concern is irritation."
   },
   {
     "name": "Sodium Laureth Sulfate",
     "inci_name": "SODIUM LAURETH SULFATE",
-    "aliases": ["SLES", "sodium lauryl ether sulfate", "sodium polyoxyethylene lauryl sulfate"],
+    "aliases": [
+      "SLES",
+      "sodium lauryl ether sulfate",
+      "sodium polyoxyethylene lauryl sulfate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["skin_irritation", "1_4_dioxane_contamination", "barrier_disruption"],
+    "concerns": [
+      "skin_irritation",
+      "1_4_dioxane_contamination",
+      "barrier_disruption"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Milder than SLS but can be contaminated with 1,4-dioxane (probable human carcinogen) as a manufacturing byproduct. Irritant at high concentrations."
   },
   {
     "name": "Ammonium Lauryl Sulfate",
     "inci_name": "AMMONIUM LAURYL SULFATE",
-    "aliases": ["ALS", "ammonium dodecyl sulfate"],
+    "aliases": [
+      "ALS",
+      "ammonium dodecyl sulfate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["skin_irritation", "mucous_membrane_irritation"],
+    "concerns": [
+      "skin_irritation",
+      "mucous_membrane_irritation"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing"],
+    "sources": [
+      "cosing"
+    ],
     "notes": "Anionic surfactant similar to SLS. Skin and mucous membrane irritant. Common in shampoos and cleansers."
   },
   {
     "name": "Ammonium Laureth Sulfate",
     "inci_name": "AMMONIUM LAURETH SULFATE",
-    "aliases": ["ALES", "ammonium lauryl ether sulfate"],
+    "aliases": [
+      "ALES",
+      "ammonium lauryl ether sulfate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["skin_irritation", "1_4_dioxane_contamination"],
+    "concerns": [
+      "skin_irritation",
+      "1_4_dioxane_contamination"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing"],
+    "sources": [
+      "cosing"
+    ],
     "notes": "Ethoxylated surfactant. Milder than ALS. Possible 1,4-dioxane contamination as manufacturing byproduct."
   },
   {
     "name": "Cyclopentasiloxane",
     "inci_name": "CYCLOPENTASILOXANE",
-    "aliases": ["D5", "decamethylcyclopentasiloxane", "silicone D5"],
+    "aliases": [
+      "D5",
+      "decamethylcyclopentasiloxane",
+      "silicone D5"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["environmental_persistence", "bioaccumulation", "endocrine_disruptor", "banned_rinse_off"],
+    "concerns": [
+      "environmental_persistence",
+      "bioaccumulation",
+      "endocrine_disruptor",
+      "banned_rinse_off"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "echa", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "echa",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Cyclic silicone. Banned in EU rinse-off cosmetics above 0.1% (Regulation 2018/1581). Persistent, bioaccumulative, and potentially toxic (PBT) substance. Endocrine disrupting concerns."
   },
   {
     "name": "Cyclotetrasiloxane",
     "inci_name": "CYCLOTETRASILOXANE",
-    "aliases": ["D4", "octamethylcyclotetrasiloxane", "silicone D4"],
+    "aliases": [
+      "D4",
+      "octamethylcyclotetrasiloxane",
+      "silicone D4"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["environmental_persistence", "bioaccumulation", "endocrine_disruptor", "reproductive_toxin", "banned_rinse_off"],
+    "concerns": [
+      "environmental_persistence",
+      "bioaccumulation",
+      "endocrine_disruptor",
+      "reproductive_toxin",
+      "banned_rinse_off"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "echa", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "echa",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Cyclic silicone. Banned in EU rinse-off cosmetics above 0.1% (Regulation 2018/1581). Reproductive toxin category 2. PBT substance. More concerning than D5 due to reproductive toxicity."
   },
   {
     "name": "Cyclomethicone",
     "inci_name": "CYCLOMETHICONE",
-    "aliases": ["cyclosiloxane mixture", "D4/D5 blend"],
+    "aliases": [
+      "cyclosiloxane mixture",
+      "D4/D5 blend"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["environmental_persistence", "bioaccumulation", "endocrine_disruptor"],
+    "concerns": [
+      "environmental_persistence",
+      "bioaccumulation",
+      "endocrine_disruptor"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "echa"],
+    "sources": [
+      "cosing",
+      "echa"
+    ],
     "notes": "Mixture of cyclic silicones (mainly D4 and D5). Subject to same EU restrictions as D4 and D5 in rinse-off products. PBT concerns."
   },
   {
     "name": "Triclosan",
     "inci_name": "TRICLOSAN",
-    "aliases": ["5-chloro-2-(2,4-dichlorophenoxy)phenol", "irgasan", "aquasept"],
+    "aliases": [
+      "5-chloro-2-(2,4-dichlorophenoxy)phenol",
+      "irgasan",
+      "aquasept"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "antibiotic_resistance", "environmental_persistence", "thyroid_disruption"],
+    "concerns": [
+      "endocrine_disruptor",
+      "antibiotic_resistance",
+      "environmental_persistence",
+      "thyroid_disruption"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety", "us_fda"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety",
+      "us_fda"
+    ],
     "notes": "Antimicrobial agent. Banned in US OTC antiseptic products (FDA 2016). EU restricted to toothpaste (0.3%) and hand soap (0.3%). Thyroid disruption, antibiotic resistance, and environmental persistence concerns."
   },
   {
     "name": "Triclocarban",
     "inci_name": "TRICLOCARBAN",
-    "aliases": ["TCC", "3,4,4'-trichlorocarbanilide", "cloflucarban"],
+    "aliases": [
+      "TCC",
+      "3,4,4'-trichlorocarbanilide",
+      "cloflucarban"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["endocrine_disruptor", "antibiotic_resistance", "environmental_persistence"],
+    "concerns": [
+      "endocrine_disruptor",
+      "antibiotic_resistance",
+      "environmental_persistence"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "us_fda"],
+    "sources": [
+      "cosing",
+      "us_fda"
+    ],
     "notes": "Antimicrobial agent banned in EU cosmetics. FDA banned from US OTC antiseptics (2016). Persistent in environment, bioaccumulates, potential endocrine disruptor."
   },
   {
     "name": "BHA",
     "inci_name": "BHA",
-    "aliases": ["butylated hydroxyanisole", "butylhydroxyanisole", "tert-butyl-4-methoxyphenol"],
+    "aliases": [
+      "butylated hydroxyanisole",
+      "butylhydroxyanisole",
+      "tert-butyl-4-methoxyphenol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["potential_carcinogen", "endocrine_disruptor", "photoallergy"],
+    "concerns": [
+      "potential_carcinogen",
+      "endocrine_disruptor",
+      "photoallergy"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety", "iarc"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety",
+      "iarc"
+    ],
     "notes": "Antioxidant preservative. IARC Group 2B possible carcinogen. EU restricted in cosmetics. Potential endocrine disruptor. Banned in some countries for food use."
   },
   {
     "name": "BHT",
     "inci_name": "BHT",
-    "aliases": ["butylated hydroxytoluene", "dibutylhydroxytoluene", "2,6-di-tert-butyl-p-cresol"],
+    "aliases": [
+      "butylated hydroxytoluene",
+      "dibutylhydroxytoluene",
+      "2,6-di-tert-butyl-p-cresol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["potential_carcinogen", "endocrine_disruptor", "allergic_reactions"],
+    "concerns": [
+      "potential_carcinogen",
+      "endocrine_disruptor",
+      "allergic_reactions"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Antioxidant preservative. Some evidence of carcinogenicity and endocrine disruption at high doses. Considered safe in cosmetics at approved levels by SCCS."
   },
   {
     "name": "Hydroquinone",
     "inci_name": "HYDROQUINONE",
-    "aliases": ["1,4-dihydroxybenzene", "benzene-1,4-diol", "quinol"],
+    "aliases": [
+      "1,4-dihydroxybenzene",
+      "benzene-1,4-diol",
+      "quinol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["potential_carcinogen", "ochronosis_risk", "genotoxicity", "banned_eu_otc"],
+    "concerns": [
+      "potential_carcinogen",
+      "ochronosis_risk",
+      "genotoxicity",
+      "banned_eu_otc"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety", "iarc"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety",
+      "iarc"
+    ],
     "notes": "Skin-lightening agent. Banned in EU OTC cosmetics (prescription only). IARC Group 3. Long-term use causes ochronosis (permanent skin darkening). Genotoxic in some in vitro studies."
   },
   {
     "name": "Formaldehyde",
     "inci_name": "FORMALDEHYDE",
-    "aliases": ["methanal", "methylene oxide", "formalin"],
+    "aliases": [
+      "methanal",
+      "methylene oxide",
+      "formalin"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["carcinogen", "allergic_reactions", "genotoxicity", "skin_sensitisation"],
+    "concerns": [
+      "carcinogen",
+      "allergic_reactions",
+      "genotoxicity",
+      "skin_sensitisation"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "iarc", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "iarc",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "IARC Group 1 carcinogen. Restricted in EU cosmetics (max 0.1%). Must carry warning label above 0.05%. Many cosmetics contain formaldehyde-releasing preservatives instead."
   },
   {
     "name": "Styrene",
     "inci_name": "STYRENE",
-    "aliases": ["vinylbenzene", "ethenylbenzene", "styrol"],
+    "aliases": [
+      "vinylbenzene",
+      "ethenylbenzene",
+      "styrol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["potential_carcinogen", "neurotoxin", "allergic_reactions"],
+    "concerns": [
+      "potential_carcinogen",
+      "neurotoxin",
+      "allergic_reactions"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "iarc"],
+    "sources": [
+      "cosing",
+      "iarc"
+    ],
     "notes": "IARC Group 2B possible carcinogen. Banned in EU cosmetics. Neurotoxic at high exposures."
   },
   {
     "name": "Cocamide DEA",
     "inci_name": "COCAMIDE DEA",
-    "aliases": ["coconut oil diethanolamide", "DEA coconut acid", "diethanolamine coconut acid amide"],
+    "aliases": [
+      "coconut oil diethanolamide",
+      "DEA coconut acid",
+      "diethanolamine coconut acid amide"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["potential_carcinogen", "nitrosamine_formation", "allergic_reactions"],
+    "concerns": [
+      "potential_carcinogen",
+      "nitrosamine_formation",
+      "allergic_reactions"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety", "iarc"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety",
+      "iarc"
+    ],
     "notes": "IARC Group 2B possible carcinogen (animal data). Can react with nitrosamines. EU has restricted DEA compounds in cosmetics. California Prop 65 listed."
   },
   {
     "name": "Lauramide DEA",
     "inci_name": "LAURAMIDE DEA",
-    "aliases": ["lauric diethanolamide", "DEA lauric acid", "coconut monoethanolamide"],
+    "aliases": [
+      "lauric diethanolamide",
+      "DEA lauric acid",
+      "coconut monoethanolamide"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["nitrosamine_formation", "allergic_reactions"],
+    "concerns": [
+      "nitrosamine_formation",
+      "allergic_reactions"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Foam booster and emulsifier. Risk of nitrosamine formation with other ingredients. EU restrictions on DEA compounds."
   },
   {
     "name": "Triethanolamine",
     "inci_name": "TRIETHANOLAMINE",
-    "aliases": ["TEA", "trolamine", "2,2',2''-nitrilotriethanol"],
+    "aliases": [
+      "TEA",
+      "trolamine",
+      "2,2',2''-nitrilotriethanol"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["nitrosamine_formation", "allergic_reactions", "liver_toxicity_high_dose"],
+    "concerns": [
+      "nitrosamine_formation",
+      "allergic_reactions",
+      "liver_toxicity_high_dose"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "pH adjuster and emulsifier. EU restricted (max 2.5% in face products). Can form carcinogenic nitrosamines with nitrosating agents. Restricted from leave-on facial products above certain concentrations."
   },
   {
     "name": "Talc",
     "inci_name": "TALC",
-    "aliases": ["magnesium silicate", "talcum powder", "hydrated magnesium silicate"],
+    "aliases": [
+      "magnesium silicate",
+      "talcum powder",
+      "hydrated magnesium silicate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["potential_carcinogen", "asbestos_contamination_risk", "inhalation_hazard"],
+    "concerns": [
+      "potential_carcinogen",
+      "asbestos_contamination_risk",
+      "inhalation_hazard"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "iarc", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "iarc",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "IARC Group 2B when used in perineal area. Possible asbestos contamination. EU restricts to grades free of asbestiform fibres. Major lawsuits (Johnson & Johnson) over ovarian cancer links."
   },
   {
     "name": "Petrolatum",
     "inci_name": "PETROLATUM",
-    "aliases": ["petroleum jelly", "white petrolatum", "yellow soft paraffin", "vaseline"],
+    "aliases": [
+      "petroleum jelly",
+      "white petrolatum",
+      "yellow soft paraffin",
+      "vaseline"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["polycyclic_aromatic_hydrocarbon_contamination", "mineral_oil_aromatic_hydrocarbons"],
+    "concerns": [
+      "polycyclic_aromatic_hydrocarbon_contamination",
+      "mineral_oil_aromatic_hydrocarbons"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "EU restricts petrolatum to fully refined grades with no evidence of carcinogenicity. Mineral oil aromatic hydrocarbons (MOAH) are IARC Group 1 carcinogens if present as contaminants."
   },
   {
     "name": "Mineral oil",
     "inci_name": "MINERAL OIL",
-    "aliases": ["paraffinum liquidum", "white mineral oil", "liquid paraffin", "paraffin oil"],
+    "aliases": [
+      "paraffinum liquidum",
+      "white mineral oil",
+      "liquid paraffin",
+      "paraffin oil"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["polycyclic_aromatic_hydrocarbon_contamination", "skin_barrier_occlusion"],
+    "concerns": [
+      "polycyclic_aromatic_hydrocarbon_contamination",
+      "skin_barrier_occlusion"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Must be fully refined per EU regulations. Untreated/mildly treated mineral oils are IARC Group 1 carcinogens. Fully refined cosmetic grade considered safe but review of MOAH contamination ongoing."
   },
   {
     "name": "Parfum",
     "inci_name": "PARFUM",
-    "aliases": ["fragrance", "perfume", "aroma", "fragrance mix"],
+    "aliases": [
+      "fragrance",
+      "perfume",
+      "aroma",
+      "fragrance mix"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["allergic_reactions", "hidden_allergens", "undisclosed_ingredients", "contact_dermatitis"],
+    "concerns": [
+      "allergic_reactions",
+      "hidden_allergens",
+      "undisclosed_ingredients",
+      "contact_dermatitis"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Catch-all term hiding complex mixtures. EU requires declaration of 26 listed fragrance allergens above 0.01% (leave-on) or 0.001% (rinse-off). New EU regulation (2023) expanding to 80+ allergens."
   },
   {
     "name": "Aluminum chlorohydrate",
     "inci_name": "ALUMINUM CHLOROHYDRATE",
-    "aliases": ["ACH", "aluminium chlorohydrate", "aluminum chlorhydrate", "basic aluminum chloride"],
+    "aliases": [
+      "ACH",
+      "aluminium chlorohydrate",
+      "aluminum chlorhydrate",
+      "basic aluminum chloride"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["breast_cancer_link_debated", "neurotoxicity_debated", "skin_irritation"],
+    "concerns": [
+      "breast_cancer_link_debated",
+      "neurotoxicity_debated",
+      "skin_irritation"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Antiperspirant active. SCCS (2020) concluded insufficient evidence to establish safety for damaged or shaved skin at current levels. Ongoing debate about breast cancer and Alzheimer's links; not conclusively established."
   },
   {
     "name": "Aluminum zirconium tetrachlorohydrex",
     "inci_name": "ALUMINUM ZIRCONIUM TETRACHLOROHYDREX GLY",
-    "aliases": ["AZT", "aluminium zirconium tetrachlorohydrex glycine", "aluminum zirconium chlorohydrate"],
+    "aliases": [
+      "AZT",
+      "aluminium zirconium tetrachlorohydrex glycine",
+      "aluminum zirconium chlorohydrate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["breast_cancer_link_debated", "neurotoxicity_debated", "inhalation_hazard"],
+    "concerns": [
+      "breast_cancer_link_debated",
+      "neurotoxicity_debated",
+      "inhalation_hazard"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Antiperspirant active. EU restricts use and requires aerosol products not to be inhaled. Same concerns as aluminum chlorohydrate; EU under review. Not approved for spray use on broken skin."
   },
   {
     "name": "Nano titanium dioxide",
     "inci_name": "TITANIUM DIOXIDE (NANO)",
-    "aliases": ["TiO2 nano", "nano TiO2", "[nano] titanium dioxide"],
+    "aliases": [
+      "TiO2 nano",
+      "nano TiO2",
+      "[nano] titanium dioxide"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["nanoparticle", "inhalation_hazard", "potential_carcinogen_inhaled"],
+    "concerns": [
+      "nanoparticle",
+      "inhalation_hazard",
+      "potential_carcinogen_inhaled"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "UV filter in nanofom. EU permits in rinse-off cosmetics and non-spray leave-on products. SCCS (2021) concluded unsafe when inhaled (e.g. spray sunscreens). Must be labelled [nano] in EU."
   },
   {
     "name": "Nano zinc oxide",
     "inci_name": "ZINC OXIDE (NANO)",
-    "aliases": ["ZnO nano", "nano ZnO", "[nano] zinc oxide"],
+    "aliases": [
+      "ZnO nano",
+      "nano ZnO",
+      "[nano] zinc oxide"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 10,
-    "concerns": ["nanoparticle", "inhalation_hazard", "cytotoxicity_concern"],
+    "concerns": [
+      "nanoparticle",
+      "inhalation_hazard",
+      "cytotoxicity_concern"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "UV filter in nanoform. EU permits in face cosmetics at max 25% but prohibits use in spray applications. SCCS noted cytotoxic potential. Must be labelled [nano] in EU."
   },
   {
     "name": "PEG-100 Stearate",
     "inci_name": "PEG-100 STEARATE",
-    "aliases": ["polyethylene glycol 100 stearate", "polyoxyethylene 100 stearate", "PEG stearate"],
+    "aliases": [
+      "polyethylene glycol 100 stearate",
+      "polyoxyethylene 100 stearate",
+      "PEG stearate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["1_4_dioxane_contamination", "skin_penetration_enhancer", "ethylene_oxide_contamination"],
+    "concerns": [
+      "1_4_dioxane_contamination",
+      "skin_penetration_enhancer",
+      "ethylene_oxide_contamination"
+    ],
     "eu_status": "approved",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "PEG compound used as emulsifier. May be contaminated with 1,4-dioxane (probable carcinogen) and ethylene oxide as manufacturing byproducts. Acts as penetration enhancer, increasing absorption of other ingredients. Low-irritation profile when pure."
   },
   {
     "name": "Retinoic acid",
     "inci_name": "RETINOIC ACID",
-    "aliases": ["tretinoin", "all-trans retinoic acid", "all-trans-retinoic acid", "vitamin A acid"],
+    "aliases": [
+      "tretinoin",
+      "all-trans retinoic acid",
+      "all-trans-retinoic acid",
+      "vitamin A acid"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "avoid",
     "score_penalty": 15,
-    "concerns": ["teratogen", "pregnancy_risk", "skin_irritation", "banned_eu_otc"],
+    "concerns": [
+      "teratogen",
+      "pregnancy_risk",
+      "skin_irritation",
+      "banned_eu_otc"
+    ],
     "eu_status": "banned",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Banned in EU OTC cosmetics (prescription only). Potent teratogen — can cause severe birth defects. Causes significant skin irritation. Only available as pharmaceutical product."
   },
   {
     "name": "Retinyl palmitate",
     "inci_name": "RETINYL PALMITATE",
-    "aliases": ["vitamin A palmitate", "retinol palmitate", "ascorbyl palmitate"],
+    "aliases": [
+      "vitamin A palmitate",
+      "retinol palmitate",
+      "ascorbyl palmitate"
+    ],
     "ingredient_type": "cosmetic",
     "safety_level": "caution",
     "score_penalty": 7,
-    "concerns": ["photosensitivity", "pregnancy_risk_high_dose", "potential_photocarcinogenicity"],
+    "concerns": [
+      "photosensitivity",
+      "pregnancy_risk_high_dose",
+      "potential_photocarcinogenicity"
+    ],
     "eu_status": "restricted",
-    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
     "notes": "Vitamin A ester. EU restricts retinol/retinyl esters in cosmetics (max 0.05% face, 0.3% body). NTP study raised photosensitivity and photocarcinogenicity concerns in sun-exposed skin. Avoid during pregnancy at high levels."
+  },
+  {
+    "name": "methylisothiazolinone",
+    "inci_name": "METHYLISOTHIAZOLINONE",
+    "aliases": [
+      "MIT",
+      "2-methyl-4-isothiazolin-3-one",
+      "2-methyl-3(2h)-isothiazolone",
+      "methylisothiazolone",
+      "neolone 950"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "2682-20-4",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 15,
+    "concerns": [
+      "allergen",
+      "irritant"
+    ],
+    "eu_status": "restricted",
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
+    "notes": "SCCS/1521/13 (2013) concluded MIT is unsafe in leave-on cosmetics at any concentration. EU Commission Regulation 2016/1198 banned MIT from leave-on cosmetics; restricted in rinse-off at max 0.0015%. SCCS/1570/15 further concluded 0.0015% is not safe even in rinse-off for the general population, prompting ongoing regulatory review. One of the leading causes of epidemic cosmetic contact allergy in the 2010s. safety_level=avoid because the leave-on ban covers the majority of products (moisturisers, serums, shampoos left in, sunscreens); rinse-off use remains controversial."
+  },
+  {
+    "name": "methylchloroisothiazolinone",
+    "inci_name": "METHYLCHLOROISOTHIAZOLINONE",
+    "aliases": [
+      "MCI",
+      "5-chloro-2-methyl-4-isothiazolin-3-one",
+      "5-chloro-2-methyl-2h-isothiazol-3-one",
+      "chloromethylisothiazolinone",
+      "kathon cg component"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "26172-55-4",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 15,
+    "concerns": [
+      "allergen",
+      "irritant"
+    ],
+    "eu_status": "restricted",
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
+    "notes": "SCCS/1155/08 (2009) and SCCS/1521/13 (2013). Typically used in the Kathon CG biocide blend (MCI:MIT 3:1 by mass, CAS 55965-84-9). EU Commission Regulation 2014/1121 banned MCI/MIT from leave-on cosmetics; restricted in rinse-off at max 0.0015% combined MCI+MIT. MCI is the more potent sensitiser of the two components: lower NOAEL than MIT, cross-reacts with MIT, and with thiuram rubber accelerants causing occupational cross-sensitisation. Must be declared on cosmetic labels by full INCI name."
+  },
+  {
+    "name": "p-phenylenediamine",
+    "inci_name": "P-PHENYLENEDIAMINE",
+    "aliases": [
+      "ppd",
+      "1,4-phenylenediamine",
+      "4-aminoaniline",
+      "para-phenylenediamine",
+      "1,4-diaminobenzene"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "106-50-3",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "allergen",
+      "irritant"
+    ],
+    "eu_status": "restricted",
+    "sources": [
+      "cosing",
+      "scientific_committee_on_consumer_safety"
+    ],
+    "notes": "EU Annex III restricted substance (Regulation 1223/2009, entry 8): permitted in oxidative hair dye products at max 2.0% after mixing for use; prohibited in other cosmetics; product must carry warning 'Hair colorants can cause severe allergic reactions. Read and follow instructions. This product is not intended for use on persons under 16 years. Temporary black henna tattoos may increase the risk of allergy.' SCCS/1443/11. Most common cause of allergic contact dermatitis from hair dye globally; cross-reacts with IPPD (rubber), sulfonamides, PABA sunscreen agents, and azo dyes. IARC Group 3 (unclassifiable as to carcinogenicity)."
+  },
+  {
+    "name": "polyethylene",
+    "inci_name": "POLYETHYLENE",
+    "aliases": [
+      "PE",
+      "PE beads",
+      "polyethylene beads",
+      "polyethylene microspheres",
+      "polyethylene microbeads"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "9002-88-4",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": [
+      "aquatic_toxin",
+      "petrochemical"
+    ],
+    "eu_status": "restricted",
+    "sources": [
+      "cosing",
+      "echa"
+    ],
+    "notes": "ECHA REACH Restriction Entry 78 (Commission Regulation (EU) 2023/2055): intentionally added microplastics (particles <5 mm) restricted in cosmetics effective October 2023 for rinse-off products; phase-out for leave-on products by October 2027. Polyethylene beads were widely used as exfoliants in scrubs and as texture-modifiers in make-up before the ban. Primary concern is environmental persistence and aquatic ecotoxicology — microplastics are not biodegradable, accumulate in marine food chains, and have been detected in human blood, placenta, and lung tissue. IARC Group 3 (polyethylene itself — no carcinogenicity classification). score_penalty=8 reflects environmental rather than direct toxicity concern."
+  },
+  {
+    "name": "nylon-12",
+    "inci_name": "NYLON-12",
+    "aliases": [
+      "polyamide 12",
+      "PA-12",
+      "polylaurolactam",
+      "nylon 12 powder",
+      "polyamide-12"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "24937-16-4",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": [
+      "aquatic_toxin",
+      "petrochemical"
+    ],
+    "eu_status": "restricted",
+    "sources": [
+      "cosing",
+      "echa"
+    ],
+    "notes": "ECHA REACH Restriction Entry 78 (Regulation (EU) 2023/2055): polyamide microplastic particles restricted in cosmetics. Used as smooth-feel powder in loose powder foundations, setting powders, eyeshadow bases, and as exfoliant beads. Like other synthetic polymer microplastics, primary concern is environmental persistence — not biodegradable, contributes to marine and terrestrial microplastic pollution. Nylon-12 particles have been detected in environmental samples globally. Phase-out timeline: rinse-off cosmetics October 2023; leave-on cosmetics October 2027. score_penalty=8 reflects environmental rather than direct human toxicity concern at typical cosmetic use levels."
   }
 ]

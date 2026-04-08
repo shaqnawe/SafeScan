@@ -1,0 +1,376 @@
+[
+  {
+    "name": "acrylamide",
+    "inci_name": "ACRYLAMIDE",
+    "aliases": [
+      "acrylic amide",
+      "propenamide",
+      "2-propenamide",
+      "vinyl amide",
+      "ethylene carboxamide"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "79-06-1",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 20,
+    "concerns": [
+      "iarc_group_2a",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin",
+      "prop65_reproductive_toxin",
+      "neurotoxin",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 2A — Monograph 60 (1994), reassessed Vol. 110 (2016). Prop 65: carcinogen listed 1990, developmental toxicant 2011, male reproductive toxicant 2011. Forms via the Maillard reaction between asparagine and reducing sugars in starchy foods heated above ~120°C: potato chips, French fries, bread, biscuits, breakfast cereals, roasted coffee. EFSA 2015 opinion (EFSA-Q-2014-00810) confirmed dietary exposure is a concern across all age groups. EU Regulation 2017/2158 sets mitigation benchmarks for food manufacturers; this is a process contaminant, not a permitted additive."
+  },
+  {
+    "name": "furan",
+    "inci_name": "FURAN",
+    "aliases": [
+      "divinylene oxide",
+      "oxole",
+      "1-oxacyclopenta-2,4-diene",
+      "furfuran",
+      "tetrahydrofuran related"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "110-00-9",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "efsa"],
+    "notes": "IARC Group 2B — Monograph 63 (1995), Vol. 101 (2012). EFSA 2017 risk assessment (doi:10.2903/j.efsa.2017.4899) concluded that furan and methylfurans in food are a concern for all age groups. Forms during heat treatment of canned/jarred foods, coffee, and baby food via thermal degradation of sugars, amino acids, and unsaturated fatty acids. European Commission set benchmark levels for furan in roasted coffee (Commission Recommendation 2019/1888)."
+  },
+  {
+    "name": "glycidol",
+    "inci_name": "GLYCIDOL",
+    "aliases": [
+      "2,3-epoxy-1-propanol",
+      "glycidyl alcohol",
+      "epoxypropanol",
+      "oxiranemethanol",
+      "glycidyl fatty acid esters"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "556-52-5",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 20,
+    "concerns": [
+      "iarc_group_2a",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin",
+      "process_contaminant",
+      "reproductive_toxin"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 2A — Monograph 77 (2000). Prop 65: carcinogen and developmental toxicant. Forms primarily as glycidyl fatty acid esters (GE) during high-temperature deodorization of refined vegetable oils (especially palm oil). EFSA 2016 opinion (doi:10.2903/j.efsa.2016.4426) classified GE as a concern; updated 2018. EU Commission Regulation 2020/1322 sets maximum levels for glycidyl esters in edible oils, infant formula, and follow-on formula. On food labels, appears as 'vegetable oil' or 'palm oil' rather than glycidol itself."
+  },
+  {
+    "name": "benzene",
+    "inci_name": "BENZENE",
+    "aliases": [
+      "benzol",
+      "cyclohexatriene",
+      "phenyl hydride",
+      "coal naphtha",
+      "benzene in soft drinks"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "71-43-2",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 25,
+    "concerns": [
+      "iarc_group_1",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin",
+      "prop65_reproductive_toxin",
+      "process_contaminant",
+      "neurotoxin"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 1 — confirmed human carcinogen. Monograph 29 (1982), Vol. 100F (2012). Prop 65: carcinogen, developmental toxicant, male reproductive toxicant. Consumer food context: benzene can form in soft drinks containing both sodium benzoate (E211) or potassium benzoate (E212) and ascorbic acid (vitamin C / E300) under conditions of heat, light, or low pH. US FDA surveys found benzene above 5 ppb in some drinks. Maximum level in food/drink regulated under environmental contamination rules, not as an additive."
+  },
+  {
+    "name": "benzo[a]pyrene",
+    "inci_name": "BENZO[A]PYRENE",
+    "aliases": [
+      "benzo(a)pyrene",
+      "3,4-benzopyrene",
+      "bap",
+      "3,4-benz[a]pyrene",
+      "benzo-a-pyrene"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "50-32-8",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 25,
+    "concerns": [
+      "iarc_group_1",
+      "prop65_carcinogen",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 1 — confirmed human carcinogen. Monograph 3 (1973), Vol. 100F (2012). Prop 65: carcinogen. Polycyclic aromatic hydrocarbon (PAH) formed by incomplete combustion; found in smoked, grilled, and barbecued meats and fish, roasted coffee, toasted bread, and coal-tar-derived food colorants. EFSA 2008 opinion on PAH in food (EFSA-Q-2007-098). EU Regulation 835/2011 sets maximum levels in smoked meats, fish, and shellfish. BaP is used as a marker for the broader carcinogenic PAH mixture."
+  },
+  {
+    "name": "ochratoxin a",
+    "inci_name": "OCHRATOXIN A",
+    "aliases": [
+      "OTA",
+      "ochratoxin",
+      "ochratoxin-a",
+      "aspergillus ochratoxin",
+      "penicillium mycotoxin"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "303-47-9",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "process_contaminant",
+      "neurotoxin"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "efsa"],
+    "notes": "IARC Group 2B — Monograph 56 (1993), Vol. 100F (2012). Mycotoxin produced by Aspergillus and Penicillium molds. Found in cereals (wheat, barley, maize), coffee, cocoa, dried fruit, raisins, grapes, wine, beer, and spices. EFSA 2020 updated scientific opinion (doi:10.2903/j.efsa.2020.6113) reduced the tolerable weekly intake (TWI) to 0.012 µg/kg bw/week; concluded that cereal-based exposure in children and regular wine drinkers may approach or exceed the TWI. EU Regulation 1881/2006 as amended sets maximum levels in cereals, dried vine fruits, and roasted coffee."
+  },
+  {
+    "name": "acetaldehyde",
+    "inci_name": "ACETALDEHYDE",
+    "aliases": [
+      "ethanal",
+      "acetic aldehyde",
+      "ethyl aldehyde",
+      "methyl formaldehyde",
+      "aldehyde c-7"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "75-07-0",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 20,
+    "concerns": [
+      "iarc_group_1",
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65"],
+    "notes": "IARC Group 2B for acetaldehyde alone (Monograph 71, 1999); separately classified IARC Group 1 for 'acetaldehyde associated with consumption of alcoholic beverages' (Vol. 100E, 2012). Both classifications share CAS 75-07-0 in the IARC CSV — the importer will add both iarc_group_1 and iarc_group_2b. Prop 65: carcinogen. Found as a natural component of fruit, fermented foods, bread, dairy; produced endogenously during alcohol metabolism. Also used as a food flavoring (EFSA re-evaluation 2020). Group 1 classification reflects the alcohol-metabolite pathway, not direct food exposure at typical flavoring levels."
+  },
+  {
+    "name": "4-methylimidazole",
+    "inci_name": "4-METHYLIMIDAZOLE",
+    "aliases": [
+      "4-miz",
+      "4-mei",
+      "4-methyl-1h-imidazole",
+      "methylimidazole",
+      "1,3-diazole 4-methyl"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "822-36-6",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "process_contaminant"
+    ],
+    "eu_status": "unknown",
+    "sources": ["iarc", "prop65"],
+    "notes": "IARC Group 2B — Vol. 101 (2012). Prop 65: carcinogen. A byproduct formed during production of caramel colors E150c (ammonia caramel) and E150d (sulphite ammonia caramel) from ammoniation reactions. Does not appear on food labels as a distinct ingredient but is present in products using E150c/d — including colas, dark beers, sauces, and baked goods. California Prop 65 set a maximum allowable dose level (MADL) of 16 µg/day (2012). No specific EU maximum level set; EFSA 2011 opinion noted the concern but found exposure from E150c/d within acceptable range at typical use levels."
+  },
+  {
+    "name": "furfuryl alcohol",
+    "inci_name": "FURFURYL ALCOHOL",
+    "aliases": [
+      "2-furylmethanol",
+      "2-furanmethanol",
+      "2-hydroxymethylfuran",
+      "furfural alcohol",
+      "2-(hydroxymethyl)furan"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "98-00-0",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 2B — Monograph 63 (1995), Vol. 101 (2012). Prop 65: carcinogen. A furan derivative formed from furfural during coffee roasting, baking, and heat processing of carbohydrate-rich foods. Also occurs in dried fruit and certain spirits. Commission Regulation (EU) 2018/290 (amended by 2023/168) establishes maximum levels for furfuryl alcohol in roasted coffee (3500 µg/kg for ground roasted coffee, 2000 µg/kg for soluble/instant coffee). EFSA 2017 CONTAM opinion on furan and methylfurans included furfuryl alcohol in scope."
+  },
+  {
+    "name": "ethylene oxide",
+    "inci_name": "ETHYLENE OXIDE",
+    "aliases": [
+      "oxirane",
+      "epoxyethane",
+      "1,2-epoxyethane",
+      "dimethylene oxide",
+      "ETO"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "75-21-8",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 25,
+    "concerns": [
+      "iarc_group_1",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin",
+      "prop65_reproductive_toxin",
+      "process_contaminant"
+    ],
+    "eu_status": "banned",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 1 — confirmed human carcinogen. Monograph 36 (1985), Vol. 97 (2008), Vol. 100F (2012). Prop 65: carcinogen, developmental toxicant, reproductive toxicant. A fumigant historically used to sterilize spices, dried herbs, and cosmetic raw materials. Banned as a fumigant for food in the EU since 1991 (Directive 91/414/EEC). However, products imported from non-EU countries (notably sesame seeds from India) have repeatedly tested positive for ethylene oxide residues, triggering hundreds of RASFF alerts since 2020. Maximum residue level (MRL) in most spices is 0.1 mg/kg (Reg 396/2005). Also used to sterilize some cosmetic ingredients — a route for cosmetic exposure."
+  },
+  {
+    "name": "aflatoxins",
+    "inci_name": "AFLATOXINS",
+    "aliases": [
+      "aflatoxin",
+      "aflatoxin b1",
+      "aflatoxin b2",
+      "aflatoxin g1",
+      "aflatoxin g2",
+      "aflatoxin m1",
+      "mycotoxin aflatoxin"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "1402-68-2",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 25,
+    "concerns": [
+      "iarc_group_1",
+      "prop65_carcinogen",
+      "process_contaminant"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 1 — confirmed human carcinogens (B1, B2, G1, G2 naturally occurring mixture). Monograph 10 (1976), Vol. 100F (2012). Prop 65: naturally occurring aflatoxins listed as carcinogens. Mycotoxins produced by Aspergillus flavus and A. parasiticus molds. Found in peanuts, tree nuts (almonds, pistachios, walnuts), maize, dried figs, spices (paprika, chili, nutmeg), and coffee. Aflatoxin B1 is the most potent hepatocarcinogen known. EFSA maximum level opinions; EU Regulation 1881/2006 sets strict maximum levels (e.g., 2 µg/kg total aflatoxins in peanuts for direct consumption). CAS 1402-68-2 refers to the mixture; aflatoxin B1 alone is CAS 1162-65-8."
+  },
+  {
+    "name": "lead",
+    "inci_name": "LEAD",
+    "aliases": [
+      "plumbum",
+      "inorganic lead",
+      "lead metal",
+      "lead compounds",
+      "pb"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "7439-92-1",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 20,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin",
+      "prop65_reproductive_toxin",
+      "neurotoxin",
+      "developmental_toxin"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC: lead metal Group 2B, inorganic lead compounds Group 2A — Monograph 87 (2006). CAS 7439-92-1 is lead metal; the IARC CSV entry for this CAS is Group 2B. Prop 65: carcinogen, developmental toxicant, reproductive toxicant. Food contamination routes: soil/water contamination, old ceramic glazes, certain traditional spices, bone broth from old-glazed vessels, some herbal supplements. Cosmetic context: kohl and kajal eyeliners (particularly artisanal and imported) frequently contain lead at levels far above EU limits. EFSA 2010 opinion concluded there is no safe level of lead exposure; the BMDL01 is 0.50 µg/kg bw/day. EU maximum levels set in Regulation 1881/2006 as amended by 2021/1317."
+  },
+  {
+    "name": "pulegone",
+    "inci_name": "PULEGONE",
+    "aliases": [
+      "(r)-pulegone",
+      "d-pulegone",
+      "p-menth-8-en-3-one",
+      "peppermint ketone",
+      "mentha pulegium ketone"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "89-82-7",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "prop65_developmental_toxin"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "efsa"],
+    "notes": "IARC Group 2B — IARC Monographs (confirmed in CSV). Prop 65: carcinogen and developmental toxicant. Naturally occurring monoterpene ketone constituting up to 90% of pennyroyal oil and a minor component of peppermint and spearmint oils. Used as a food flavoring in confectionery, chewing gum, toothpaste, and mint-flavored beverages. EFSA 2013 re-evaluation as flavoring substance (CoE FL-no: 07.035, doi:10.2903/j.efsa.2013.3405) set an acceptable daily intake; noted hepatotoxicity at high doses. EU Regulation 1334/2008 limits pulegone in foods: max 250 mg/kg in mint-flavored confectionery, 350 mg/kg in mint liqueurs."
+  },
+  {
+    "name": "methyleugenol",
+    "inci_name": "METHYLEUGENOL",
+    "aliases": [
+      "methyl eugenol",
+      "4-allyl-1,2-dimethoxybenzene",
+      "3,4-dimethoxyallylbenzene",
+      "eugenol methyl ether",
+      "1,2-dimethoxy-4-(2-propenyl)benzene"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "93-15-2",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 12,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen"
+    ],
+    "eu_status": "restricted",
+    "sources": ["iarc", "prop65", "scientific_committee_on_consumer_safety"],
+    "notes": "IARC Group 2B — Vol. 101 (2012). Prop 65: carcinogen. Naturally occurring phenylpropanoid found in basil, clove, bay leaves, star anise, and many essential oils; also used as a synthetic fragrance and food flavoring. SCCS 2012 opinion (SCCS/1503/12) found it unsafe at levels present in some cosmetic formulations. EU Regulation 1334/2008 limits methyleugenol in food: max 0.01 mg/kg in beverages; restricted in cosmetics under Annex II of Regulation 1223/2009 (max 0.0002% leave-on, 0.001% rinse-off). Both food and cosmetic exposure routes relevant."
+  },
+  {
+    "name": "safrole",
+    "inci_name": "SAFROLE",
+    "aliases": [
+      "5-(2-propenyl)-1,3-benzodioxole",
+      "4-allyl-1,2-methylenedioxybenzene",
+      "shikimole",
+      "m-allylpyrocatechol methylene ether",
+      "3,4-methylenedioxy-allylbenzene"
+    ],
+    "ingredient_type": "food",
+    "cas_number": "94-59-7",
+    "e_number": null,
+    "safety_level": "avoid",
+    "score_penalty": 15,
+    "concerns": [
+      "iarc_group_2b",
+      "prop65_carcinogen",
+      "banned_eu"
+    ],
+    "eu_status": "banned",
+    "sources": ["iarc", "prop65", "eu_regulation"],
+    "notes": "IARC Group 2B — Monograph 1 (1972), Vol. 10 (1976), Vol. 100F (2012). Prop 65: carcinogen. A phenylpropanoid historically used as the primary flavoring in root beer (US FDA banned as a direct additive in 1960). Naturally present in trace amounts in black pepper, star anise, cinnamon leaf, and basil. Banned as a food flavoring in EU under Directive 88/388/EEC (Annex II); also banned in cosmetics (EU Cosmetics Regulation 1223/2009, Annex II, entry 219). Hepatocarcinogenic in rodents; metabolically activated to a DNA-reactive carbocation. score_penalty=15 reflects 'avoid' with banned status rather than maximum 25 (traces in natural extracts are unavoidable)."
+  }
+]

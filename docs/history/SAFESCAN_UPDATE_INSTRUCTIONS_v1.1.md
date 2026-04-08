@@ -10,7 +10,7 @@ This document covers two areas: (1) code and agent instruction updates to align 
 |------|--------|---------|
 | Part 1 — Claude API & Code Updates | ✅ Complete | Sessions 1–2 |
 | Part 2 — Agent Instruction Improvements | ✅ Complete | Session 2 |
-| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done Session A, 5 done Session B, 3+4+6–10 pending) | Dedicated session per source |
+| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done Session A, 5 done Session B, 3+4+6–10 pending, Session C seed expansion complete) | Dedicated session per source |
 | Part 4 — Quick Wins Checklist | ✅ Complete (except IARC/Prop65 deferred to Part 3) | Sessions 1–2 |
 
 **Session 1** (previous): 1.2, 1.3, 1.5, 1.6, Part 4 code quick wins
@@ -452,3 +452,47 @@ These are changes that can be made immediately with minimal risk:
 - [x] Download Prop 65 list and add to seed data *(completed Session A — 2026-04-05)*
 - [x] Add structured error handling around `messages.parse()` calls
 - [x] Update CLAUDE.md with new best practices after changes
+
+---
+
+## Session C: Ingredient DB Expansion (2026-04-06)
+
+**Goal:** Expand seed DB to improve IARC and Prop 65 importer match rates from near-zero.
+
+### Changes made
+
+**CAS backfill (atomic transaction, 6 updates):**
+Applied BHA CAS 25013-16-5 (only Tier 1 pick — IARC 2B + Prop 65 hit). Five Tier 2 future-proofing CAS additions (aspartame, sodium nitrite, sodium nitrate, potassium nitrite, potassium nitrate) — no current CSV match, added for when IARC CSV is refreshed.
+
+**Batch 1 — food processing contaminants (15 new entries):**
+`backend/db/seed/data/food_flagged.json` created. All `ingredient_type: "food"`. Includes: acrylamide, furan, glycidol, benzene, benzo[a]pyrene, ochratoxin A, acetaldehyde, 4-methylimidazole, furfuryl alcohol, ethylene oxide, aflatoxins, lead, pulegone, methyleugenol, safrole.
+
+**Batch 2 — EU fragrance allergens (15 new entries):**
+`backend/db/seed/data/fragrance_allergens_flagged.json` created. All `ingredient_type: "cosmetic"`. EU Annex III / SCCS/1659/21 declarable allergens: limonene, linalool, citral, eugenol, geraniol, cinnamal, benzyl alcohol, benzyl benzoate, benzyl salicylate, coumarin, isoeugenol, farnesol, citronellol, hexyl cinnamaladehyde, alpha-isomethyl ionone.
+
+**Batch 3 — cosmetic gaps (5 entries appended to cosing_flagged.json):**
+methylisothiazolinone (MIT), methylchloroisothiazolinone (MCI), p-phenylenediamine (PPD), polyethylene, nylon-12.
+
+**New concern tag:**
+`process_contaminant` added to `instructions/agents/analysis_agent.md` vocabulary.
+
+**New ingredient_type:**
+`'food'` added to `ingredients.ingredient_type` CHECK constraint via `ALTER TABLE`.
+
+**Seed loader (`seed_ingredients.py`) updated:**
+Added `cas_number` parameter to `_UPSERT_INGREDIENT`, added conditional loading of `food_flagged.json` and `fragrance_allergens_flagged.json`.
+
+**Documentation:**
+`backend/db/seed/README.md` created.
+
+### Match rate results
+
+| Importer | Before (Session C start) | After (all batches) |
+|---|---|---|
+| IARC | 4 matches / 392 entries (1.0%) | 20 matches / 392 entries (5.1%) |
+| Prop 65 | 5 matches / 1,063 pairs (0.5%) | 24 matches / 1,063 pairs (2.3%) |
+
+### TODO carried forward
+- Refresh IARC CSV to pick up Monographs 134+ (aspartame Group 2B classified 2023 — absent from current CSV)
+- Prop 65 Part 3 sources (NSF, NTP) pending
+- ECHA SVHC entries for `echa_svhc` tag coverage

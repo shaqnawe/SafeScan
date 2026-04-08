@@ -1,0 +1,295 @@
+[
+  {
+    "name": "limonene",
+    "inci_name": "LIMONENE",
+    "aliases": [
+      "d-limonene",
+      "r-limonene",
+      "citrus limonene",
+      "4-isopropenyl-1-methylcyclohexene",
+      "p-mentha-1,8-diene"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "5989-27-5",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 68 as amended by Reg 2023/1545). Must be declared on cosmetic labels when ≥0.001% in leave-on products or ≥0.01% in rinse-off. Naturally present in citrus peel oils, many essential oils. SCCS/1659/21 (2022) confirmed allergenicity. Oxidised limonene (formed on air exposure) is a stronger sensitiser than the fresh compound. IARC Group 3 (unclassifiable) — no carcinogenicity concern."
+  },
+  {
+    "name": "linalool",
+    "inci_name": "LINALOOL",
+    "aliases": [
+      "linalol",
+      "3,7-dimethyl-1,6-octadien-3-ol",
+      "beta-linalool",
+      "licareol",
+      "linalyl alcohol"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "78-70-6",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 69 as amended). Declaration required at ≥0.001% leave-on, ≥0.01% rinse-off. Found in lavender, coriander, basil, and hundreds of essential oils. One of the most widely used fragrance ingredients globally. SCCS/1659/21 (2022) confirmed sensitisation potential. Oxidised linalool is more allergenic than fresh. Not classified by IARC or Prop 65."
+  },
+  {
+    "name": "citral",
+    "inci_name": "CITRAL",
+    "aliases": [
+      "3,7-dimethyl-2,6-octadienal",
+      "geranial",
+      "neral",
+      "lemonal",
+      "2,6-dimethyl-2,6-octadienal"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "5392-40-5",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen", "irritant"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 55). Declaration required at ≥0.001% leave-on, ≥0.01% rinse-off. CAS 5392-40-5 is the technical mixture of geranial (CAS 141-27-5) and neral (CAS 106-26-3). Present in citrus oils, lemongrass, verbena. Known skin sensitiser and irritant at higher concentrations. SCCS/1659/21 (2022). Also used as a food flavouring; EFSA set ADI via flavouring re-evaluation."
+  },
+  {
+    "name": "eugenol",
+    "inci_name": "EUGENOL",
+    "aliases": [
+      "4-allylguaiacol",
+      "2-methoxy-4-(2-propenyl)phenol",
+      "caryophyllic acid",
+      "4-allyl-2-methoxyphenol",
+      "clove oil component"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "97-53-0",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 59). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Major component of clove oil; also in cinnamon leaf, nutmeg, basil. Common cause of contact allergic dermatitis (patch test positive in ~1–2% of general population). SCCS/1659/21 (2022). IARC Group 3 — not classifiable as to carcinogenicity. Also classified as a fragrance allergen in food flavouring context (EFSA)."
+  },
+  {
+    "name": "geraniol",
+    "inci_name": "GERANIOL",
+    "aliases": [
+      "trans-geraniol",
+      "(e)-3,7-dimethylocta-2,6-dien-1-ol",
+      "geranyl alcohol",
+      "lemonol",
+      "rhodinol"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "106-24-1",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 61). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Present in rose oil, geranium oil, citronella oil, and many essential oil blends. Moderate sensitisation potential; significant cross-reactivity with citronellol. SCCS/1659/21 (2022). Not listed by IARC or Prop 65."
+  },
+  {
+    "name": "cinnamal",
+    "inci_name": "CINNAMAL",
+    "aliases": [
+      "cinnamaldehyde",
+      "cinnamic aldehyde",
+      "3-phenyl-2-propenal",
+      "trans-cinnamaldehyde",
+      "beta-phenylacrolein"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "104-55-2",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 10,
+    "concerns": ["fragrance_allergen", "allergen", "irritant"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 54). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Higher score_penalty (10) than most allergens: cinnamal is one of the most potent fragrance sensitisers; positive patch test rate up to 2–3% in dermatology clinic populations. Found in cinnamon bark oil, cassia oil. Can also cause immediate contact urticaria (type I) in addition to delayed sensitisation. SCCS/1659/21 (2022) confirmed strong sensitisation potential."
+  },
+  {
+    "name": "benzyl alcohol",
+    "inci_name": "BENZYL ALCOHOL",
+    "aliases": [
+      "phenylmethanol",
+      "phenylcarbinol",
+      "alpha-hydroxytoluene",
+      "benzenemethanol"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "100-51-6",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 51). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Also used as a preservative in cosmetics (max 1.0% under EU Annex V). Present in jasmine, ylang ylang, hyacinth oils. Dual function: fragrance ingredient and antimicrobial preservative. SCCS/1659/21 (2022). Sensitisation potential is relatively low among the 26 allergens but combined preservative/fragrance exposure is relevant."
+  },
+  {
+    "name": "benzyl benzoate",
+    "inci_name": "BENZYL BENZOATE",
+    "aliases": [
+      "benzyl benzenecarboxylate",
+      "benzoic acid benzyl ester",
+      "phenylmethyl benzoate",
+      "ascabin"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "120-51-4",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 52). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Naturally present in balsams (Balsam of Peru, tolu balsam), jasmine, ylang ylang. Also used pharmaceutically as a scabicide/antiparasitic. SCCS/1659/21 (2022). Cross-reactive with other balsam components; patients with balsam-of-Peru allergy typically react. Prop 65 not listed; IARC not classified."
+  },
+  {
+    "name": "benzyl salicylate",
+    "inci_name": "BENZYL SALICYLATE",
+    "aliases": [
+      "benzyl 2-hydroxybenzoate",
+      "2-hydroxybenzoic acid benzyl ester",
+      "phenylmethyl salicylate"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "118-58-1",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 53). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Widely used as a UV absorber and fixative in fragrances; imparts floral note. Found in ylang ylang, carnation. SCCS/1659/21 (2022) confirmed allergenicity. Additionally acts as a mild UV filter — this dual function makes it common in both fragranced and sun-protection cosmetics."
+  },
+  {
+    "name": "coumarin",
+    "inci_name": "COUMARIN",
+    "aliases": [
+      "2h-chromen-2-one",
+      "1,2-benzopyrone",
+      "cis-o-coumarinic acid anhydride",
+      "tonka bean lactone",
+      "2h-1-benzopyran-2-one"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "91-64-5",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 10,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety", "efsa"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 56). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Higher score_penalty (10): coumarin is also restricted as a food flavouring (EU Reg 1334/2008 max 2 mg/kg in most foods, 10 mg/kg in drinks) due to hepatotoxicity at high dietary intake. EFSA 2004 and 2008 opinions on coumarin in food. Present naturally in tonka beans, cassia cinnamon, sweet woodruff. SCCS/1659/21 (2022) confirmed cosmetic allergenicity. IARC Group 3 — not classifiable as to carcinogenicity."
+  },
+  {
+    "name": "isoeugenol",
+    "inci_name": "ISOEUGENOL",
+    "aliases": [
+      "2-methoxy-4-propenylphenol",
+      "4-propenylguaiacol",
+      "methoxy propenyl phenol",
+      "isoeugenol mix"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "97-54-1",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 10,
+    "concerns": ["fragrance_allergen", "allergen", "irritant"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 64). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Higher score_penalty (10): isoeugenol is among the stronger sensitisers in the 26-allergen list; patch-test positive rates are higher than for most others. Prohibited from use in perfumes in some markets. Found in ylang ylang, carnation, geranium. SCCS/1659/21 (2022) and SCCS/1541/14 specifically addressed isoeugenol restriction. Structural isomer of eugenol but considerably more allergenic."
+  },
+  {
+    "name": "farnesol",
+    "inci_name": "FARNESOL",
+    "aliases": [
+      "3,7,11-trimethyl-2,6,10-dodecatrien-1-ol",
+      "trans-trans-farnesol",
+      "farnesyl alcohol",
+      "(e,e)-farnesol"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "4602-84-0",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 60). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Sesquiterpene alcohol; present in rose, lily-of-the-valley, linden blossom oils. Also a natural component of many plant essential oils used in 'natural' cosmetics. SCCS/1659/21 (2022) confirmed allergenicity. Not in IARC or Prop 65."
+  },
+  {
+    "name": "citronellol",
+    "inci_name": "CITRONELLOL",
+    "aliases": [
+      "3,7-dimethyl-6-octen-1-ol",
+      "dihydrogeraniol",
+      "rhodinol component",
+      "2,3-dihydrogeraniol"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "106-22-9",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 57). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Present in rose oil, geranium oil, citronella oil. Cross-reactivity with geraniol is common. Widely used in household and personal care fragrances. SCCS/1659/21 (2022). Not in IARC or Prop 65."
+  },
+  {
+    "name": "hexyl cinnamaladehyde",
+    "inci_name": "HEXYL CINNAMAL",
+    "aliases": [
+      "hexyl cinnamaldehyde",
+      "alpha-hexylcinnamaldehyde",
+      "2-(phenylmethylene)octanal",
+      "hexyl cinnamic aldehyde",
+      "ahc"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "101-86-0",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 63). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. One of the most widely used synthetic fragrance ingredients, imparting a jasmine-chamomile note. Not naturally occurring — synthetic. SCCS/1659/21 (2022) confirmed sensitisation potential. Among the more frequently detected allergens in patch-test studies of cosmetic-related contact dermatitis. Not in IARC or Prop 65."
+  },
+  {
+    "name": "alpha-isomethyl ionone",
+    "inci_name": "ALPHA-ISOMETHYL IONONE",
+    "aliases": [
+      "isomethyl ionone",
+      "alpha-n-methyl ionone",
+      "4-(2,6,6-trimethyl-2-cyclohexen-1-yl)-3-buten-2-one",
+      "orris-related ionone",
+      "methyl ionone"
+    ],
+    "ingredient_type": "cosmetic",
+    "cas_number": "127-51-5",
+    "e_number": null,
+    "safety_level": "caution",
+    "score_penalty": 8,
+    "concerns": ["fragrance_allergen", "allergen"],
+    "eu_status": "restricted",
+    "sources": ["cosing", "scientific_committee_on_consumer_safety"],
+    "notes": "EU Annex III declarable fragrance allergen (Regulation 1223/2009, entry 50). Declaration at ≥0.001% leave-on, ≥0.01% rinse-off. Synthetic fragrance ingredient with a violet/orris/woody note. Widely used in fine fragrances, hair care, and fabric softeners. SCCS/1659/21 (2022) confirmed allergenicity. Not in IARC or Prop 65."
+  }
+]

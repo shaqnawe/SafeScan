@@ -40,6 +40,8 @@ if not DATABASE_URL:
 _DATA_DIR = Path(__file__).parent / "data"
 _E_NUMBERS_PATH = _DATA_DIR / "e_numbers.json"
 _COSING_PATH = _DATA_DIR / "cosing_flagged.json"
+_FOOD_PATH = _DATA_DIR / "food_flagged.json"
+_FRAGRANCE_PATH = _DATA_DIR / "fragrance_allergens_flagged.json"
 
 # ---------------------------------------------------------------------------
 # SQL
@@ -47,16 +49,17 @@ _COSING_PATH = _DATA_DIR / "cosing_flagged.json"
 
 _UPSERT_INGREDIENT = """
 INSERT INTO ingredients (
-    name, inci_name, e_number, ingredient_type, safety_level,
+    name, inci_name, e_number, cas_number, ingredient_type, safety_level,
     score_penalty, concerns, eu_status, sources, notes, updated_at
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
 ON CONFLICT (name) DO UPDATE SET
     safety_level  = EXCLUDED.safety_level,
     score_penalty = EXCLUDED.score_penalty,
     concerns      = EXCLUDED.concerns,
     eu_status     = EXCLUDED.eu_status,
     notes         = EXCLUDED.notes,
+    cas_number    = COALESCE(EXCLUDED.cas_number, ingredients.cas_number),
     updated_at    = NOW()
 RETURNING id
 """
@@ -83,15 +86,16 @@ def _build_records(
     entries: list[dict],
 ) -> list[tuple]:
     """
-    Convert raw JSON dicts into (name, inci_name, e_number, ingredient_type,
-    safety_level, score_penalty, concerns, eu_status, sources, notes, aliases)
-    tuples.
+    Convert raw JSON dicts into (name, inci_name, e_number, cas_number,
+    ingredient_type, safety_level, score_penalty, concerns, eu_status,
+    sources, notes, aliases) tuples.
     """
     rows = []
     for entry in entries:
         name = entry["name"].lower().strip()
         inci_name = entry.get("inci_name") or None
         e_number = entry.get("e_number") or None
+        cas_number = entry.get("cas_number") or None
         ingredient_type = entry.get("ingredient_type")
         safety_level = entry.get("safety_level")
         score_penalty = int(entry.get("score_penalty", 0))
@@ -105,6 +109,7 @@ def _build_records(
             name,
             inci_name,
             e_number,
+            cas_number,
             ingredient_type,
             safety_level,
             score_penalty,
@@ -138,14 +143,14 @@ async def _seed_batch(
     async with conn.transaction():
         for rec in records:
             (
-                name, inci_name, e_number, ingredient_type,
+                name, inci_name, e_number, cas_number, ingredient_type,
                 safety_level, score_penalty, concerns,
                 eu_status, sources, notes, aliases,
             ) = rec
 
             ingredient_id: int = await conn.fetchval(
                 _UPSERT_INGREDIENT,
-                name, inci_name, e_number, ingredient_type,
+                name, inci_name, e_number, cas_number, ingredient_type,
                 safety_level, score_penalty, concerns,
                 eu_status, sources, notes,
             )
@@ -161,7 +166,7 @@ async def _seed_batch(
 
 
 async def main() -> None:
-    """Entry-point: load both data files and seed the database."""
+    """Entry-point: load all data files and seed the database."""
 
     # Load data
     print(f"Loading {_E_NUMBERS_PATH.name} ...")
@@ -172,9 +177,27 @@ async def main() -> None:
     cosing_entries = _load_json(_COSING_PATH)
     print(f"  -> {len(cosing_entries)} CosIng-flagged entries")
 
+    food_entries: list[dict] = []
+    if _FOOD_PATH.exists():
+        print(f"Loading {_FOOD_PATH.name} ...")
+        food_entries = _load_json(_FOOD_PATH)
+        print(f"  -> {len(food_entries)} food-flagged entries")
+    else:
+        print(f"(No {_FOOD_PATH.name} found — skipping)")
+
+    fragrance_entries: list[dict] = []
+    if _FRAGRANCE_PATH.exists():
+        print(f"Loading {_FRAGRANCE_PATH.name} ...")
+        fragrance_entries = _load_json(_FRAGRANCE_PATH)
+        print(f"  -> {len(fragrance_entries)} fragrance allergen entries")
+    else:
+        print(f"(No {_FRAGRANCE_PATH.name} found — skipping)")
+
     # Build typed records
     e_records = _build_records(e_number_entries)
     c_records = _build_records(cosing_entries)
+    f_records = _build_records(food_entries)
+    fr_records = _build_records(fragrance_entries)
 
     # Connect
     print(f"\nConnecting to database ...")
@@ -192,12 +215,27 @@ async def main() -> None:
         c_ing, c_ali = await _seed_batch(conn, c_records, "cosing")
         print(f"  -> {c_ing} ingredients upserted, {c_ali} aliases inserted")
 
+        # Seed food-flagged
+        if f_records:
+            print("\nSeeding food-flagged ingredients ...")
+            f_ing, f_ali = await _seed_batch(conn, f_records, "food")
+            print(f"  -> {f_ing} ingredients upserted, {f_ali} aliases inserted")
+        else:
+            f_ing = f_ali = 0
+
+        if fr_records:
+            print("\nSeeding fragrance allergen ingredients ...")
+            fr_ing, fr_ali = await _seed_batch(conn, fr_records, "fragrance")
+            print(f"  -> {fr_ing} ingredients upserted, {fr_ali} aliases inserted")
+        else:
+            fr_ing = fr_ali = 0
+
     finally:
         await conn.close()
 
     # Summary
-    total_ing = e_ing + c_ing
-    total_ali = e_ali + c_ali
+    total_ing = e_ing + c_ing + f_ing + fr_ing
+    total_ali = e_ali + c_ali + f_ali + fr_ali
     print(
         f"\nDone. Total: {total_ing} ingredients upserted, "
         f"{total_ali} aliases inserted."

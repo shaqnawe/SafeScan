@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS ingredients (
     -- CAS Registry Number for chemical identity matching (e.g. '50-00-0')
     cas_number      TEXT,
     -- Whether this ingredient appears in food, cosmetics, or both
-    ingredient_type TEXT        CHECK (ingredient_type IN ('food_additive', 'cosmetic', 'both')),
+    ingredient_type TEXT        CHECK (ingredient_type IN ('food_additive', 'cosmetic', 'food', 'both')),
     -- Overall safety classification driving grade contribution
     safety_level    TEXT        CHECK (safety_level IN ('safe', 'caution', 'avoid')),
     -- Points to deduct from the base score of 100 (0–30)
@@ -86,7 +86,7 @@ COMMENT ON COLUMN ingredients.name           IS 'Lowercase canonical name. Must 
 COMMENT ON COLUMN ingredients.inci_name      IS 'INCI standard name used in EU cosmetic labelling.';
 COMMENT ON COLUMN ingredients.e_number       IS 'EU E-number (food additives), e.g. E211 for sodium benzoate.';
 COMMENT ON COLUMN ingredients.cas_number     IS 'CAS Registry Number for chemical identity matching, e.g. 50-00-0 (formaldehyde). Used by IARC/Prop65 importers.';
-COMMENT ON COLUMN ingredients.ingredient_type IS 'food_additive | cosmetic | both.';
+COMMENT ON COLUMN ingredients.ingredient_type IS 'food_additive | cosmetic | food | both.';
 COMMENT ON COLUMN ingredients.safety_level   IS 'safe | caution | avoid — drives score penalty application.';
 COMMENT ON COLUMN ingredients.score_penalty  IS 'Points deducted from base score 100. Range 0–30.';
 COMMENT ON COLUMN ingredients.concerns       IS 'Array of concern tags: endocrine_disruptor, allergen, carcinogen, paraben, etc.';
