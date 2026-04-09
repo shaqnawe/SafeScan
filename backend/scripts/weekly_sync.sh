@@ -40,6 +40,10 @@ echo "--- FDA Recall Alerts ---" | tee -a "$LOG_FILE"
 "$PYTHON" -m db.recall_store 2>&1 | tee -a "$LOG_FILE"
 
 echo "" | tee -a "$LOG_FILE"
+echo "--- RASFF EU Recall Alerts ---" | tee -a "$LOG_FILE"
+"$PYTHON" -m db.rasff_store 2>&1 | tee -a "$LOG_FILE"
+
+echo "" | tee -a "$LOG_FILE"
 echo "--- IARC Monographs (enrich ingredients) ---" | tee -a "$LOG_FILE"
 "$PYTHON" -m db.importers.iarc_importer 2>&1 | tee -a "$LOG_FILE"
 

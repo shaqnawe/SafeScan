@@ -154,6 +154,14 @@ Not used at runtime (reference only):
 Every `SafetyReport` gets recalls attached via `_attach_recalls()` after analysis. Sources checked:
 1. Local `recalls` table (FTS query on title + description)
 2. Local `recalls` table (barcode literal ILIKE search)
-3. Real-time `openFDA` food enforcement API
+3. Real-time `openFDA` food enforcement API (catches recalls within the ~7-day indexing lag window)
 
-The `recalls` table is populated from the FDA RSS feed — seeded on startup via `ensure_recalls_table()` and refreshed weekly by `scripts/weekly_sync.sh` or manually via `POST /api/recalls/refresh`.
+The `recalls` table is populated from two sources and has a `source` column to distinguish them:
+- **FDA** (`source='fda'`): openFDA food enforcement API — ~28.7K records from 2012 to present, full `classification` → `risk_level` mapping (Class I=serious, Class II=high). Managed by `db/recall_store.py`. Weekly delta sync covers the last 45 days. One-time full backfill: `python -m db.recall_store --backfill`. **The FDA RSS feed was retired** — it only exposed a rolling ~20-item window with no risk classification and wrong category labels for non-food entries (medical devices labeled "food").
+- **RASFF** (`source='rasff'`): EU Rapid Alert System for Food and Feed — EC DG SANTE Datalake API (`api.datalake.sante.service.ec.europa.eu`), no API key required. ~37.8K entries covering 2020–present. Managed by `db/rasff_store.py`. Full re-pagination each weekly sync (~531 pages, ~30s) because the API date filter is broken server-side.
+
+**FDA recall coverage note**: The 28.7K openFDA food records are brand+lot specific (e.g. "Trader Joe's Vegetable Fried Rice, net wt. 1lb per bag, UPC 00617571…"). FTS match rate on a typical scan is ~5–15% (most matches are for brands with known recall histories). Class I (serious/life-threatening) and Class II (high/likely harm) are the only classifications in the dataset — no Class III records appear in food/enforcement.
+
+**Decision point (pending)**: the real-time per-scan `_query_openfda()` call in `check_product_recalls()` is now largely redundant given the 45-day delta window. Candidate for removal to eliminate per-scan latency. Evaluate after 2–3 weeks of weekly sync operation confirms the overlap is sufficient.
+
+**weekly_sync.sh order**: OFF → OBF → USDA → OpenFDA → FDA recalls → RASFF recalls → IARC → Prop 65.

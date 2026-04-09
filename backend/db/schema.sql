@@ -202,6 +202,45 @@ COMMENT ON COLUMN user_submissions.status                 IS 'pending | verified
 
 
 -- =============================================================================
+-- recalls
+-- Food and product recall alerts from external sources (FDA RSS, RASFF).
+-- Populated by recall_store.py (FDA) and rasff_store.py (EU RASFF).
+-- Queried during every scan via check_product_recalls() in recall_store.py.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS recalls (
+    id           SERIAL      PRIMARY KEY,
+    -- Data source: 'fda' for FDA RSS feed, 'rasff' for EU RASFF Datalake API
+    source       TEXT        NOT NULL DEFAULT 'fda',
+    -- Stable unique identifier: FDA RSS guid URL, or RASFF NOTIFICATION_REFERENCE
+    guid         TEXT        UNIQUE,
+    title        TEXT        NOT NULL,
+    description  TEXT,
+    -- Severity: serious / high / medium / low
+    risk_level   TEXT,
+    -- Product category (free text from source)
+    category     TEXT,
+    -- Countries of distribution (ISO names or codes from source)
+    countries    TEXT[]      NOT NULL DEFAULT '{}',
+    link         TEXT,
+    published_at TIMESTAMPTZ,
+    fetched_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS recalls_fts_idx
+    ON recalls
+    USING GIN (to_tsvector('english', title || ' ' || COALESCE(description, '')));
+
+CREATE INDEX IF NOT EXISTS recalls_published_at_idx
+    ON recalls (published_at DESC);
+
+COMMENT ON TABLE recalls IS
+    'Product recall and safety alerts from FDA (US) and RASFF (EU). '
+    'Populated by recall_store.py and rasff_store.py. Queried on every scan.';
+COMMENT ON COLUMN recalls.source IS 'fda = FDA RSS recall feed; rasff = EU RASFF Datalake API.';
+COMMENT ON COLUMN recalls.guid   IS 'Stable dedup key: FDA RSS guid URL or RASFF NOTIFICATION_REFERENCE.';
+
+
+-- =============================================================================
 -- sync_log
 -- Audit trail for all external data sync runs. Records source, timing,
 -- record counts, and error messages for monitoring and debugging.

@@ -10,7 +10,7 @@ This document covers two areas: (1) code and agent instruction updates to align 
 |------|--------|---------|
 | Part 1 — Claude API & Code Updates | ✅ Complete | Sessions 1–2 |
 | Part 2 — Agent Instruction Improvements | ✅ Complete | Session 2 |
-| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done Session A, 5 done Session B, 3+4+6–10 pending, Session C seed expansion complete) | Dedicated session per source |
+| Part 3 — Additional Data Sources | 🔄 In Progress (1+2 done Session A, 5 done Session B, 4 done Session D, 3+6–10 pending, Session C seed expansion complete) | Dedicated session per source |
 | Part 4 — Quick Wins Checklist | ✅ Complete (except IARC/Prop65 deferred to Part 3) | Sessions 1–2 |
 
 **Session 1** (previous): 1.2, 1.3, 1.5, 1.6, Part 4 code quick wins
@@ -427,8 +427,8 @@ Based on coverage impact and implementation difficulty:
 |----------|--------|------|------------|---------------|
 | 1 | IARC Monographs | Food + Cosmetic | Easy | Structured carcinogen data for local analyzer |
 | 2 | Prop 65 List | Food + Cosmetic | Easy | US safety signal, downloadable Excel |
-| 3 | ECHA REACH/SVHC | Cosmetic | Medium | Authoritative EU chemical safety data |
-| 4 | RASFF Alerts | Food | Medium | EU recall coverage alongside FDA |
+| 3 | ~~**ECHA REACH/SVHC**~~ ⏸ DEFERRED (Session E) | Cosmetic | Medium | Recon: only 4 CAS matches, all already covered by IARC/Prop 65. Revisit when CAS-populated rows > 150. |
+| 4 | ~~**RASFF Alerts**~~ ✅ Session D | Food | Medium | EU recall coverage; 37K entries 2020–present; no API key; `db/rasff_store.py` |
 | 5 | ~~UPCitemdb~~ ✅ Session B | Food + Cosmetic | Easy | Runtime fallback in `lookup_product()`; trial endpoint (100/day, no key); name+brand+category only |
 | 6 | Health Canada Hotlist | Cosmetic | Easy | Second regulatory perspective |
 | 7 | SCCS Opinions Index | Cosmetic | Medium | Reference-grade safety evidence |
@@ -495,4 +495,65 @@ Added `cas_number` parameter to `_UPSERT_INGREDIENT`, added conditional loading 
 ### TODO carried forward
 - Refresh IARC CSV to pick up Monographs 134+ (aspartame Group 2B classified 2023 — absent from current CSV)
 - Prop 65 Part 3 sources (NSF, NTP) pending
-- ECHA SVHC entries for `echa_svhc` tag coverage
+- ECHA SVHC: DEFERRED — revisit when CAS-populated ingredient rows exceed 150 (currently 44 as of 2026-04-08)
+
+### Session D completed (2026-04-08)
+
+**Goal:** EU RASFF recall coverage alongside existing FDA recall flow.
+
+- **API**: EC DG SANTE Datalake — `api.datalake.sante.service.ec.europa.eu/rasff/irasff-general-info-view` — fully open, no API key required
+- **New module**: `backend/db/rasff_store.py` — mirrors `recall_store.py` structure; fetch → parse → upsert lifecycle; cursor-based pagination via `nextLink`; idempotent ON CONFLICT upsert
+- **Dedup key**: `NOTIFICATION_REFERENCE` (e.g. `"2021.3184"`) stored in `recalls.guid`
+- **Risk filter**: entries with `RISK_DECISION_DESC='no risk'` are skipped (~29% of total) — not safety recalls
+- **Schema**: `recalls` table added to `schema.sql` (was missing); pre-existing FDA rows corrected from `source='rasff'` → `source='fda'`; column default fixed; `recall_store.py` upsert made `source='fda'` explicit
+- **Scanner**: no changes — `_attach_recalls()` queries the whole `recalls` table without source filter; RASFF entries surface automatically via existing FTS
+- **Weekly sync**: RASFF added as step 6 in `weekly_sync.sh` (after FDA recalls, before IARC)
+- **Backfill**: 53,032 records fetched → 37,707 inserted, 15,253 skipped (no-risk), 0 errors; date range 2020-01-02 → 2026-04-08
+- **Validation**: Nutella (3017620422003) picked up RASFF 2025.5781 "Presence of metal screws in Nutella" (serious); US regression guard (808124114326) completely unchanged
+- **Known limitation**: RASFF date filter broken server-side; full pagination required each sync (~531 pages, ~30s); no real-time per-scan RASFF query (API has no product-name search parameter)
+- **Next**: Session E candidate — ECHA REACH/SVHC (Priority 3); `cas_number` column already in place
+
+### Session E completed (2026-04-08) — ECHA SVHC recon + CAS backfills only
+
+**Goal:** ECHA REACH/SVHC importer (Priority 3).
+
+**Outcome:** DEFERRED after Step 2 recon gate. No importer created.
+
+- **Recon**: chemsafetypro XLSX (233 SVHC substances, 261 CAS) — only viable source; echa.europa.eu returns 403, chem.echa.europa.eu returns 502
+- **Scope check**: 4 CAS overlaps with our 44 CAS-populated ingredient rows (benzo[a]pyrene, acrylamide, lead, furan) — all already well-covered by IARC + Prop 65 tags; adding `echa_svhc` label provides no consumer-visible score change
+- **CAS backfills (only code changes)**:
+  - `boric acid` CAS `10043-35-3` written directly to DB (E284 in e_numbers.json lacks cas_number field)
+  - `Cyclopentasiloxane` CAS `541-02-6` added to `cosing_flagged.json`
+  - `Cyclotetrasiloxane` CAS `556-67-2` added to `cosing_flagged.json`
+- **Recon report**: `docs/history/SESSION_E_ECHA_SVHC_RECON_2026-04-08.md`
+- **Revisit trigger**: when `SELECT COUNT(*) FROM ingredients WHERE cas_number IS NOT NULL` exceeds 150 rows
+- **Deferred separately**: `echa_svhc` as scored concern in `local_analyzer.py` — scoring rubric decision, not in scope for a data import session
+
+### FDA Recall Coverage Audit completed (2026-04-09)
+
+**Goal:** Diagnose the 1,700× imbalance between FDA (22) and RASFF (37,779) rows in the recalls table.
+
+**Root cause:** Outcome C + B. (C) The FDA fetcher was polling the RSS feed (rolling ~20-item window, no history) — equivalent of reading only today's newspaper. No historical backfill was ever done. (B) The RSS parser hardcoded `risk_level=None` and `category='food'` for every entry regardless of actual product type (medical device recalls were labeled "food").
+
+**Fix:**
+- RSS fetcher retired from `recall_store.py` (`FDA_RSS_URL`, `_parse_date`, `_parse_fda_rss`, `fetch_and_store_recalls` removed)
+- `fetch_and_store_openfda()` added — year-by-year cursor pagination to stay within openFDA's 26K skip ceiling; `recall_number` as dedup guid; full `classification → risk_level` mapping; `product_type` from API (not hardcoded)
+- Weekly delta: `python -m db.recall_store` fetches last 45 days (45-day overlap >> 7-day openFDA indexing lag)
+- Full backfill: `python -m db.recall_store --backfill`
+
+**Backfill results:** 28,742 FDA food enforcement records inserted (2012–2026-04-01), 1 skipped (no recall_number), 0 errors. `risk_level` 100% populated.
+
+**Data quality (post-fix):** risk_level breakdown — Class I (serious): 12,682 / Class II (high): 16,060 / Class III: 0 (not present in food/enforcement dataset). Category: all "food" (correct — food/enforcement endpoint is food-only).
+
+**22 corrupted RSS rows deleted** — URL-format guids, wrong categories, null risk_levels.
+
+**Regression check:** Nutella C/40 + 1 RASFF recall (serious) — identical to Session E baseline. No regression.
+
+**Decision point pending:** real-time per-scan `_query_openfda()` call in `check_product_recalls()` is now largely redundant. Candidate for removal (option a — eliminate per-scan latency). Evaluate after 2–3 weekly syncs confirm 45-day overlap is sufficient.
+
+**Post-mortem — how did this go unnoticed?**
+No monitoring on `SELECT COUNT(*) FROM recalls GROUP BY source`. The 22-vs-37K imbalance was only visible by querying the DB directly. A weekly_sync log line like `[FDA] stored N recalls (total in DB: M)` would have flagged it immediately. The fix for future: the new fetcher prints per-year counts and a final summary line — these land in `logs/sync_*.log` which the existing log retention already handles.
+
+**Honest coverage metrics:** openFDA food records are brand+lot specific. A typical FTS scan matches ~5–15% of products with known US recall histories. Most recalls are narrow (specific lot codes, not entire brands). RASFF coverage is broader per record (country-level distribution notices). The 28K rows add meaningful recall coverage for US branded foods and eliminate the 7-day complete blind spot from the RSS approach.
+
+*Last updated: 2026-04-09*

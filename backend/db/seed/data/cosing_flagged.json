@@ -696,6 +696,7 @@
   {
     "name": "Cyclopentasiloxane",
     "inci_name": "CYCLOPENTASILOXANE",
+    "cas_number": "541-02-6",
     "aliases": [
       "D5",
       "decamethylcyclopentasiloxane",
@@ -721,6 +722,7 @@
   {
     "name": "Cyclotetrasiloxane",
     "inci_name": "CYCLOTETRASILOXANE",
+    "cas_number": "556-67-2",
     "aliases": [
       "D4",
       "octamethylcyclotetrasiloxane",
