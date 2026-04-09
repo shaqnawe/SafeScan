@@ -194,7 +194,10 @@ async def _classify_with_claude(names: list[str]) -> list[_IngredientClassificat
 _INSERT_INGREDIENT = """
 INSERT INTO ingredients (name, cas_number, safety_level, score_penalty, concerns, eu_status, sources, notes)
 VALUES ($1, $2, $3, $4, $5, $6, ARRAY['claude'], $7)
-ON CONFLICT (name) DO NOTHING
+ON CONFLICT (name) DO UPDATE
+    SET cas_number = EXCLUDED.cas_number,
+        updated_at = now()
+    WHERE ingredients.cas_number IS NULL AND EXCLUDED.cas_number IS NOT NULL
 RETURNING id
 """
 
