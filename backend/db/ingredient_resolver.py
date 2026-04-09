@@ -126,6 +126,7 @@ LIMIT 1
 class _IngredientClassification(BaseModel):
     raw_name: str
     canonical_name: str
+    cas_number: str | None = None   # CAS registry number, e.g. "50-00-0"; null if unknown
     safety_level: Literal["safe", "caution", "avoid"]
     score_penalty: int          # 0–30
     concerns: list[str]         # e.g. ["allergen", "endocrine_disruptor"]
@@ -149,7 +150,11 @@ score_penalty: 0 = no penalty (safe), 5-10 = minor concern, 15-20 = moderate, 25
 
 Common concern tags: allergen, carcinogen, endocrine_disruptor, neurotoxin, paraben,
 sulfate, preservative, artificial_color, artificial_flavor, high_sugar, high_sodium,
-nitrite, trans_fat, microplastic, formaldehyde_releaser"""
+nitrite, trans_fat, microplastic, formaldehyde_releaser
+
+cas_number: provide the CAS Registry Number (e.g. "50-00-0") when you are confident of
+the exact chemical identity. Use null if the ingredient name is ambiguous, refers to a
+mixture, or you are not certain of the correct CAS."""
 
 
 async def _classify_with_claude(names: list[str]) -> list[_IngredientClassification]:
@@ -187,8 +192,8 @@ async def _classify_with_claude(names: list[str]) -> list[_IngredientClassificat
 # ---------------------------------------------------------------------------
 
 _INSERT_INGREDIENT = """
-INSERT INTO ingredients (name, safety_level, score_penalty, concerns, eu_status, sources, notes)
-VALUES ($1, $2, $3, $4, $5, ARRAY['claude'], $6)
+INSERT INTO ingredients (name, cas_number, safety_level, score_penalty, concerns, eu_status, sources, notes)
+VALUES ($1, $2, $3, $4, $5, $6, ARRAY['claude'], $7)
 ON CONFLICT (name) DO NOTHING
 RETURNING id
 """
@@ -216,6 +221,7 @@ async def _write_back(classifications: list[_IngredientClassification]) -> None:
                 ingredient_id = await conn.fetchval(
                     _INSERT_INGREDIENT,
                     c.canonical_name,
+                    c.cas_number,
                     c.safety_level,
                     max(0, min(30, c.score_penalty)),
                     c.concerns or [],
