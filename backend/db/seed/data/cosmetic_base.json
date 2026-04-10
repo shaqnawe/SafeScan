@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Sodium Palmate",
+    "inci_name": "SODIUM PALMATE",
+    "aliases": ["sodium palm oil soap", "sodium salt of palm acid"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing", "fda_gras"],
+    "notes": "Sodium salt of palm oil fatty acids. Common soap base. EU and FDA approved."
+  },
+  {
+    "name": "Sodium Palm Kernelate",
+    "inci_name": "SODIUM PALM KERNELATE",
+    "aliases": ["sodium palm kernel oil soap", "sodium salt of palm kernel acid"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing", "fda_gras"],
+    "notes": "Sodium salt of palm kernel oil fatty acids. Common soap surfactant. EU and FDA approved."
+  },
+  {
+    "name": "Aqua",
+    "inci_name": "AQUA",
+    "aliases": ["water", "purified water", "deionized water", "distilled water"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Water. Universal solvent and cosmetic base ingredient."
+  },
+  {
+    "name": "Glycerin",
+    "inci_name": "GLYCERIN",
+    "aliases": ["glycerol", "glycerine", "1,2,3-propanetriol"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing", "fda_gras"],
+    "notes": "Humectant and skin-conditioning agent. Widely used, well-tolerated."
+  },
+  {
+    "name": "Sodium Gluconate",
+    "inci_name": "SODIUM GLUCONATE",
+    "aliases": ["gluconic acid sodium salt"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Chelating agent derived from glucose. Prevents soap scum. No known concerns."
+  },
+  {
+    "name": "Melaleuca Alternifolia Leaf Oil",
+    "inci_name": "MELALEUCA ALTERNIFOLIA LEAF OIL",
+    "aliases": [
+      "tea tree oil", "tea tree leaf oil", "melaleuca alternifolia oil",
+      "melaleuca alternifolia (tea tree) leaf oil"
+    ],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": ["potential_sensitizer"],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Antimicrobial essential oil. Generally safe at low concentrations. Rare sensitization possible in sensitive individuals."
+  },
+  {
+    "name": "Mentha Piperita Oil",
+    "inci_name": "MENTHA PIPERITA OIL",
+    "aliases": [
+      "peppermint oil", "peppermint leaf oil", "mentha piperita (peppermint) oil",
+      "mentha piperita (peppermint) leaf oil"
+    ],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": ["potential_sensitizer"],
+    "eu_status": "approved",
+    "sources": ["cosing", "ifra"],
+    "notes": "Cooling essential oil. Safe at typical use concentrations. Avoid near eyes. Potential sensitizer in rare cases."
+  },
+  {
+    "name": "Palm Acid",
+    "inci_name": "PALM ACID",
+    "aliases": ["palm fatty acid", "palm oil acid"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Mixture of fatty acids from palm oil. Used as emollient and soap component. No known safety concerns."
+  },
+  {
+    "name": "Eucalyptus Globulus Leaf Oil",
+    "inci_name": "EUCALYPTUS GLOBULUS LEAF OIL",
+    "aliases": [
+      "eucalyptus oil", "eucalyptus leaf oil", "blue gum eucalyptus oil"
+    ],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": ["potential_sensitizer"],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Antimicrobial and aromatic essential oil. Safe at typical rinse-off concentrations. Potential sensitizer in rare cases."
+  },
+  {
+    "name": "Sodium Chloride",
+    "inci_name": "SODIUM CHLORIDE",
+    "aliases": ["salt", "table salt", "sea salt", "rock salt", "nacl"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing", "fda_gras"],
+    "notes": "Common salt. Used as thickener and texture modifier in cosmetics. No known concerns."
+  },
+  {
+    "name": "Palm Kernel Acid",
+    "inci_name": "PALM KERNEL ACID",
+    "aliases": ["palm kernel fatty acid", "palm kernel oil acid"],
+    "ingredient_type": "cosmetic",
+    "safety_level": "safe",
+    "score_penalty": 0,
+    "concerns": [],
+    "eu_status": "approved",
+    "sources": ["cosing"],
+    "notes": "Mixture of fatty acids from palm kernel oil. Emollient and soap component. No known safety concerns."
+  }
+]

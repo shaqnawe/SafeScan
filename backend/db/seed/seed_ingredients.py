@@ -42,6 +42,7 @@ _E_NUMBERS_PATH = _DATA_DIR / "e_numbers.json"
 _COSING_PATH = _DATA_DIR / "cosing_flagged.json"
 _FOOD_PATH = _DATA_DIR / "food_flagged.json"
 _FRAGRANCE_PATH = _DATA_DIR / "fragrance_allergens_flagged.json"
+_COSMETIC_BASE_PATH = _DATA_DIR / "cosmetic_base.json"
 
 # ---------------------------------------------------------------------------
 # SQL
@@ -193,11 +194,20 @@ async def main() -> None:
     else:
         print(f"(No {_FRAGRANCE_PATH.name} found — skipping)")
 
+    cosmetic_base_entries: list[dict] = []
+    if _COSMETIC_BASE_PATH.exists():
+        print(f"Loading {_COSMETIC_BASE_PATH.name} ...")
+        cosmetic_base_entries = _load_json(_COSMETIC_BASE_PATH)
+        print(f"  -> {len(cosmetic_base_entries)} cosmetic base entries")
+    else:
+        print(f"(No {_COSMETIC_BASE_PATH.name} found — skipping)")
+
     # Build typed records
     e_records = _build_records(e_number_entries)
     c_records = _build_records(cosing_entries)
     f_records = _build_records(food_entries)
     fr_records = _build_records(fragrance_entries)
+    cb_records = _build_records(cosmetic_base_entries)
 
     # Connect
     print(f"\nConnecting to database ...")
@@ -230,12 +240,19 @@ async def main() -> None:
         else:
             fr_ing = fr_ali = 0
 
+        if cb_records:
+            print("\nSeeding cosmetic base ingredients ...")
+            cb_ing, cb_ali = await _seed_batch(conn, cb_records, "cosmetic_base")
+            print(f"  -> {cb_ing} ingredients upserted, {cb_ali} aliases inserted")
+        else:
+            cb_ing = cb_ali = 0
+
     finally:
         await conn.close()
 
     # Summary
-    total_ing = e_ing + c_ing + f_ing + fr_ing
-    total_ali = e_ali + c_ali + f_ali + fr_ali
+    total_ing = e_ing + c_ing + f_ing + fr_ing + cb_ing
+    total_ali = e_ali + c_ali + f_ali + fr_ali + cb_ali
     print(
         f"\nDone. Total: {total_ing} ingredients upserted, "
         f"{total_ali} aliases inserted."

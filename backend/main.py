@@ -10,7 +10,7 @@ from models import ScanRequest, SafetyReport
 from agents.scanner import analyze_product, analyze_submission_bg
 from agents.image_agent import process_product_photos, SubmissionResult
 from db.connection import get_pool, close_pool
-from db.recall_store import ensure_recalls_table, fetch_and_store_recalls
+from db.recall_store import ensure_recalls_table, fetch_and_store_openfda as fetch_and_store_recalls
 from db.queries import list_user_submissions, get_submission
 
 
