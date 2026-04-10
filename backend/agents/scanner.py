@@ -264,6 +264,25 @@ async def analyze_product(barcode: str) -> SafetyReport:
             return local_report
         print(f"  [LOCAL] Not enough resolved ingredients, falling back to Claude.")
 
+    # Pre-flight lookup — if no source finds the product, skip Claude entirely
+    preflight = await lookup_product(barcode)
+    if not preflight.get("found"):
+        print(f"  [LOOKUP] Product {barcode} not found in any source, skipping Claude.")
+        return SafetyReport(
+            product_name="Unknown Product",
+            brand="Unknown",
+            product_type="unknown",
+            barcode=barcode,
+            score=0,
+            grade="D",
+            summary="This product could not be found in any database.",
+            ingredients_analysis=[],
+            positive_points=[],
+            negative_points=["Product not found in any database"],
+            not_found=True,
+        )
+
+    # Seed the conversation with the preflight result so Claude skips a redundant lookup
     messages = [
         {
             "role": "user",
@@ -273,7 +292,15 @@ async def analyze_product(barcode: str) -> SafetyReport:
                 "If the product data includes 'resolved_ingredients' with pre-computed safety levels "
                 "from our EU ingredient database, use that data to anchor your analysis."
             )
-        }
+        },
+        {
+            "role": "assistant",
+            "content": [{"type": "tool_use", "id": "preflight_lookup", "name": "lookup_product", "input": {"barcode": barcode}}],
+        },
+        {
+            "role": "user",
+            "content": [{"type": "tool_result", "tool_use_id": "preflight_lookup", "content": json.dumps(preflight)}],
+        },
     ]
 
     # --- Phase 1: tool use loop ---
