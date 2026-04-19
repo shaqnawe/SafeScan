@@ -23,7 +23,7 @@ _client = anthropic.AsyncAnthropic()
 
 MODEL_LIGHT = "claude-sonnet-4-6"  # extraction and parsing tasks
 
-INSTRUCTIONS_DIR = Path(__file__).parent.parent.parent / "instructions"
+INSTRUCTIONS_DIR = Path(__file__).parent.parent / "instructions"
 
 
 def _load(path: str) -> str:

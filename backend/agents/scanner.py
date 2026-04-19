@@ -23,7 +23,7 @@ client = anthropic.AsyncAnthropic(
 MODEL_HEAVY = "claude-opus-4-6"    # deep safety analysis (Phase 2)
 MODEL_LIGHT = "claude-sonnet-4-6"  # lookup, extraction, classification
 
-INSTRUCTIONS_DIR = Path(__file__).parent.parent.parent / "instructions"
+INSTRUCTIONS_DIR = Path(__file__).parent.parent / "instructions"
 
 
 async def _attach_recalls(report: SafetyReport) -> list[RecallAlert]:
