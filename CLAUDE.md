@@ -103,13 +103,13 @@ Called during local DB lookup to map raw label text to safety data:
 
 **Model routing**: `MODEL_HEAVY = "claude-opus-4-6"` for Phase 2 safety analysis only. `MODEL_LIGHT = "claude-sonnet-4-6"` for Phase 1 tool loop, image extraction, ingredient parsing, and ingredient classification. Constants are defined at the top of each agent file.
 
-**Prompt caching**: All system prompts are passed as `[{"type": "text", "text": ..., "cache_control": {"type": "ephemeral"}}]` rather than plain strings. This caches the prompt for 5 minutes, saving input tokens on repeated scans. The system prompts are large (loaded from `instructions/`) so this is high-value.
+**Prompt caching**: All system prompts are passed as `[{"type": "text", "text": ..., "cache_control": {"type": "ephemeral"}}]` rather than plain strings. This caches the prompt for 5 minutes, saving input tokens on repeated scans. The system prompts are large (loaded from `backend/instructions/`) so this is high-value.
 
 **Grade scale**: A/B/C/D only — there is no "E" grade. The fallback `SafetyReport` in `scanner.py` uses `grade="D"`. The Phase 2 prompt says "A/B/C/D" not "A/B/C/D/E".
 
 **CAS number column**: `ingredients.cas_number TEXT` (nullable) added in Session A. Indexed via `idx_ingredients_cas` (partial). Used by IARC and Prop 65 importers for preferred-path matching.
 
-**Concern tag vocabulary**: Canonical tags are defined in `instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
+**Concern tag vocabulary**: Canonical tags are defined in `backend/instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
 
 **Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`. After adding new seed entries (especially with CAS numbers), re-run both importers.
 
@@ -125,19 +125,19 @@ Called during local DB lookup to map raw label text to safety data:
 
 ### Agent system prompts
 
-System prompts are loaded from `instructions/` at module import time (not per-request). Restart the backend after editing any instruction file.
+System prompts are loaded from `backend/instructions/` at module import time (not per-request). Restart the backend after editing any instruction file.
 
 Files used at runtime:
-- `instructions/agents/analysis_agent.md` — safety analysis persona, confidence calibration, output format compliance rules
-- `instructions/data/scoring_rubric.md` — A/B/C/D grade thresholds (no "E"), penalty/bonus tables, score algorithm
-- `instructions/data/eu_regulations.md` — EU cosmetics/food regulatory context
-- `instructions/agents/image_agent.md` — product photo extraction, OCR challenge guidance
-- `instructions/agents/ingredient_parser.md` — ingredient list parsing, INCI normalization rules
+- `backend/instructions/agents/analysis_agent.md` — safety analysis persona, confidence calibration, output format compliance rules
+- `backend/instructions/data/scoring_rubric.md` — A/B/C/D grade thresholds (no "E"), penalty/bonus tables, score algorithm
+- `backend/instructions/data/eu_regulations.md` — EU cosmetics/food regulatory context
+- `backend/instructions/agents/image_agent.md` — product photo extraction, OCR challenge guidance
+- `backend/instructions/agents/ingredient_parser.md` — ingredient list parsing, INCI normalization rules
 
 Not used at runtime (reference only):
-- `instructions/agents/barcode_agent.md` — documents the lookup priority and timeout policy
-- `instructions/agents/safety_lookup_agent.md` — documents the resolution cascade
-- `instructions/agents/sync_worker.md` — documents the weekly sync worker
+- `backend/instructions/agents/barcode_agent.md` — documents the lookup priority and timeout policy
+- `backend/instructions/agents/safety_lookup_agent.md` — documents the resolution cascade
+- `backend/instructions/agents/sync_worker.md` — documents the weekly sync worker
 
 ### Frontend state
 
