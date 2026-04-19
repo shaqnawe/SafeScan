@@ -2,16 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// BUILD_TARGET=native disables the service worker so Capacitor handles offline.
+const isNativeBuild = process.env.BUILD_TARGET === 'native'
+
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
+    !isNativeBuild && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['safescan-icon.svg', 'apple-touch-icon-180x180.png', 'favicon.ico'],
       manifest: {
         name: 'SafeScan — Barcode Safety Scanner',
         short_name: 'SafeScan',
-        description: 'Scan any product. Know exactly what\'s inside.',
+        description: "Scan any product. Know exactly what's inside.",
         theme_color: '#34c759',
         background_color: '#000000',
         display: 'standalone',
@@ -46,14 +49,13 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            // Cache API scan results for offline fallback
             urlPattern: ({ url }) => url.pathname.startsWith('/api/scan'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-scan-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
               networkTimeoutSeconds: 10,
             },
@@ -61,10 +63,10 @@ export default defineConfig({
         ],
       },
     }),
-  ],
+  ].filter(Boolean),
   server: {
     port: 5173,
-    host: true,   // bind to 0.0.0.0 — makes the dev server reachable on your local network
+    host: true,
     allowedHosts: ['.loca.lt'],
   },
 })

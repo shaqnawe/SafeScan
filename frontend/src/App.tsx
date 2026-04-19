@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { SplashScreen } from "@capacitor/splash-screen";
 import { scanBarcode } from "./api";
 import AddProductPage from "./components/AddProductPage";
 import BarcodeScanner from "./components/BarcodeScanner";
@@ -34,6 +37,13 @@ export default function App() {
   const isDark = useDarkMode();
   const { history, addEntry, clearHistory } = useScanHistory();
   const { activeIds, activeAllergens, toggleAllergen, clearAll: clearAllergens } = useAllergenProfile();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    StatusBar.setStyle({ style: Style.Dark });
+    StatusBar.setOverlaysWebView({ overlay: true });
+    SplashScreen.hide();
+  }, []);
 
   const handleBarcodeScan = async (barcode: string) => {
     setScannedBarcode(barcode);

@@ -1,10 +1,15 @@
 import React, { useState, useRef } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { BarcodeScanner as NativeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useZxing } from 'react-zxing'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
 
 const GRADE_COLOR: Record<string, string> = {
   A: '#34c759', B: '#a3d977', C: '#ff9f0a', D: '#ff3b30', E: '#9c2b2b',
 }
+
+const IS_NATIVE = Capacitor.isNativePlatform()
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void
@@ -15,11 +20,121 @@ interface BarcodeScannerProps {
   onCompare?: () => void
 }
 
-export default function BarcodeScanner({ onScan, history = [], onViewHistory, onAddProduct, onViewSubmissions, onCompare }: BarcodeScannerProps) {
-  const [manualBarcode, setManualBarcode] = useState('')
+// ─── Native scanner (iOS / Android) ─────────────────────────────────────────
+
+function NativeScannerView({ onScan }: { onScan: (barcode: string) => void }) {
+  const [scanning, setScanning] = useState(false)
   const [scannerError, setScannerError] = useState<string | null>(null)
   const [lastScanned, setLastScanned] = useState<string | null>(null)
+
+  const handleScan = async () => {
+    setScannerError(null)
+    setScanning(true)
+    try {
+      const { camera } = await NativeScanner.checkPermissions()
+      if (camera !== 'granted') {
+        const result = await NativeScanner.requestPermissions()
+        if (result.camera !== 'granted') {
+          setScannerError('Camera permission denied. Enable it in Settings.')
+          setScanning(false)
+          return
+        }
+      }
+
+      const { barcodes } = await NativeScanner.scan({
+        formats: [BarcodeFormat.Ean13, BarcodeFormat.UpcA, BarcodeFormat.Ean8],
+      })
+
+      if (barcodes.length > 0) {
+        const value = barcodes[0].rawValue ?? ''
+        if (!value) return
+        setLastScanned(value)
+        await Haptics.impact({ style: ImpactStyle.Medium })
+        onScan(value)
+      }
+    } catch (err) {
+      const msg = String(err)
+      if (!msg.includes('cancel') && !msg.includes('dismiss')) {
+        setScannerError('Scanner unavailable. Use manual entry below.')
+      }
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  return (
+    <div style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '20px',
+      padding: '40px 24px',
+      minHeight: '300px',
+    }}>
+      <button
+        onClick={handleScan}
+        disabled={scanning}
+        style={{
+          width: '160px',
+          height: '160px',
+          borderRadius: '80px',
+          border: `3px solid ${scanning ? 'rgba(52,199,89,0.4)' : '#34c759'}`,
+          background: scanning ? 'rgba(52,199,89,0.1)' : 'rgba(52,199,89,0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: scanning ? 'default' : 'pointer',
+          gap: '8px',
+          transition: 'all 0.2s',
+        }}
+      >
+        <span style={{ fontSize: '52px' }}>{scanning ? '⏳' : '📷'}</span>
+        <span style={{
+          color: scanning ? 'rgba(52,199,89,0.6)' : '#34c759',
+          fontSize: '13px',
+          fontWeight: '600',
+        }}>
+          {scanning ? 'Scanning…' : 'Tap to Scan'}
+        </span>
+      </button>
+
+      {lastScanned && !scanning && (
+        <div style={{
+          background: 'rgba(52,199,89,0.15)',
+          border: '1px solid rgba(52,199,89,0.4)',
+          borderRadius: '12px',
+          padding: '10px 20px',
+          color: '#34c759',
+          fontSize: '13px',
+          fontWeight: '600',
+        }}>
+          Scanned: {lastScanned}
+        </div>
+      )}
+
+      {scannerError && (
+        <p style={{
+          color: '#ff3b30',
+          fontSize: '13px',
+          textAlign: 'center',
+          maxWidth: '260px',
+        }}>
+          {scannerError}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ─── Web scanner (ZXing camera) ──────────────────────────────────────────────
+
+function WebScannerView({ onScan }: { onScan: (barcode: string) => void }) {
+  const [scannerError, setScannerError] = useState<string | null>(null)
   const [cameraActive, setCameraActive] = useState(true)
+  const [lastScanned, setLastScanned] = useState<string | null>(null)
   const lastScanTime = useRef<number>(0)
 
   const { ref } = useZxing({
@@ -27,7 +142,6 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
     onDecodeResult(result) {
       const now = Date.now()
       const text = result.getText()
-      // Debounce: ignore scans within 2s of the last one
       if (text && now - lastScanTime.current > 2000) {
         lastScanTime.current = now
         setLastScanned(text)
@@ -43,21 +157,133 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
     },
   })
 
+  return (
+    <div style={{
+      flex: 1,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '300px',
+      overflow: 'hidden',
+    }}>
+      {cameraActive && !scannerError ? (
+        <>
+          <video
+            ref={ref as React.RefObject<HTMLVideoElement>}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              position: 'absolute',
+              inset: 0,
+            }}
+          />
+          {/* Scanning overlay */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            <div style={{ width: '260px', height: '160px', position: 'relative' }}>
+              {[
+                { top: 0, left: 0, borderTop: '3px solid #34c759', borderLeft: '3px solid #34c759' },
+                { top: 0, right: 0, borderTop: '3px solid #34c759', borderRight: '3px solid #34c759' },
+                { bottom: 0, left: 0, borderBottom: '3px solid #34c759', borderLeft: '3px solid #34c759' },
+                { bottom: 0, right: 0, borderBottom: '3px solid #34c759', borderRight: '3px solid #34c759' },
+              ].map((style, i) => (
+                <div key={i} style={{
+                  position: 'absolute',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '2px',
+                  ...style,
+                }} />
+              ))}
+              <div style={{
+                position: 'absolute',
+                left: '10px',
+                right: '10px',
+                top: '50%',
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, #34c759, transparent)',
+                animation: 'scanline 2s ease-in-out infinite',
+              }} />
+            </div>
+          </div>
+
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+          }}>
+            <span style={{
+              background: 'rgba(0,0,0,0.6)',
+              color: '#fff',
+              fontSize: '13px',
+              padding: '6px 16px',
+              borderRadius: '20px',
+            }}>
+              Point camera at a barcode
+            </span>
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', padding: '40px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
+          <p style={{ fontSize: '16px', marginBottom: '8px' }}>
+            {scannerError || 'Camera unavailable'}
+          </p>
+          <p style={{ fontSize: '13px', opacity: 0.6 }}>Use the manual input below</p>
+        </div>
+      )}
+
+      {lastScanned && (
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(52,199,89,0.9)',
+          color: '#fff',
+          padding: '8px 20px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: '600',
+          zIndex: 5,
+        }}>
+          Scanned: {lastScanned}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
+
+export default function BarcodeScanner({
+  onScan,
+  history = [],
+  onViewHistory,
+  onAddProduct,
+  onViewSubmissions,
+  onCompare,
+}: BarcodeScannerProps) {
+  const [manualBarcode, setManualBarcode] = useState('')
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = manualBarcode.trim()
-    if (trimmed) {
-      onScan(trimmed)
-    }
+    if (trimmed) onScan(trimmed)
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#000',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{
         background: 'rgba(0,0,0,0.8)',
@@ -74,223 +300,58 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
           position: 'relative',
         }}>
           <span style={{ fontSize: '28px' }}>🔍</span>
-          <h1 style={{
-            color: '#fff',
-            fontSize: '22px',
-            fontWeight: '700',
-            letterSpacing: '-0.3px',
-          }}>
+          <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: '700', letterSpacing: '-0.3px' }}>
             SafeScan
           </h1>
           <div style={{ position: 'absolute', right: 0, display: 'flex', gap: '8px' }}>
             {onCompare && (
               <button
                 onClick={onCompare}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none', borderRadius: '50%',
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: '16px',
-                }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '16px' }}
                 title="Compare products"
-              >
-                ⚖️
-              </button>
+              >⚖️</button>
             )}
             {onViewSubmissions && (
               <button
                 onClick={onViewSubmissions}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none', borderRadius: '50%',
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: '16px',
-                }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '16px' }}
                 title="My submissions"
-              >
-                📦
-              </button>
+              >📦</button>
             )}
             {onAddProduct && (
               <button
                 onClick={onAddProduct}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none', borderRadius: '50%',
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: '18px',
-                }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}
                 title="Add product manually"
-              >
-                +
-              </button>
+              >+</button>
             )}
             {onViewHistory && (
               <button
                 onClick={onViewHistory}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none', borderRadius: '50%',
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: '16px',
-                }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '16px' }}
                 title="Scan history"
-              >
-                🕐
-              </button>
+              >🕐</button>
             )}
           </div>
         </div>
-        <p style={{
-          color: 'rgba(255,255,255,0.6)',
-          fontSize: '13px',
-        }}>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
           Scan a barcode to check product safety
         </p>
       </div>
 
-      {/* Camera view */}
-      <div style={{
-        flex: 1,
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '300px',
-        overflow: 'hidden',
-      }}>
-        {cameraActive && !scannerError ? (
-          <>
-            <video
-              ref={ref as React.RefObject<HTMLVideoElement>}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                position: 'absolute',
-                inset: 0,
-              }}
-            />
-            {/* Scanning overlay */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-            }}>
-              <div style={{
-                width: '260px',
-                height: '160px',
-                position: 'relative',
-              }}>
-                {/* Corner markers */}
-                {[
-                  { top: 0, left: 0, borderTop: '3px solid #34c759', borderLeft: '3px solid #34c759' },
-                  { top: 0, right: 0, borderTop: '3px solid #34c759', borderRight: '3px solid #34c759' },
-                  { bottom: 0, left: 0, borderBottom: '3px solid #34c759', borderLeft: '3px solid #34c759' },
-                  { bottom: 0, right: 0, borderBottom: '3px solid #34c759', borderRight: '3px solid #34c759' },
-                ].map((style, i) => (
-                  <div key={i} style={{
-                    position: 'absolute',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '2px',
-                    ...style,
-                  }} />
-                ))}
-                {/* Scan line */}
-                <div style={{
-                  position: 'absolute',
-                  left: '10px',
-                  right: '10px',
-                  top: '50%',
-                  height: '2px',
-                  background: 'linear-gradient(90deg, transparent, #34c759, transparent)',
-                  animation: 'scanline 2s ease-in-out infinite',
-                }} />
-              </div>
-            </div>
+      {/* Camera / scan area */}
+      {IS_NATIVE ? <NativeScannerView onScan={onScan} /> : <WebScannerView onScan={onScan} />}
 
-            {/* Instruction text */}
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: 0,
-              right: 0,
-              textAlign: 'center',
-            }}>
-              <span style={{
-                background: 'rgba(0,0,0,0.6)',
-                color: '#fff',
-                fontSize: '13px',
-                padding: '6px 16px',
-                borderRadius: '20px',
-              }}>
-                Point camera at a barcode
-              </span>
-            </div>
-          </>
-        ) : (
-          <div style={{
-            textAlign: 'center',
-            color: 'rgba(255,255,255,0.7)',
-            padding: '40px',
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
-            <p style={{ fontSize: '16px', marginBottom: '8px' }}>
-              {scannerError || 'Camera unavailable'}
-            </p>
-            <p style={{ fontSize: '13px', opacity: 0.6 }}>
-              Use the manual input below
-            </p>
-          </div>
-        )}
-
-        {lastScanned && (
-          <div style={{
-            position: 'absolute',
-            top: '16px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(52, 199, 89, 0.9)',
-            color: '#fff',
-            padding: '8px 20px',
-            borderRadius: '20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            zIndex: 5,
-          }}>
-            Scanned: {lastScanned}
-          </div>
-        )}
-      </div>
-
-      {/* Manual input section */}
+      {/* Manual input + history */}
       <div style={{
         background: '#1c1c1e',
         padding: '20px 24px 32px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}>
-        <p style={{
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: '12px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.8px',
-          marginBottom: '12px',
-          textAlign: 'center',
-        }}>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px', textAlign: 'center' }}>
           Or enter barcode manually
         </p>
-        <form onSubmit={handleManualSubmit} style={{
-          display: 'flex',
-          gap: '10px',
-        }}>
+        <form onSubmit={handleManualSubmit} style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             value={manualBarcode}
@@ -328,26 +389,12 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
           </button>
         </form>
 
-        {/* Scan history */}
         {history.length > 0 && (
           <div style={{ marginTop: '20px' }}>
-            <p style={{
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: '12px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.8px',
-              marginBottom: '10px',
-              textAlign: 'center',
-            }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '10px', textAlign: 'center' }}>
               Recent Scans
             </p>
-            <div style={{
-              display: 'flex',
-              gap: '10px',
-              overflowX: 'auto',
-              paddingBottom: '4px',
-              scrollbarWidth: 'none',
-            }}>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
               {history.map(entry => (
                 <button
                   key={entry.barcode + entry.scanned_at}
@@ -366,7 +413,6 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
                     gap: '6px',
                   }}
                 >
-                  {/* Thumbnail or emoji */}
                   <div style={{
                     width: '44px',
                     height: '44px',
@@ -391,8 +437,6 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
                       </span>
                     )}
                   </div>
-
-                  {/* Product name */}
                   <p style={{
                     fontSize: '11px',
                     color: 'rgba(255,255,255,0.75)',
@@ -406,8 +450,6 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
                   }}>
                     {entry.name}
                   </p>
-
-                  {/* Grade badge */}
                   <span style={{
                     fontSize: '11px',
                     fontWeight: '700',
@@ -424,7 +466,6 @@ export default function BarcodeScanner({ onScan, history = [], onViewHistory, on
           </div>
         )}
 
-        {/* Example barcodes */}
         <div style={{ marginTop: '14px', textAlign: 'center' }}>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginBottom: '8px' }}>
             Try examples:

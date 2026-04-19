@@ -1,8 +1,11 @@
+import { Capacitor } from '@capacitor/core'
 import type { SafetyReport, SubmissionResult, UserSubmission } from './types'
 
-// Use VITE_API_URL env var so the app works on other devices on the same network.
-// In .env.local set: VITE_API_URL=http://192.168.x.x:8000
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8000'
+// On native (iOS/Android), VITE_API_URL must be set to the production backend URL
+// at build time (e.g. https://api.safescan.app). On web, fall back to localhost.
+const API_BASE = Capacitor.isNativePlatform()
+  ? (import.meta.env.VITE_API_URL as string)
+  : (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8000'
 
 export async function scanBarcode(barcode: string): Promise<SafetyReport> {
   const response = await fetch(`${API_BASE}/api/scan`, {
