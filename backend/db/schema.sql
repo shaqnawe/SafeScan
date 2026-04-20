@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS products (
     -- Brand / manufacturer name
     brand           TEXT,
     -- Broad category: food, cosmetic, or unknown (not yet classified)
-    product_type    TEXT        CHECK (product_type IN ('food', 'cosmetic', 'unknown')),
+    product_type    TEXT        CHECK (product_type IN ('food', 'cosmetic', 'unknown', 'drug')),
     -- Front-of-pack image URL from the data source
     image_url       TEXT,
     -- Nutri-Score letter grade (a–e), food only
@@ -285,6 +285,9 @@ CREATE INDEX IF NOT EXISTS idx_products_type
     ON products (product_type);
 
 -- product_ingredients — fast joins in both directions
+CREATE UNIQUE INDEX IF NOT EXISTS idx_product_ingredients_product_position
+    ON product_ingredients (product_id, position);
+
 CREATE INDEX IF NOT EXISTS idx_product_ingredients_product
     ON product_ingredients (product_id);
 
