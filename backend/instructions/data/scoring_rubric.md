@@ -41,6 +41,24 @@ Apply penalties first, then bonuses. Clamp the final result: `score = max(0, min
 | Ingredient with `safety_level = 'caution'` | −7 pts |
 | Declared allergen (`is_allergen = true`) | −3 pts |
 
+### Carcinogen / Reproductive / Mutagen Tags (stack on top of safety_level)
+
+These tags are applied by the IARC, GHS (EPA CompTox / ECHA CLP), and California Prop 65 enrichment importers. Unlike the per-ingredient safety_level penalty (which the seed `score_penalty` may already encode), these tags are enriched **post-hoc** and stack on top of `explicit_penalty` and `safety_level`. The same logic applies to both food and cosmetic.
+
+| Tag (`concerns` includes…) | Penalty |
+|---|---|
+| `iarc_group_1` or `iarc_group_2a` | −25 pts |
+| `iarc_group_2b` or legacy `carcinogen` | −12 pts |
+| `ghs_carcinogen_cat1` | −25 pts |
+| `ghs_carcinogen_cat2` | −12 pts |
+| `ghs_reproductive_toxin` | −15 pts |
+| `ghs_mutagen` | −12 pts |
+| `prop65_carcinogen` | −12 pts |
+| `prop65_developmental_toxin` | −15 pts |
+| `prop65_reproductive_toxin` | −15 pts |
+
+Tag families (IARC / GHS / Prop 65) are mutually independent — a substance carrying both an IARC Group 1 listing and a Prop 65 carcinogen listing pays both penalties. Within IARC the severity tiers (1/2A vs 2B) are mutually exclusive since they represent one jurisdiction's verdict.
+
 ### Additive Category Penalties (applied once per category, not per ingredient)
 
 | Category | Penalty |
@@ -80,9 +98,7 @@ Apply penalties first, then bonuses. Clamp the final result: `score = max(0, min
 | EU-banned substance (`eu_status = 'banned'`) | −30 pts AND score floor to D (max 24) | Applied immediately; score cannot exceed 24 |
 | EU-restricted substance (`eu_status = 'restricted'`) | −15 pts | |
 | Endocrine disruptor (`concerns` includes `endocrine_disruptor`) | −20 pts | |
-| IARC Group 1 carcinogen (`concerns` includes `iarc_group_1`) | −25 pts | Confirmed carcinogen in humans |
-| IARC Group 2A carcinogen (`concerns` includes `iarc_group_2a`) | −25 pts | Probable carcinogen in humans |
-| IARC Group 2B carcinogen (`concerns` includes `iarc_group_2b` or legacy `carcinogen`) | −12 pts | Possible carcinogen |
+| IARC / GHS / Prop 65 tags | see the "Carcinogen / Reproductive / Mutagen Tags" table in the Food section | Shared logic; magnitudes are identical for food and cosmetic |
 | Paraben (`concerns` includes `paraben`) | −10 pts | Each distinct paraben type |
 | SLS — Sodium Lauryl Sulfate (`concerns` includes `sls`) | −8 pts | |
 | SLES — Sodium Laureth Sulfate (`concerns` includes `sles`) | −8 pts | |

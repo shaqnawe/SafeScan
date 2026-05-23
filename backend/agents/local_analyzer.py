@@ -47,6 +47,50 @@ def _score_to_grade(score: int) -> str:
     return 'D'
 
 
+def _carcinogen_penalty(concerns: list[str]) -> int:
+    """
+    Return the total point penalty for IARC / GHS / Prop 65 carcinogen,
+    reproductive-toxin, and mutagen tags found in `concerns`.
+
+    Tag families are mutually independent — a substance with both an IARC
+    and a Prop 65 carcinogen listing pays both penalties. Within IARC, the
+    severity tiers (Group 1/2A vs 2B) are mutually exclusive because they
+    represent a single jurisdiction's verdict.
+
+    Applied to both food and cosmetic paths so post-hoc enrichment from
+    importers has uniform impact on scoring.
+    """
+    penalty = 0
+
+    # IARC: Group 1 / 2A both indicate established or strong carcinogen
+    # evidence and share the heavier penalty. Group 2B / legacy `carcinogen`
+    # share the lighter penalty.
+    if 'iarc_group_1' in concerns or 'iarc_group_2a' in concerns:
+        penalty += 25
+    elif 'iarc_group_2b' in concerns or 'carcinogen' in concerns:
+        penalty += 12
+
+    # GHS (CLP / CompTox)
+    if 'ghs_carcinogen_cat1' in concerns:
+        penalty += 25
+    if 'ghs_carcinogen_cat2' in concerns:
+        penalty += 12
+    if 'ghs_reproductive_toxin' in concerns:
+        penalty += 15
+    if 'ghs_mutagen' in concerns:
+        penalty += 12
+
+    # California Prop 65
+    if 'prop65_carcinogen' in concerns:
+        penalty += 12
+    if 'prop65_developmental_toxin' in concerns:
+        penalty += 15
+    if 'prop65_reproductive_toxin' in concerns:
+        penalty += 15
+
+    return penalty
+
+
 def _compute_score(
     product_type: str,
     resolved: list[dict],
@@ -74,6 +118,13 @@ def _compute_score(
             elif safety == 'caution':
                 score -= 7
 
+            # Carcinogen / reproductive / mutagen tags applied by the
+            # IARC, GHS (CompTox/ECHA CLP), and Prop 65 importers. These
+            # stack on top of explicit_penalty and safety_level because
+            # the seed score_penalty was authored before post-hoc
+            # enrichment and does not include their weight.
+            score -= _carcinogen_penalty(concerns)
+
         else:  # cosmetic
             if eu_status == 'banned':
                 has_banned = True
@@ -86,10 +137,6 @@ def _compute_score(
                     score -= 15
                 if 'endocrine_disruptor' in concerns:
                     score -= 20
-                if 'iarc_group_1' in concerns or 'iarc_group_2a' in concerns:
-                    score -= 25
-                elif 'iarc_group_2b' in concerns or 'carcinogen' in concerns:
-                    score -= 12
                 if 'paraben' in concerns:
                     score -= 10
                 if 'sls' in concerns:
@@ -102,6 +149,10 @@ def _compute_score(
                     score -= 15
                 elif safety == 'caution' and explicit_penalty == 0:
                     score -= 7
+
+                # Carcinogen / reproductive / mutagen tags — shared logic
+                # with food path. See _carcinogen_penalty() for details.
+                score -= _carcinogen_penalty(concerns)
 
         # Allergen penalty (both types)
         if ing.get('is_allergen'):

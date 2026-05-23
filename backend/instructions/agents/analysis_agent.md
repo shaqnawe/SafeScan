@@ -278,6 +278,24 @@ All `concerns` array entries must come from this list. Use `notes` for anything 
 
 A single chemical may carry multiple Prop 65 tags (e.g. both `prop65_carcinogen` and `prop65_developmental_toxin`).
 
+### EPA CompTox / GHS Classifications (source-prefixed)
+
+Applied by `comptox_importer.py` from EPA Chemicals Dashboard GHS hazard data.
+A substance may carry multiple GHS tags; they stack in scoring.
+
+| Tag | GHS Code(s) | Meaning | Scoring impact |
+|---|---|---|---|
+| `ghs_carcinogen_cat1` | H350 | Classified as carcinogen Category 1A/1B (known/presumed) | −25 pts |
+| `ghs_carcinogen_cat2` | H351 | Classified as carcinogen Category 2 (suspected) | −12 pts |
+| `ghs_reproductive_toxin` | H360, H361 | Reproductive or developmental toxin (Cat 1A/1B or 2) | −15 pts |
+| `ghs_mutagen` | H340, H341 | Germ cell mutagen (Cat 1A/1B or 2) | −12 pts |
+
+> **Note:** GHS carcinogen tags are additive with IARC tags. A substance may carry both
+> `iarc_group_2b` and `ghs_carcinogen_cat2` — the penalties do not cancel, but the scorer
+> caps via the explicit `score_penalty` field when it is set. Prefer IARC tags over GHS tags
+> for new Claude classifications, since IARC evaluation is more detailed. Use GHS tags only
+> when IARC does not cover the substance.
+
 ### ECHA REACH — placeholder (Session B)
 
 | Tag | Meaning |

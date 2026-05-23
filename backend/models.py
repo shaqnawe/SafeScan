@@ -24,7 +24,7 @@ class SafetyReport(BaseModel):
     barcode: str
     image_url: Optional[str] = None
     score: int  # 0-100
-    grade: str  # A, B, C, D, E
+    grade: str  # A, B, C, D — no E grade per scoring_rubric.md
     summary: str
     ingredients_analysis: list[IngredientAnalysis]
     positive_points: list[str]

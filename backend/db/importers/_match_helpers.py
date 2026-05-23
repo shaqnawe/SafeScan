@@ -20,10 +20,10 @@ from typing import Optional
 
 import asyncpg
 
-
 # ---------------------------------------------------------------------------
 # SQL builders
 # ---------------------------------------------------------------------------
+
 
 def build_update_sql(source: str) -> tuple[str, str]:
     """
@@ -72,6 +72,7 @@ def build_update_sql(source: str) -> tuple[str, str]:
 # Two-pass match-and-update
 # ---------------------------------------------------------------------------
 
+
 async def match_and_update(
     conn: asyncpg.Connection,
     cas_number: Optional[str],
@@ -105,6 +106,7 @@ async def match_and_update(
 # ---------------------------------------------------------------------------
 # File discovery
 # ---------------------------------------------------------------------------
+
 
 def find_latest_csv(seed_dir: Path, prefix: str) -> Optional[Path]:
     """
