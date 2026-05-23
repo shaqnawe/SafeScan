@@ -65,7 +65,7 @@ export default function AllergenProfilePage({
 
       <div style={{ padding: '20px' }}>
         {/* Description */}
-        <div style={{
+        <div className="fade-up stagger-1" style={{
           ...glassStyle(theme),
           background: theme.accentSoft,
           border: `1px solid ${theme.accent}40`,
@@ -84,7 +84,7 @@ export default function AllergenProfilePage({
         )}
 
         {/* Grid */}
-        <div style={{
+        <div className="fade-up stagger-2" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '10px',
@@ -95,6 +95,7 @@ export default function AllergenProfilePage({
               <button
                 key={allergen.id}
                 onClick={() => onToggle(allergen.id)}
+                className="press"
                 style={{
                   ...glassStyle(theme),
                   display: 'flex',
@@ -108,7 +109,6 @@ export default function AllergenProfilePage({
                   background: active ? theme.accentSoft : theme.glass,
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.15s ease',
                   fontFamily: FONT_STACK,
                   boxShadow: active ? `0 4px 16px ${theme.accent}33` : theme.glassShadow,
                 }}

@@ -174,6 +174,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
           <button
             onClick={() => analyze(which)}
             disabled={slot.state === 'loading' || !slot.barcode.trim()}
+            className={slot.barcode.trim() ? 'press' : ''}
             style={{
               padding: '8px 12px', borderRadius: '10px', border: 'none',
               background: slot.barcode.trim() ? theme.accent : (isDark ? '#2c2c2e' : '#e5e5ea'),
@@ -260,7 +261,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Two slots */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="fade-up stagger-1" style={{ display: 'flex', gap: '10px' }}>
           <SlotInput which="a" />
           <div style={{ display: 'flex', alignItems: 'center', fontSize: '14px', fontWeight: '700', color: secondary, flexShrink: 0 }}>
             VS

@@ -26,13 +26,16 @@ function Glass({
   children,
   style,
   theme,
+  className,
 }: {
   children: React.ReactNode
   style?: React.CSSProperties
   theme: Theme
+  className?: string
 }) {
   return (
     <div
+      className={className}
       style={{
         ...glassStyle(theme),
         padding: 24,
@@ -317,7 +320,7 @@ export default function SafetyReportView({
         </div>
 
         {/* Hero — product card */}
-        <Glass theme={theme} style={{ textAlign: 'center', marginBottom: 16 }}>
+        <Glass theme={theme} className="fade-up stagger-1" style={{ textAlign: 'center', marginBottom: 16 }}>
           {report.image_url && (
             <div
               style={{
@@ -534,14 +537,14 @@ export default function SafetyReportView({
         )}
 
         {/* Summary */}
-        <Glass theme={theme} style={{ marginBottom: 16 }}>
+        <Glass theme={theme} className="fade-up stagger-2" style={{ marginBottom: 16 }}>
           <SectionLabel theme={theme}>Summary</SectionLabel>
           <div style={{ fontSize: 15, color: theme.secondary, lineHeight: 1.5 }}>{report.summary}</div>
         </Glass>
 
         {/* Ingredient stats */}
         {report.ingredients_analysis.length > 0 && (
-          <Glass theme={theme} style={{ marginBottom: 16 }}>
+          <Glass theme={theme} className="fade-up stagger-3" style={{ marginBottom: 16 }}>
             <SectionLabel theme={theme}>Ingredient Overview</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {statItems.map(({ count, label, color }) => (
@@ -576,7 +579,7 @@ export default function SafetyReportView({
 
         {/* Findings */}
         {(report.positive_points.length > 0 || report.negative_points.length > 0) && (
-          <Glass theme={theme} style={{ marginBottom: 16 }}>
+          <Glass theme={theme} className="fade-up stagger-4" style={{ marginBottom: 16 }}>
             <SectionLabel theme={theme}>Findings</SectionLabel>
             <div>
               {report.positive_points.map((p, i) => (
@@ -591,7 +594,7 @@ export default function SafetyReportView({
 
         {/* Ingredients */}
         {report.ingredients_analysis.length > 0 && (
-          <Glass theme={theme} style={{ marginBottom: 16 }}>
+          <Glass theme={theme} className="fade-up stagger-5" style={{ marginBottom: 16 }}>
             <SectionLabel theme={theme}>
               Ingredients · {report.ingredients_analysis.length}
             </SectionLabel>
@@ -635,6 +638,7 @@ export default function SafetyReportView({
       >
         <button
           onClick={onScanAgain}
+          className="press"
           style={{
             display: 'block',
             width: '100%',
@@ -650,6 +654,7 @@ export default function SafetyReportView({
             cursor: 'pointer',
             boxShadow: theme.ctaShadow,
             letterSpacing: '-0.01em',
+            fontFamily: FONT_STACK,
           }}
         >
           Scan Another Product

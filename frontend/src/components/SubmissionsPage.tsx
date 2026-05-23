@@ -102,7 +102,7 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
         </div>
       </div>
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="fade-up stagger-1" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {loading && (
           <p style={{ textAlign: 'center', color: secondary, fontSize: '14px', padding: '40px 0' }}>
             Loading...
@@ -132,6 +132,7 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
             <div
               key={sub.id}
               onClick={() => report && onViewReport(report as SafetyReport)}
+              className={report ? 'lift press' : ''}
               style={{
                 ...glassStyle(theme),
                 borderRadius: '16px',

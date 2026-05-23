@@ -130,6 +130,7 @@ export default function HomePage({
       >
         {/* Logo tile */}
         <div
+          className="fade-up stagger-1"
           style={{
             width: 88,
             height: 88,
@@ -149,6 +150,7 @@ export default function HomePage({
             Horizontal padding gives the italic 'n' exit stroke room inside the
             background-clip: text mask (otherwise the trailing glyph is chopped). */}
         <h1
+          className="fade-up stagger-2"
           style={{
             fontFamily: FONT_DISPLAY,
             fontSize: 56,
@@ -172,6 +174,7 @@ export default function HomePage({
 
         {/* Tagline */}
         <p
+          className="fade-up stagger-3"
           style={{
             fontSize: 17,
             color: theme.tertiary,
@@ -186,6 +189,7 @@ export default function HomePage({
         {/* Primary CTA */}
         <button
           onClick={onStartScanning}
+          className="fade-up stagger-4 press"
           style={{
             padding: '18px 48px',
             borderRadius: 18,
@@ -208,6 +212,7 @@ export default function HomePage({
         </button>
 
         <p
+          className="fade-up stagger-5"
           style={{
             marginTop: 16,
             fontSize: 12,
@@ -234,9 +239,10 @@ export default function HomePage({
           boxSizing: 'border-box',
         }}
       >
-        {FEATURES.map(f => (
+        {FEATURES.map((f, i) => (
           <div
             key={f.title}
+            className={`fade-up lift stagger-${5 + i}`}
             style={{
               ...glassStyle(theme),
               borderRadius: 18,

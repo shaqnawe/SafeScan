@@ -289,12 +289,12 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
       </div>
 
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <p style={{ fontSize: '14px', color: secondary, textAlign: 'center', lineHeight: 1.6 }}>
+        <p className="fade-up stagger-1" style={{ fontSize: '14px', color: secondary, textAlign: 'center', lineHeight: 1.6 }}>
           Take photos of the product and its ingredient list. Claude will extract the data and run a safety analysis.
         </p>
 
         {/* Photo pickers */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="fade-up stagger-2" style={{ display: 'flex', gap: '12px' }}>
           <ImagePickerCard
             label="Product Photo"
             emoji="📦"

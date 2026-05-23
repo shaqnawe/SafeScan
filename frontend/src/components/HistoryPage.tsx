@@ -150,7 +150,7 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
 
       {/* List */}
       {history.length > 0 && (
-        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="fade-up stagger-1" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <p style={{ fontSize: '13px', color: secondary, marginBottom: '4px' }}>
             {history.length} product{history.length !== 1 ? 's' : ''} scanned
           </p>
@@ -165,6 +165,7 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
               <button
                 key={entry.barcode + entry.scanned_at}
                 onClick={() => onRescan(entry.barcode)}
+                className="lift press"
                 style={{
                   ...glassStyle(theme),
                   display: 'flex',
