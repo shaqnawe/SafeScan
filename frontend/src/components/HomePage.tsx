@@ -1,5 +1,5 @@
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
-import { getTheme, glassStyle, FONT_STACK } from '../theme'
+import { getTheme, glassStyle, FONT_STACK, FONT_DISPLAY } from '../theme'
 
 interface HomePageProps {
   onStartScanning:     () => void
@@ -145,13 +145,19 @@ export default function HomePage({
           🔍
         </div>
 
-        {/* Wordmark */}
+        {/* Wordmark — Fraunces display face, optical-size large, italic for character.
+            Horizontal padding gives the italic 'n' exit stroke room inside the
+            background-clip: text mask (otherwise the trailing glyph is chopped). */}
         <h1
           style={{
-            fontSize: 48,
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
+            fontFamily: FONT_DISPLAY,
+            fontSize: 56,
+            fontWeight: 500,
+            fontStyle: 'italic',
+            fontVariationSettings: '"opsz" 144, "SOFT" 50',
+            letterSpacing: '-0.035em',
             marginBottom: 12,
+            padding: '0 0.18em',
             background: isDark
               ? 'linear-gradient(135deg, #fafafa 40%, #fbbf24 100%)'
               : 'linear-gradient(135deg, #1a1a1f 40%, #d97706 100%)',

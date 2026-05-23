@@ -138,3 +138,10 @@ export function glassStyle(theme: Theme): React.CSSProperties {
 
 export const FONT_STACK =
   '"Manrope", -apple-system, BlinkMacSystemFont, system-ui, sans-serif'
+
+/**
+ * Display face for hero typography only — wordmark, grade letter, page titles.
+ * Fraunces is a variable serif with optical sizing; pair sparingly with Manrope body.
+ */
+export const FONT_DISPLAY =
+  '"Fraunces", "Iowan Old Style", "Palatino", Georgia, serif'

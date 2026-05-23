@@ -7,6 +7,7 @@ import {
   SAFETY_INDICATOR,
   glassStyle,
   FONT_STACK,
+  FONT_DISPLAY,
   type Theme,
 } from '../theme'
 
@@ -379,8 +380,10 @@ export default function SafetyReportView({
           >
             <div
               style={{
-                fontSize: 100,
-                fontWeight: 200,
+                fontFamily: FONT_DISPLAY,
+                fontSize: 120,
+                fontWeight: 300,
+                fontVariationSettings: '"opsz" 144, "SOFT" 30',
                 letterSpacing: '-0.06em',
                 background: gradeGradient(report.grade, isDark),
                 WebkitBackgroundClip: 'text',
