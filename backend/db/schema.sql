@@ -336,6 +336,15 @@ CREATE INDEX IF NOT EXISTS idx_safety_reports_expires
 CREATE INDEX IF NOT EXISTS idx_user_submissions_status
     ON user_submissions (status);
 
+-- user_submissions — partial unique index on barcode.
+-- Required by the ON CONFLICT (barcode) WHERE barcode IS NOT NULL clause in
+-- image_agent._save_submission(); without this index PostgreSQL errors with
+-- "no unique or exclusion constraint matching the ON CONFLICT specification".
+-- Partial so NULL barcodes (anonymous photo-only submissions) can repeat.
+CREATE UNIQUE INDEX IF NOT EXISTS user_submissions_barcode_unique
+    ON user_submissions (barcode)
+    WHERE barcode IS NOT NULL;
+
 
 -- =============================================================================
 -- INGREDIENT RESOLUTION FLOW
