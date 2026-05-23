@@ -9,8 +9,8 @@ to the caller for immediate use.
 
 from __future__ import annotations
 
+import asyncio
 import base64
-import json
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +22,11 @@ from db.connection import get_conn
 _client = anthropic.AsyncAnthropic()
 
 MODEL_LIGHT = "claude-sonnet-4-6"  # extraction and parsing tasks
+
+# Bounded wall-clock per Anthropic call. The SDK default (~10 min) is far too
+# generous for an interactive photo submission — a hung connection would stall
+# the request indefinitely. 60s comfortably accommodates adaptive thinking.
+_VISION_TIMEOUT_S = 60.0
 
 INSTRUCTIONS_DIR = Path(__file__).parent.parent / "instructions"
 
@@ -59,6 +64,13 @@ class ParsedIngredient(BaseModel):
     concerns:          list[str]     = []
 
 
+class IngredientParseResponse(BaseModel):
+    """Structured output schema for the ingredient parser vision call."""
+    ingredients:        list[ParsedIngredient]
+    parsing_confidence: float        = 0.0
+    parsing_notes:      Optional[str] = None
+
+
 class SubmissionResult(BaseModel):
     submission_id:     Optional[int] = None
     product:           ExtractedProduct
@@ -90,52 +102,33 @@ def _encode_image(image_bytes: bytes, media_type: str = "image/jpeg") -> dict:
 
 async def _extract_product_info(image_bytes: bytes, media_type: str) -> ExtractedProduct:
     """Call Claude vision to extract brand/name/barcode from a product photo."""
-    response = await _client.messages.create(
-        model=MODEL_LIGHT,
-        max_tokens=1024,
-        thinking={"type": "adaptive"},
-        system=_IMAGE_SYSTEM_CACHED,
-        messages=[{
-            "role": "user",
-            "content": [
-                _encode_image(image_bytes, media_type),
-                {
-                    "type": "text",
-                    "text": (
-                        "Extract all product identity information from this image. "
-                        "Return a JSON object matching the output format specified in your instructions."
-                    ),
-                },
-            ],
-        }],
-    )
-
-    # Pull the JSON out of the response text
-    text = next(
-        (b.text for b in response.content if hasattr(b, 'text') and b.text.strip()),
-        "{}"
-    )
-    # Strip markdown fences if present
-    text = text.strip()
-    if text.startswith("```"):
-        text = "\n".join(text.split("\n")[1:])
-    if text.endswith("```"):
-        text = text.rsplit("```", 1)[0]
-
     try:
-        data = json.loads(text)
-    except Exception:
+        response = await _client.messages.parse(
+            model=MODEL_LIGHT,
+            max_tokens=2048,
+            timeout=_VISION_TIMEOUT_S,
+            thinking={"type": "adaptive"},
+            system=_IMAGE_SYSTEM_CACHED,
+            messages=[{
+                "role": "user",
+                "content": [
+                    _encode_image(image_bytes, media_type),
+                    {
+                        "type": "text",
+                        "text": (
+                            "Extract all product identity information from this image. "
+                            "Conform to the output schema."
+                        ),
+                    },
+                ],
+            }],
+            output_format=ExtractedProduct,
+        )
+    except anthropic.APIError as e:
+        print(f"  [IMAGE AGENT] Product extraction failed: {e}")
         return ExtractedProduct()
 
-    return ExtractedProduct(
-        brand=data.get("brand"),
-        product_name=data.get("product_name"),
-        barcode=data.get("barcode"),
-        product_type=data.get("product_type", "unknown"),
-        certifications=data.get("certifications", []),
-        confidence=float(data.get("confidence", 0.0)),
-        notes=data.get("notes"),
-    )
+    return response.parsed_output or ExtractedProduct()
 
 
 async def _parse_ingredients(
@@ -144,55 +137,38 @@ async def _parse_ingredients(
     product_type: str,
 ) -> tuple[list[ParsedIngredient], float, Optional[str]]:
     """Call Claude vision to parse an ingredient list photo."""
-    response = await _client.messages.create(
-        model=MODEL_LIGHT,
-        max_tokens=2048,
-        thinking={"type": "adaptive"},
-        system=_PARSER_SYSTEM_CACHED,
-        messages=[{
-            "role": "user",
-            "content": [
-                _encode_image(image_bytes, media_type),
-                {
-                    "type": "text",
-                    "text": (
-                        f"Parse the ingredient list from this image. "
-                        f"product_type: {product_type}. "
-                        "Return a JSON object matching the output format in your instructions."
-                    ),
-                },
-            ],
-        }],
-    )
-
-    text = next(
-        (b.text for b in response.content if hasattr(b, 'text') and b.text.strip()),
-        "{}"
-    )
-    text = text.strip()
-    if text.startswith("```"):
-        text = "\n".join(text.split("\n")[1:])
-    if text.endswith("```"):
-        text = text.rsplit("```", 1)[0]
-
     try:
-        data = json.loads(text)
-    except Exception:
+        response = await _client.messages.parse(
+            model=MODEL_LIGHT,
+            max_tokens=2048,
+            timeout=_VISION_TIMEOUT_S,
+            thinking={"type": "adaptive"},
+            system=_PARSER_SYSTEM_CACHED,
+            messages=[{
+                "role": "user",
+                "content": [
+                    _encode_image(image_bytes, media_type),
+                    {
+                        "type": "text",
+                        "text": (
+                            f"Parse the ingredient list from this image. "
+                            f"product_type: {product_type}. "
+                            "Conform to the output schema."
+                        ),
+                    },
+                ],
+            }],
+            output_format=IngredientParseResponse,
+        )
+    except anthropic.APIError as e:
+        print(f"  [IMAGE AGENT] Ingredient parse failed: {e}")
         return [], 0.0, "Failed to parse agent response"
 
-    ingredients = []
-    for item in data.get("ingredients", []):
-        ingredients.append(ParsedIngredient(
-            name=item.get("name", ""),
-            position=int(item.get("position", len(ingredients) + 1)),
-            is_allergen=bool(item.get("is_allergen", False)),
-            is_fragrance_blend=bool(item.get("is_fragrance_blend", False)),
-            concerns=[],
-        ))
+    parsed = response.parsed_output
+    if parsed is None:
+        return [], 0.0, "Empty agent response"
 
-    confidence = float(data.get("parsing_confidence", 0.0))
-    notes = data.get("parsing_notes")
-    return ingredients, confidence, notes
+    return parsed.ingredients, parsed.parsing_confidence, parsed.parsing_notes
 
 
 # ---------------------------------------------------------------------------
@@ -272,23 +248,33 @@ async def process_product_photos(
     parsing_confidence = 0.0
     parsing_notes: Optional[str] = None
 
-    # Extract product identity from front photo
-    if product_image:
-        extracted = await _extract_product_info(product_image, product_media_type)
-        # Manual barcode overrides extracted one
+    # Manual ingredient text overrides the photo if both are provided.
+    manual_text = manual_ingredients_text.strip() if manual_ingredients_text else ""
+
+    # Launch the two Claude vision calls concurrently. They're independent —
+    # the parser receives the caller-provided product_type_hint rather than
+    # waiting for the extractor's output. The common "both photos uploaded"
+    # case now runs in max(extract, parse) wall-clock time instead of sum.
+    extract_task = (
+        asyncio.create_task(_extract_product_info(product_image, product_media_type))
+        if product_image else None
+    )
+    parse_task = (
+        asyncio.create_task(_parse_ingredients(ingredients_image, ingredients_media_type, product_type_hint))
+        if ingredients_image and not manual_text else None
+    )
+
+    if extract_task is not None:
+        extracted = await extract_task
         if barcode_hint:
             extracted.barcode = barcode_hint
 
-    # Parse ingredient list — manual text takes priority over photo
-    pt = extracted.product_type if extracted.product_type != "unknown" else product_type_hint
-    if manual_ingredients_text and manual_ingredients_text.strip():
-        ingredients, parsing_confidence, parsing_notes = _parse_manual_ingredients(
-            manual_ingredients_text, pt
-        )
-    elif ingredients_image:
-        ingredients, parsing_confidence, parsing_notes = await _parse_ingredients(
-            ingredients_image, ingredients_media_type, pt
-        )
+    if parse_task is not None:
+        ingredients, parsing_confidence, parsing_notes = await parse_task
+
+    if manual_text:
+        pt = extracted.product_type if extracted.product_type != "unknown" else product_type_hint
+        ingredients, parsing_confidence, parsing_notes = _parse_manual_ingredients(manual_text, pt)
 
     # We can offer analysis if we have a barcode (extracted or hinted) + some ingredients
     barcode = extracted.barcode or barcode_hint
