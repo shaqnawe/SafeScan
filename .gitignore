@@ -42,3 +42,10 @@ backend/*.csv
 .idea/
 *.swp
 *.swo
+
+# ── Claude Code / agent skills ────────────────────────────────────────────────
+# Skills installed via `npx skills add` — vendored locally, re-install with:
+#   npx skills add anthropics/skills
+.agents/
+.claude/
+skills-lock.json
