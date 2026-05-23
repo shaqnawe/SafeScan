@@ -12,13 +12,17 @@ only exposes the rolling ~20 most recent items; openFDA has the full
 dataset (~28 K food enforcement records from 2012 onwards).
 
 Weekly delta sync (last 45 days — called by weekly_sync.sh):
-    python -m db.recall_store
+    python -m db.recall_store              # food enforcement
+    python -m db.recall_store --drugs      # drug enforcement
 
 One-time full backfill (2012 to present):
     python -m db.recall_store --backfill
+    python -m db.recall_store --backfill --drugs
 
-check_product_recalls() queries BOTH the local table (FTS) AND the
-openFDA API in real time so results are always current.
+check_product_recalls() queries the local table only — the 45-day
+weekly delta sync covers openFDA's ~7-day indexing lag with overlap,
+so the previously-included real-time per-scan openFDA call has been
+removed to eliminate latency.
 """
 
 from __future__ import annotations
@@ -41,8 +45,9 @@ load_dotenv(dotenv_path=_ENV_PATH)
 # API config
 # ---------------------------------------------------------------------------
 
-# openFDA food enforcement API — queryable by product description, date, etc.
+# openFDA enforcement endpoints — identical schemas, separate datasets.
 OPENFDA_FOOD_URL = "https://api.fda.gov/food/enforcement.json"
+OPENFDA_DRUG_URL = "https://api.fda.gov/drug/enforcement.json"
 
 # openFDA imposes a skip+limit cap of 26,000 per query; we use year-by-year
 # date-range pagination to stay within this ceiling for the full backfill.
@@ -212,11 +217,13 @@ async def _fetch_openfda_range(
     date_end: str,
     stats: dict[str, int],
     label: str = "",
+    endpoint_url: str = OPENFDA_FOOD_URL,
 ) -> None:
     """
-    Fetch all food enforcement records in [date_start, date_end] (YYYYMMDD)
-    and upsert into the recalls table.  Uses skip/limit pagination within the
-    date window — safe because no single year exceeds the 25K skip ceiling.
+    Fetch all enforcement records in [date_start, date_end] (YYYYMMDD)
+    from `endpoint_url` (food or drug) and upsert into the recalls table.
+    Uses skip/limit pagination within the date window — safe because no
+    single year exceeds the 25K skip ceiling for either endpoint.
     """
     skip = 0
     while True:
@@ -226,7 +233,7 @@ async def _fetch_openfda_range(
             "skip":   skip,
         }
         try:
-            r = await http_client.get(OPENFDA_FOOD_URL, params=params)
+            r = await http_client.get(endpoint_url, params=params)
             if r.status_code == 404:
                 break  # no records in this window
             r.raise_for_status()
@@ -278,18 +285,22 @@ async def fetch_and_store_openfda(
     *,
     since_date: str | None = None,
     max_years: int | None = None,
+    endpoint_url: str = OPENFDA_FOOD_URL,
 ) -> dict[str, int]:
     """
-    Fetch FDA food enforcement records from openFDA and upsert into the
-    local `recalls` table (source='fda').
+    Fetch FDA enforcement records from openFDA and upsert into the
+    local `recalls` table (source='fda', distinguished by `category`).
 
     Args:
-        since_date: Start date as "YYYYMMDD". If None, runs a full backfill
-                    from _BACKFILL_START_YEAR to the current year, paginating
-                    year by year to stay within the openFDA 26K skip ceiling.
-                    If set, fetches only records from since_date to today —
-                    safe for delta/weekly syncs where the window is small.
-        max_years:  Limit to this many years (for testing). None = all years.
+        since_date:    Start date as "YYYYMMDD". If None, runs a full
+                       backfill from _BACKFILL_START_YEAR to the current
+                       year, paginating year by year to stay within the
+                       openFDA 26K skip ceiling. If set, fetches only
+                       records from since_date to today.
+        max_years:     Limit to this many years (for testing). None = all.
+        endpoint_url:  Which openFDA enforcement endpoint to hit.
+                       Defaults to OPENFDA_FOOD_URL. Pass OPENFDA_DRUG_URL
+                       to sync drug recalls instead.
 
     Returns:
         dict with fetched, inserted, updated, skipped, errors counts.
@@ -301,10 +312,13 @@ async def fetch_and_store_openfda(
     today_str = datetime.now(tz=timezone.utc).strftime("%Y%m%d")
     current_year = datetime.now(tz=timezone.utc).year
 
+    # Short tag for logging — derived from the URL path
+    tag = "DRUG" if "drug" in endpoint_url else "FOOD"
+
     if since_date:
-        print(f"[FDA] Starting delta sync from {since_date} to {today_str} ...")
+        print(f"[FDA-{tag}] Starting delta sync from {since_date} to {today_str} ...")
     else:
-        print(f"[FDA] Starting full backfill {_BACKFILL_START_YEAR}–{current_year} ...")
+        print(f"[FDA-{tag}] Starting full backfill {_BACKFILL_START_YEAR}–{current_year} ...")
 
     try:
         async with httpx.AsyncClient(
@@ -317,6 +331,7 @@ async def fetch_and_store_openfda(
                 await _fetch_openfda_range(
                     http_client, since_date, today_str, stats,
                     label=f"[{since_date}→{today_str}]",
+                    endpoint_url=endpoint_url,
                 )
             else:
                 # Full backfill: iterate year by year
@@ -330,20 +345,21 @@ async def fetch_and_store_openfda(
                     await _fetch_openfda_range(
                         http_client, year_start, year_end, stats,
                         label=f"[year={year}]",
+                        endpoint_url=endpoint_url,
                     )
                     print(
-                        f"[FDA] Year {year} done — "
+                        f"[FDA-{tag}] Year {year} done — "
                         f"fetched={stats['fetched']} inserted={stats['inserted']} "
                         f"updated={stats['updated']} skipped={stats['skipped']} "
                         f"errors={stats['errors']}"
                     )
 
     except Exception as e:
-        print(f"[FDA] Fatal error — sync aborted (non-fatal to caller): {e}")
+        print(f"[FDA-{tag}] Fatal error — sync aborted (non-fatal to caller): {e}")
         stats["errors"] += 1
 
     print(
-        f"[FDA] Done. "
+        f"[FDA-{tag}] Done. "
         f"fetched={stats['fetched']} inserted={stats['inserted']} "
         f"updated={stats['updated']} skipped={stats['skipped']} "
         f"errors={stats['errors']}"
@@ -385,57 +401,6 @@ def _build_fts_query(product_name: str, brand: str) -> str:
     return " ".join(meaningful[:8])
 
 
-async def _query_openfda(product_name: str, brand: str) -> list[dict[str, Any]]:
-    """
-    Real-time query to openFDA food enforcement API.
-    Returns a list of matching recall dicts.
-    """
-    tokens = re.findall(r"[a-zA-Z]{3,}", f"{product_name} {brand}")
-    tokens = [t for t in tokens if t.lower() not in _STOP][:4]
-    if not tokens:
-        return []
-
-    search_term = " ".join(tokens)
-    params = {
-        "search": f'product_description:"{search_term}"',
-        "limit":  5,
-        "sort":   "report_date:desc",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            r = await client.get(OPENFDA_FOOD_URL, params=params)
-            if r.status_code == 404:
-                return []
-            r.raise_for_status()
-            data = r.json()
-    except Exception as e:
-        print(f"  [RECALLS] openFDA query failed (non-fatal): {e}")
-        return []
-
-    results = []
-    for item in data.get("results", []):
-        pub_date = None
-        raw_date = item.get("report_date")
-        if raw_date:
-            try:
-                pub_date = datetime.strptime(raw_date, "%Y%m%d")
-            except ValueError:
-                pass
-
-        results.append({
-            "id":           f"fda_{item.get('recall_number', '')}",
-            "title":        item.get("product_description", "Unknown product")[:200],
-            "description":  item.get("reason_for_recall"),
-            "risk_level":   _classification_to_risk(item.get("classification")),
-            "category":     (item.get("product_type") or "food").lower(),
-            "link":         None,
-            "published_at": pub_date,
-        })
-
-    return results
-
-
 async def check_product_recalls(
     product_name: str,
     brand: str,
@@ -443,16 +408,19 @@ async def check_product_recalls(
 ) -> list[dict[str, Any]]:
     """
     Return recalls that plausibly match this product.
-    Checks:
-      1. Local DB full-text search (fast, offline-capable)
-      2. Local DB barcode literal search
-      3. Real-time openFDA API query (covers the ~7-day lag window)
+    Checks the local `recalls` table only:
+      1. Full-text search on title + description
+      2. Barcode literal ILIKE search
     Deduplicates and returns combined results capped at 5.
+
+    The local table is refreshed weekly via the 45-day delta sync, which
+    covers openFDA's ~7-day indexing lag with substantial overlap — so the
+    previously-included real-time per-scan openFDA call has been removed
+    (verified after 3+ weekly syncs showed zero recalls slipping through).
     """
     seen_titles: set[str] = set()
     results: list[dict[str, Any]] = []
 
-    # 1 + 2: local DB
     fts_query = _build_fts_query(product_name, brand)
     async with get_conn() as conn:
         if fts_query.strip():
@@ -473,14 +441,6 @@ async def check_product_recalls(
                     seen_titles.add(key)
                     results.append(d)
 
-    # 3: real-time openFDA — catches recalls within the ~7-day indexing lag
-    openfda_results = await _query_openfda(product_name, brand)
-    for r in openfda_results:
-        key = r["title"].lower()[:80]
-        if key not in seen_titles:
-            seen_titles.add(key)
-            results.append(r)
-
     return results[:5]
 
 
@@ -497,14 +457,19 @@ async def _main() -> None:
     await ensure_recalls_table()
 
     backfill = "--backfill" in sys.argv
+    drugs    = "--drugs"    in sys.argv
+    endpoint = OPENFDA_DRUG_URL if drugs else OPENFDA_FOOD_URL
+
     if backfill:
         # One-time full historical backfill (2012 → today)
-        stats = await fetch_and_store_openfda()
+        stats = await fetch_and_store_openfda(endpoint_url=endpoint)
     else:
         # Weekly delta: last 45 days (covers the ~7-day openFDA indexing lag
         # with plenty of overlap so no recalls slip through the cracks)
         since = (datetime.now(tz=timezone.utc) - timedelta(days=45)).strftime("%Y%m%d")
-        stats = await fetch_and_store_openfda(since_date=since)
+        stats = await fetch_and_store_openfda(
+            since_date=since, endpoint_url=endpoint,
+        )
 
     print(stats)
     await close_pool()
