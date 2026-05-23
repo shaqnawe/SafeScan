@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { scanBarcode } from '../api'
 import type { SafetyReport } from '../types'
+import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface ComparisonPageProps {
   onBack:  () => void
@@ -8,7 +9,7 @@ interface ComparisonPageProps {
 }
 
 const GRADE_COLOR: Record<string, string> = {
-  A: '#34c759', B: '#a3d977', C: '#ff9f0a', D: '#ff3b30', E: '#9c2b2b',
+  A: '#22c55e', B: '#84cc16', C: '#f59e0b', D: '#ef4444'
 }
 
 type SlotState = 'empty' | 'loading' | 'done' | 'error'
@@ -27,18 +28,30 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
   const [slotA, setSlotA] = useState<Slot>(EMPTY_SLOT)
   const [slotB, setSlotB] = useState<Slot>(EMPTY_SLOT)
 
-  const bg       = isDark ? '#000'    : '#f5f5f7'
-  const headerBg = isDark ? '#1c1c1e' : '#fff'
-  const cardBg   = isDark ? '#1c1c1e' : '#fff'
-  const primary  = isDark ? '#f2f2f7' : '#1c1c1e'
-  const secondary = '#8e8e93'
-  const border   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
-  const shadow   = isDark ? '0 1px 8px rgba(0,0,0,0.4)' : '0 1px 8px rgba(0,0,0,0.06)'
-  const inputBg  = isDark ? '#2c2c2e' : '#f5f5f7'
-  const inputBorder = isDark ? 'rgba(255,255,255,0.1)' : '#e5e5ea'
-  const backBg   = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
-  const rowBg    = isDark ? 'rgba(255,255,255,0.04)' : '#f9f9fb'
-  const winBg    = isDark ? 'rgba(52,199,89,0.12)' : '#e8f8ed'
+  const theme     = getTheme(isDark)
+  const primary   = theme.primary
+  const secondary = theme.tertiary
+  const border    = theme.glassBorder
+  const inputBg   = theme.ingredientBg
+  const inputBorder = theme.glassBorder
+  const backBg    = theme.ingredientBg
+  const rowBg     = theme.ingredientBg
+  const winBg     = theme.accentSoft
+  const headerStyle: React.CSSProperties = {
+    ...glassStyle(theme),
+    borderRadius: 0,
+    borderLeft: 'none',
+    borderRight: 'none',
+    borderTop: 'none',
+    boxShadow: 'none',
+  }
+  const rootStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    background: theme.bg,
+    backgroundImage: theme.bgGradient,
+    color: theme.primary,
+    fontFamily: FONT_STACK,
+  }
 
   async function analyze(which: 'a' | 'b') {
     const slot = which === 'a' ? slotA : slotB
@@ -83,11 +96,11 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
     return (
       <div style={{
         flex: 1,
-        background: cardBg,
+        ...glassStyle(theme),
         borderRadius: '16px',
         padding: '14px',
-        boxShadow: shadow,
-        border: isWinner ? '2px solid #34c759' : `1px solid ${border}`,
+        boxShadow: theme.glassShadow,
+        border: isWinner ? `2px solid ${theme.accent}` : `1px solid ${border}`,
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -122,7 +135,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
             }}>?</div>
           )}
           {isWinner && (
-            <span style={{ fontSize: '11px', color: '#34c759', fontWeight: '700' }}>
+            <span style={{ fontSize: '11px', color: theme.accent, fontWeight: '700' }}>
               ★ Better choice
             </span>
           )}
@@ -163,7 +176,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
             disabled={slot.state === 'loading' || !slot.barcode.trim()}
             style={{
               padding: '8px 12px', borderRadius: '10px', border: 'none',
-              background: slot.barcode.trim() ? '#34c759' : (isDark ? '#2c2c2e' : '#e5e5ea'),
+              background: slot.barcode.trim() ? theme.accent : (isDark ? '#2c2c2e' : '#e5e5ea'),
               color: slot.barcode.trim() ? '#fff' : secondary,
               fontSize: '13px', fontWeight: '600',
               cursor: slot.barcode.trim() ? 'pointer' : 'not-allowed',
@@ -175,7 +188,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
         </div>
 
         {slot.state === 'error' && (
-          <p style={{ fontSize: '11px', color: '#ff3b30', textAlign: 'center' }}>{slot.error}</p>
+          <p style={{ fontSize: '11px', color: theme.red, textAlign: 'center' }}>{slot.error}</p>
         )}
       </div>
     )
@@ -207,7 +220,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
       borderRadius: '10px',
       background: rowWin === side ? winBg : 'transparent',
       fontWeight: rowWin === side ? '700' : '500',
-      color: rowWin === side ? '#34c759' : primary,
+      color: rowWin === side ? theme.accent : primary,
       fontSize: '14px',
     })
 
@@ -225,13 +238,13 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
     )
   }
 
-  const GRADE_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+  const GRADE_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2 }
 
   return (
-    <div style={{ minHeight: '100vh', background: bg }}>
+    <div style={rootStyle}>
       {/* Header */}
       <div style={{
-        background: headerBg, borderBottom: `1px solid ${border}`,
+        ...headerStyle,
         padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -261,13 +274,13 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
             {/* Winner banner */}
             {winner !== 'tie' && (
               <div style={{
-                background: isDark ? 'rgba(52,199,89,0.12)' : '#e8f8ed',
+                background: isDark ? theme.accentSoft : '#e8f8ed',
                 border: '1.5px solid #34c759',
                 borderRadius: '16px',
                 padding: '14px 18px',
                 textAlign: 'center',
               }}>
-                <p style={{ fontSize: '16px', fontWeight: '700', color: '#34c759' }}>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: theme.accent }}>
                   ★ {winner === 'a' ? rA.product_name : rB.product_name} is the better choice
                 </p>
                 <p style={{ fontSize: '13px', color: isDark ? '#4cd964' : '#1a7a35', marginTop: '4px' }}>
@@ -293,7 +306,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
             )}
 
             {/* Stats table */}
-            <div style={{ background: cardBg, borderRadius: '18px', padding: '16px', boxShadow: shadow, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ ...glassStyle(theme), borderRadius: '18px', padding: '16px', boxShadow: theme.glassShadow, display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {/* Column headers */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <p style={{ flex: 1, textAlign: 'center', fontSize: '12px', fontWeight: '700', color: primary }}>
@@ -341,7 +354,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
 
             {/* Concerns comparison */}
             {(avoidA > 0 || avoidB > 0) && (
-              <div style={{ background: cardBg, borderRadius: '18px', padding: '16px', boxShadow: shadow }}>
+              <div style={{ ...glassStyle(theme), borderRadius: '18px', padding: '16px', boxShadow: theme.glassShadow }}>
                 <p style={{ fontSize: '13px', fontWeight: '600', color: secondary, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
                   Ingredients to Avoid
                 </p>
@@ -352,14 +365,14 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
                         {r.product_name.split(' ').slice(0, 2).join(' ')}
                       </p>
                       {avoid === 0 ? (
-                        <p style={{ fontSize: '12px', color: '#34c759' }}>None ✓</p>
+                        <p style={{ fontSize: '12px', color: theme.accent }}>None ✓</p>
                       ) : (
                         r.ingredients_analysis
                           .filter(i => i.safety_level === 'avoid')
                           .slice(0, 4)
                           .map((ing, i) => (
                             <p key={i} style={{
-                              fontSize: '11px', color: '#ff3b30',
+                              fontSize: '11px', color: theme.red,
                               marginBottom: '3px', lineHeight: 1.3,
                             }}>
                               • {ing.name}
@@ -379,16 +392,16 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
                 border: '1.5px solid #ff3b30',
                 borderRadius: '16px', padding: '14px 16px',
               }}>
-                <p style={{ fontSize: '13px', fontWeight: '700', color: '#ff3b30', marginBottom: '8px' }}>
+                <p style={{ fontSize: '13px', fontWeight: '700', color: theme.red, marginBottom: '8px' }}>
                   🚨 Recall Alerts
                 </p>
                 {rA.recalls.length > 0 && (
-                  <p style={{ fontSize: '12px', color: '#ff3b30', marginBottom: '4px' }}>
+                  <p style={{ fontSize: '12px', color: theme.red, marginBottom: '4px' }}>
                     <strong>{rA.product_name.split(' ')[0]}:</strong> {rA.recalls.length} recall{rA.recalls.length > 1 ? 's' : ''}
                   </p>
                 )}
                 {rB.recalls.length > 0 && (
-                  <p style={{ fontSize: '12px', color: '#ff3b30' }}>
+                  <p style={{ fontSize: '12px', color: theme.red }}>
                     <strong>{rB.product_name.split(' ')[0]}:</strong> {rB.recalls.length} recall{rB.recalls.length > 1 ? 's' : ''}
                   </p>
                 )}
@@ -396,7 +409,7 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
             )}
 
             {/* Positives comparison */}
-            <div style={{ background: cardBg, borderRadius: '18px', padding: '16px', boxShadow: shadow }}>
+            <div style={{ ...glassStyle(theme), borderRadius: '18px', padding: '16px', boxShadow: theme.glassShadow }}>
               <p style={{ fontSize: '13px', fontWeight: '600', color: secondary, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
                 Highlights
               </p>
@@ -407,12 +420,12 @@ export default function ComparisonPage({ onBack, isDark = false }: ComparisonPag
                       {r.product_name.split(' ').slice(0, 2).join(' ')}
                     </p>
                     {r.positive_points.slice(0, 3).map((p, i) => (
-                      <p key={i} style={{ fontSize: '11px', color: '#34c759', marginBottom: '3px', lineHeight: 1.3 }}>
+                      <p key={i} style={{ fontSize: '11px', color: theme.accent, marginBottom: '3px', lineHeight: 1.3 }}>
                         + {p}
                       </p>
                     ))}
                     {r.negative_points.slice(0, 2).map((p, i) => (
-                      <p key={i} style={{ fontSize: '11px', color: '#ff3b30', marginBottom: '3px', lineHeight: 1.3 }}>
+                      <p key={i} style={{ fontSize: '11px', color: theme.red, marginBottom: '3px', lineHeight: 1.3 }}>
                         − {p}
                       </p>
                     ))}

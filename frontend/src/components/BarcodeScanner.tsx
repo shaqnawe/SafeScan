@@ -4,9 +4,16 @@ import { BarcodeScanner as NativeScanner, BarcodeFormat } from '@capacitor-mlkit
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useZxing } from 'react-zxing'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
+import { FONT_STACK } from '../theme'
+
+// Camera UI stays dark regardless of OS theme — it's a fullscreen viewfinder
+// surface, so the chrome around it is always the dark glassmorphism variant.
+const ACCENT          = '#fbbf24'  // amber
+const ACCENT_GRADIENT = 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+void FONT_STACK // re-exposed via inline style if needed later
 
 const GRADE_COLOR: Record<string, string> = {
-  A: '#34c759', B: '#a3d977', C: '#ff9f0a', D: '#ff3b30', E: '#9c2b2b',
+  A: '#22c55e', B: '#84cc16', C: '#f59e0b', D: '#ef4444'
 }
 
 const IS_NATIVE = Capacitor.isNativePlatform()
@@ -80,8 +87,8 @@ function NativeScannerView({ onScan }: { onScan: (barcode: string) => void }) {
           width: '160px',
           height: '160px',
           borderRadius: '80px',
-          border: `3px solid ${scanning ? 'rgba(52,199,89,0.4)' : '#34c759'}`,
-          background: scanning ? 'rgba(52,199,89,0.1)' : 'rgba(52,199,89,0.15)',
+          border: `3px solid ${scanning ? 'rgba(251,191,36,0.4)' : ACCENT}`,
+          background: scanning ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.15)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -93,7 +100,7 @@ function NativeScannerView({ onScan }: { onScan: (barcode: string) => void }) {
       >
         <span style={{ fontSize: '52px' }}>{scanning ? '⏳' : '📷'}</span>
         <span style={{
-          color: scanning ? 'rgba(52,199,89,0.6)' : '#34c759',
+          color: scanning ? 'rgba(251,191,36,0.6)' : ACCENT,
           fontSize: '13px',
           fontWeight: '600',
         }}>
@@ -103,11 +110,11 @@ function NativeScannerView({ onScan }: { onScan: (barcode: string) => void }) {
 
       {lastScanned && !scanning && (
         <div style={{
-          background: 'rgba(52,199,89,0.15)',
-          border: '1px solid rgba(52,199,89,0.4)',
+          background: 'rgba(251,191,36,0.15)',
+          border: '1px solid rgba(251,191,36,0.4)',
           borderRadius: '12px',
           padding: '10px 20px',
-          color: '#34c759',
+          color: ACCENT,
           fontSize: '13px',
           fontWeight: '600',
         }}>
@@ -190,10 +197,10 @@ function WebScannerView({ onScan }: { onScan: (barcode: string) => void }) {
           }}>
             <div style={{ width: '260px', height: '160px', position: 'relative' }}>
               {[
-                { top: 0, left: 0, borderTop: '3px solid #34c759', borderLeft: '3px solid #34c759' },
-                { top: 0, right: 0, borderTop: '3px solid #34c759', borderRight: '3px solid #34c759' },
-                { bottom: 0, left: 0, borderBottom: '3px solid #34c759', borderLeft: '3px solid #34c759' },
-                { bottom: 0, right: 0, borderBottom: '3px solid #34c759', borderRight: '3px solid #34c759' },
+                { top: 0, left: 0, borderTop: '3px solid #fbbf24', borderLeft: '3px solid #fbbf24' },
+                { top: 0, right: 0, borderTop: '3px solid #fbbf24', borderRight: '3px solid #fbbf24' },
+                { bottom: 0, left: 0, borderBottom: '3px solid #fbbf24', borderLeft: '3px solid #fbbf24' },
+                { bottom: 0, right: 0, borderBottom: '3px solid #fbbf24', borderRight: '3px solid #fbbf24' },
               ].map((style, i) => (
                 <div key={i} style={{
                   position: 'absolute',
@@ -209,7 +216,7 @@ function WebScannerView({ onScan }: { onScan: (barcode: string) => void }) {
                 right: '10px',
                 top: '50%',
                 height: '2px',
-                background: 'linear-gradient(90deg, transparent, #34c759, transparent)',
+                background: 'linear-gradient(90deg, transparent, #fbbf24, transparent)',
                 animation: 'scanline 2s ease-in-out infinite',
               }} />
             </div>
@@ -249,7 +256,7 @@ function WebScannerView({ onScan }: { onScan: (barcode: string) => void }) {
           top: '16px',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: 'rgba(52,199,89,0.9)',
+          background: 'rgba(251,191,36,0.9)',
           color: '#fff',
           padding: '8px 20px',
           borderRadius: '20px',
@@ -376,13 +383,14 @@ export default function BarcodeScanner({
               padding: '14px 20px',
               borderRadius: '12px',
               border: 'none',
-              background: manualBarcode.trim() ? '#34c759' : 'rgba(255,255,255,0.1)',
-              color: '#fff',
+              background: manualBarcode.trim() ? ACCENT_GRADIENT : 'rgba(255,255,255,0.1)',
+              color: manualBarcode.trim() ? '#0a0a0f' : 'rgba(255,255,255,0.4)',
               fontSize: '15px',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: manualBarcode.trim() ? 'pointer' : 'not-allowed',
               transition: 'background 0.2s',
               whiteSpace: 'nowrap',
+              boxShadow: manualBarcode.trim() ? '0 4px 16px rgba(251,191,36,0.3)' : 'none',
             }}
           >
             Scan

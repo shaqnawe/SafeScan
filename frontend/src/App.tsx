@@ -16,6 +16,7 @@ import { useScanHistory } from "./hooks/useScanHistory";
 import { useAllergenProfile } from "./hooks/useAllergenProfile";
 import AllergenProfilePage from "./components/AllergenProfilePage";
 import type { SafetyReport } from "./types";
+import * as themeImport from "./theme";
 
 type AppState =
   | "home"
@@ -78,6 +79,7 @@ export default function App() {
         onAllergenProfile={() => setState("allergens")}
         history={history}
         activeAllergenCount={activeIds.length}
+        isDark={isDark}
       />
     );
   }
@@ -173,38 +175,29 @@ export default function App() {
   }
 
   if (state === "error") {
-    const bg = isDark ? "#000" : "#f5f5f7";
-    const cardBg = isDark ? "#1c1c1e" : "#fff";
-    const primaryText = isDark ? "#f2f2f7" : "#1c1c1e";
-    const secondaryText = "#8e8e93";
-    const dimText = isDark ? "#636366" : "#c7c7cc";
-    const borderColor = isDark ? "rgba(255,255,255,0.1)" : "#e5e5ea";
-    const scanBtnBg = isDark ? "#2c2c2e" : "#fff";
-
+    const theme = themeImport.getTheme(isDark);
     return (
       <div
         style={{
           minHeight: "100vh",
-          background: bg,
+          background: theme.bg,
+          backgroundImage: theme.bgGradient,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           padding: "24px",
-          gap: "20px",
+          gap: "16px",
+          fontFamily: themeImport.FONT_STACK,
         }}
       >
         <div
           style={{
-            background: cardBg,
-            borderRadius: "24px",
+            ...themeImport.glassStyle(theme),
             padding: "40px 32px",
             textAlign: "center",
             maxWidth: "400px",
             width: "100%",
-            boxShadow: isDark
-              ? "0 2px 20px rgba(0,0,0,0.4)"
-              : "0 2px 20px rgba(0,0,0,0.06)",
           }}
         >
           <div style={{ fontSize: "56px", marginBottom: "16px" }}>⚠️</div>
@@ -212,8 +205,9 @@ export default function App() {
             style={{
               fontSize: "22px",
               fontWeight: "700",
-              color: primaryText,
+              color: theme.primary,
               marginBottom: "10px",
+              letterSpacing: "-0.02em",
             }}
           >
             Analysis Failed
@@ -221,7 +215,7 @@ export default function App() {
           <p
             style={{
               fontSize: "15px",
-              color: secondaryText,
+              color: theme.secondary,
               lineHeight: 1.6,
               marginBottom: "8px",
             }}
@@ -233,7 +227,7 @@ export default function App() {
             <p
               style={{
                 fontSize: "13px",
-                color: dimText,
+                color: theme.tertiary,
                 marginBottom: "24px",
                 fontFamily: "monospace",
               }}
@@ -252,11 +246,13 @@ export default function App() {
                   padding: "16px",
                   borderRadius: "14px",
                   border: "none",
-                  background: "#34c759",
-                  color: "#fff",
-                  fontSize: "16px",
-                  fontWeight: "600",
+                  background: theme.gradeGradient,
+                  color: theme.btnText,
+                  fontSize: "15px",
+                  fontWeight: "700",
                   cursor: "pointer",
+                  boxShadow: theme.ctaShadow,
+                  fontFamily: themeImport.FONT_STACK,
                 }}
               >
                 Try Again
@@ -268,12 +264,13 @@ export default function App() {
                 width: "100%",
                 padding: "16px",
                 borderRadius: "14px",
-                border: `1px solid ${borderColor}`,
-                background: scanBtnBg,
-                color: primaryText,
-                fontSize: "16px",
+                border: `1px solid ${theme.glassBorder}`,
+                background: theme.ingredientBg,
+                color: theme.primary,
+                fontSize: "15px",
                 fontWeight: "600",
                 cursor: "pointer",
+                fontFamily: themeImport.FONT_STACK,
               }}
             >
               Scan Different Product
@@ -283,9 +280,10 @@ export default function App() {
 
         <p
           style={{
-            fontSize: "13px",
-            color: secondaryText,
+            fontSize: "12px",
+            color: theme.tertiary,
             textAlign: "center",
+            letterSpacing: "0.02em",
           }}
         >
           Make sure the backend is running at localhost:8000

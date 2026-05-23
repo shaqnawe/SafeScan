@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SafeScan — Playful</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Quicksand", "Nunito", -apple-system, system-ui, sans-serif;
+    background: #fff7ed;
+    color: #1f2937;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(at 100% 0%, rgba(252,211,77,0.4) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(196,181,253,0.3) 0px, transparent 50%);
+    min-height: 100vh;
+  }
+  .container { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; background: #fff; border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    margin-bottom: 20px;
+  }
+  .logo-emoji { font-size: 24px; }
+  .logo-text { font-weight: 800; font-size: 18px; }
+  .product-card {
+    background: #fff; border-radius: 28px; padding: 28px 24px;
+    text-align: center; margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    border: 3px solid #fff;
+    position: relative; overflow: hidden;
+  }
+  .product-emoji {
+    font-size: 64px; line-height: 1;
+    display: inline-block; margin-bottom: 12px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .product-brand { font-size: 12px; color: #fb923c; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+  .product-name { font-size: 22px; font-weight: 800; margin: 4px 0 20px; color: #1f2937; }
+  .grade-bubble {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff;
+    padding: 12px 24px 12px 16px; border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(245,158,11,0.3);
+  }
+  .grade-bubble .letter { font-size: 36px; font-weight: 900; line-height: 1; }
+  .grade-bubble .score { font-size: 14px; font-weight: 700; opacity: 0.95; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; }
+  .stat {
+    padding: 14px 8px; border-radius: 18px; text-align: center;
+  }
+  .stat.safe { background: #d1fae5; }
+  .stat.caution { background: #fef3c7; }
+  .stat.avoid { background: #fee2e2; }
+  .stat .emoji { font-size: 24px; }
+  .stat .num { font-size: 20px; font-weight: 800; line-height: 1.2; }
+  .stat .label { font-size: 11px; font-weight: 700; opacity: 0.7; }
+  .card {
+    background: #fff; border-radius: 24px; padding: 20px 24px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+  h2 {
+    font-size: 16px; font-weight: 800; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2 .emoji { font-size: 22px; }
+  .summary { font-size: 14px; color: #374151; }
+  .pill-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pill.good { background: #d1fae5; color: #065f46; }
+  .pill.bad { background: #fee2e2; color: #991b1b; }
+  .ingredient-list { display: grid; gap: 8px; }
+  .ingredient {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border-radius: 16px;
+  }
+  .ingredient.safe { background: #ecfdf5; }
+  .ingredient.caution { background: #fffbeb; }
+  .ingredient.avoid { background: #fef2f2; }
+  .ingredient .emoji { font-size: 18px; }
+  .ingredient .name { flex: 1; font-weight: 700; font-size: 14px; }
+  .ingredient .tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ingredient.safe .tag { color: #065f46; }
+  .ingredient.caution .tag { color: #92400e; }
+  .ingredient.avoid .tag { color: #991b1b; }
+  .cta-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 14px 16px;
+  }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; max-width: 432px; margin: 0 auto;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff;
+    border: none; padding: 18px; border-radius: 999px;
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <span class="logo-emoji">🛡️</span>
+      <span class="logo-text">SafeScan</span>
+    </div>
+
+    <div class="product-card">
+      <div class="product-emoji">🍫</div>
+      <div class="product-brand">Ferrero</div>
+      <div class="product-name">Nutella Hazelnut Spread</div>
+      <div class="grade-bubble">
+        <span class="letter">C</span>
+        <span class="score">42 / 100 ⚠️</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat safe"><div class="emoji">😊</div><div class="num">3</div><div class="label">Safe</div></div>
+        <div class="stat caution"><div class="emoji">😐</div><div class="num">3</div><div class="label">Watch</div></div>
+        <div class="stat avoid"><div class="emoji">⛔</div><div class="num">0</div><div class="label">Avoid</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="emoji">💬</span>The Scoop</h2>
+      <div class="summary">Tasty, but ultra-processed. High sugar and palm oil. Fine as a treat, not great as a daily staple!</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="emoji">✨</span>Good Stuff</h2>
+      <div class="pill-grid">
+        <span class="pill good">👍 No artificial preservatives</span>
+        <span class="pill good">🌰 Real hazelnuts</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="emoji">🚨</span>Heads Up</h2>
+      <div class="pill-grid">
+        <span class="pill bad">⚠️ Ultra-processed</span>
+        <span class="pill bad">🌴 Palm oil</span>
+        <span class="pill bad">📉 Nutri-Score E</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="emoji">🧪</span>What's Inside</h2>
+      <div class="ingredient-list">
+        <div class="ingredient caution"><span class="emoji">🍬</span><span class="name">Sugar</span><span class="tag">Watch</span></div>
+        <div class="ingredient caution"><span class="emoji">🌴</span><span class="name">Palm oil</span><span class="tag">Watch</span></div>
+        <div class="ingredient safe"><span class="emoji">🌰</span><span class="name">Hazelnuts</span><span class="tag">Safe</span></div>
+        <div class="ingredient safe"><span class="emoji">🥛</span><span class="name">Skimmed milk powder</span><span class="tag">Safe</span></div>
+        <div class="ingredient safe"><span class="emoji">🫘</span><span class="name">Soy lecithin (E322)</span><span class="tag">Safe</span></div>
+        <div class="ingredient caution"><span class="emoji">🧪</span><span class="name">Vanillin</span><span class="tag">Watch</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-bar">
+    <button class="btn">📷 Scan Another</button>
+  </div>
+</body>
+</html>

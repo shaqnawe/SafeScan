@@ -1,4 +1,5 @@
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
+import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface HistoryPageProps {
   history: ScanHistoryEntry[]
@@ -9,15 +10,17 @@ interface HistoryPageProps {
 }
 
 const GRADE_COLOR: Record<string, string> = {
-  A: '#34c759', B: '#a3d977', C: '#ff9f0a', D: '#ff3b30', E: '#9c2b2b',
+  A: '#22c55e', B: '#84cc16', C: '#f59e0b', D: '#ef4444'
 }
 
 const GRADE_BG_LIGHT: Record<string, string> = {
-  A: '#e8f8ed', B: '#f0f7e6', C: '#fff4e0', D: '#ffe8e6', E: '#f5e0e0',
+  A: 'rgba(34,197,94,0.12)',  B: 'rgba(132,204,22,0.12)',
+  C: 'rgba(245,158,11,0.12)', D: 'rgba(239,68,68,0.12)',
 }
 
 const GRADE_BG_DARK: Record<string, string> = {
-  A: '#0d3320', B: '#1e3310', C: '#332500', D: '#330d0a', E: '#2e1515',
+  A: 'rgba(34,197,94,0.15)',  B: 'rgba(132,204,22,0.15)',
+  C: 'rgba(245,158,11,0.15)', D: 'rgba(239,68,68,0.15)',
 }
 
 function timeAgo(iso: string): string {
@@ -32,25 +35,31 @@ function timeAgo(iso: string): string {
 }
 
 export default function HistoryPage({ history, onBack, onRescan, onClear, isDark = false }: HistoryPageProps) {
-  const bg        = isDark ? '#000'     : '#f5f5f7'
-  const cardBg    = isDark ? '#1c1c1e'  : '#fff'
-  const headerBg  = isDark ? '#1c1c1e'  : '#fff'
-  const primary   = isDark ? '#f2f2f7'  : '#1c1c1e'
-  const secondary = '#8e8e93'
-  const border    = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
-  const shadow    = isDark ? '0 1px 6px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)'
-  const backBg    = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
+  const theme = getTheme(isDark)
+  const primary   = theme.primary
+  const secondary = theme.tertiary
+  const backBg    = theme.ingredientBg
 
   return (
-    <div style={{ minHeight: '100vh', background: bg }}>
+    <div style={{
+      minHeight: '100vh',
+      background: theme.bg,
+      backgroundImage: theme.bgGradient,
+      color: theme.primary,
+      fontFamily: FONT_STACK,
+    }}>
       {/* Header */}
       <div style={{
-        background: headerBg,
-        borderBottom: `1px solid ${border}`,
+        ...glassStyle(theme),
+        borderRadius: 0,
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderTop: 'none',
         padding: '20px 20px 16px',
         position: 'sticky',
         top: 0,
         zIndex: 10,
+        boxShadow: 'none',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <button
@@ -90,8 +99,8 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
                 background: 'none',
                 border: 'none',
                 fontSize: '14px',
-                fontWeight: '500',
-                color: '#ff3b30',
+                fontWeight: '600',
+                color: theme.red,
                 cursor: 'pointer',
                 padding: '4px 0',
               }}
@@ -125,11 +134,13 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
               padding: '14px 32px',
               borderRadius: '14px',
               border: 'none',
-              background: '#34c759',
-              color: '#fff',
+              background: theme.gradeGradient,
+              color: theme.btnText,
               fontSize: '15px',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: 'pointer',
+              boxShadow: theme.ctaShadow,
+              fontFamily: FONT_STACK,
             }}
           >
             Start Scanning
@@ -155,17 +166,17 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
                 key={entry.barcode + entry.scanned_at}
                 onClick={() => onRescan(entry.barcode)}
                 style={{
+                  ...glassStyle(theme),
                   display: 'flex',
                   alignItems: 'center',
                   gap: '14px',
-                  background: cardBg,
-                  borderRadius: '16px',
+                  borderRadius: 18,
                   padding: '14px',
-                  border: 'none',
                   cursor: 'pointer',
-                  boxShadow: shadow,
                   textAlign: 'left',
                   width: '100%',
+                  color: theme.primary,
+                  fontFamily: FONT_STACK,
                 }}
               >
                 {/* Thumbnail */}
@@ -173,7 +184,8 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
                   width: '56px',
                   height: '56px',
                   borderRadius: '12px',
-                  background: isDark ? '#2c2c2e' : '#f5f5f7',
+                  background: theme.ingredientBg,
+                  border: `1px solid ${theme.glassBorder}`,
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getSubmissions } from '../api'
 import type { UserSubmission, SafetyReport } from '../types'
+import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface SubmissionsPageProps {
   onBack:      () => void
@@ -9,10 +10,10 @@ interface SubmissionsPageProps {
 }
 
 const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   color: '#8e8e93', bg: 'rgba(142,142,147,0.15)', emoji: '⏳' },
-  analyzing: { label: 'Analyzing', color: '#ff9f0a', bg: 'rgba(255,159,10,0.15)',  emoji: '🔄' },
-  complete:  { label: 'Complete',  color: '#34c759', bg: 'rgba(52,199,89,0.15)',   emoji: '✅' },
-  failed:    { label: 'Failed',    color: '#ff3b30', bg: 'rgba(255,59,48,0.15)',   emoji: '❌' },
+  pending:   { label: 'Pending',   color: '#71717a', bg: 'rgba(113,113,122,0.15)', emoji: '⏳' },
+  analyzing: { label: 'Analyzing', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  emoji: '🔄' },
+  complete:  { label: 'Complete',  color: '#22c55e', bg: 'rgba(34,197,94,0.15)',   emoji: '✅' },
+  failed:    { label: 'Failed',    color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   emoji: '❌' },
 }
 
 function timeAgo(iso: string | null): string {
@@ -28,21 +29,33 @@ function timeAgo(iso: string | null): string {
 }
 
 const GRADE_COLOR: Record<string, string> = {
-  A: '#34c759', B: '#a3d977', C: '#ff9f0a', D: '#ff3b30', E: '#9c2b2b',
+  A: '#22c55e', B: '#84cc16', C: '#f59e0b', D: '#ef4444'
 }
 
 export default function SubmissionsPage({ onBack, onViewReport, isDark = false }: SubmissionsPageProps) {
   const [submissions, setSubmissions] = useState<UserSubmission[]>([])
   const [loading,     setLoading]     = useState(true)
 
-  const bg        = isDark ? '#000'    : '#f5f5f7'
-  const headerBg  = isDark ? '#1c1c1e' : '#fff'
-  const cardBg    = isDark ? '#1c1c1e' : '#fff'
-  const primary   = isDark ? '#f2f2f7' : '#1c1c1e'
-  const secondary = '#8e8e93'
-  const border    = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
-  const shadow    = isDark ? '0 1px 6px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)'
-  const backBg    = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
+  const theme     = getTheme(isDark)
+  const primary   = theme.primary
+  const secondary = theme.tertiary
+  const border    = theme.glassBorder
+  const backBg    = theme.ingredientBg
+  const headerStyle: React.CSSProperties = {
+    ...glassStyle(theme),
+    borderRadius: 0,
+    borderLeft: 'none',
+    borderRight: 'none',
+    borderTop: 'none',
+    boxShadow: 'none',
+  }
+  const rootStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    background: theme.bg,
+    backgroundImage: theme.bgGradient,
+    color: theme.primary,
+    fontFamily: FONT_STACK,
+  }
 
   const load = useCallback(async () => {
     try {
@@ -68,10 +81,10 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
   }, [submissions, load])
 
   return (
-    <div style={{ minHeight: '100vh', background: bg }}>
+    <div style={rootStyle}>
       {/* Header */}
       <div style={{
-        background: headerBg, borderBottom: `1px solid ${border}`,
+        ...headerStyle,
         padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -120,12 +133,12 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
               key={sub.id}
               onClick={() => report && onViewReport(report as SafetyReport)}
               style={{
-                background: cardBg,
+                ...glassStyle(theme),
                 borderRadius: '16px',
                 padding: '16px',
-                boxShadow: shadow,
+                boxShadow: theme.glassShadow,
                 cursor: report ? 'pointer' : 'default',
-                border: `1px solid ${report ? 'rgba(52,199,89,0.3)' : border}`,
+                border: `1px solid ${report ? `${theme.accent}66` : border}`,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -133,8 +146,8 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
                 <div style={{
                   width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0,
                   background: report
-                    ? (isDark ? 'rgba(52,199,89,0.15)' : '#e8f8ed')
-                    : (isDark ? '#2c2c2e' : '#f0f0f5'),
+                    ? theme.greenSoft
+                    : theme.ingredientBg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: report ? '20px' : '22px',
                   fontWeight: '800',
@@ -173,21 +186,21 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
 
                   {/* Analyzing pulse */}
                   {sub.status === 'analyzing' && (
-                    <p style={{ fontSize: '12px', color: '#ff9f0a', marginTop: '6px' }}>
+                    <p style={{ fontSize: '12px', color: '#f59e0b', marginTop: '6px' }}>
                       Analysis in progress — check back in a moment
                     </p>
                   )}
 
                   {/* Error */}
                   {sub.status === 'failed' && sub.error && (
-                    <p style={{ fontSize: '12px', color: '#ff3b30', marginTop: '6px' }}>
+                    <p style={{ fontSize: '12px', color: theme.red, marginTop: '6px' }}>
                       {sub.error.slice(0, 80)}
                     </p>
                   )}
 
                   {/* Tap hint */}
                   {sub.status === 'complete' && report && (
-                    <p style={{ fontSize: '12px', color: '#34c759', marginTop: '6px' }}>
+                    <p style={{ fontSize: '12px', color: theme.green, marginTop: '6px' }}>
                       Tap to view safety report →
                     </p>
                   )}

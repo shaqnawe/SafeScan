@@ -59,7 +59,7 @@ export interface SafetyReport {
   barcode: string
   image_url?: string | null
   score: number
-  grade: 'A' | 'B' | 'C' | 'D' | 'E'
+  grade: 'A' | 'B' | 'C' | 'D'
   summary: string
   ingredients_analysis: IngredientAnalysis[]
   positive_points: string[]

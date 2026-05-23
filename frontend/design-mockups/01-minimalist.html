@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SafeScan — Minimalist</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+    background: #fafafa;
+    color: #111;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 480px; margin: 0 auto; padding: 32px 24px 96px; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 32px; font-size: 13px; color: #888;
+  }
+  .topbar .brand { font-weight: 600; color: #111; letter-spacing: -0.01em; }
+  .product { margin-bottom: 40px; }
+  .product .brand { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .product .name { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .grade-block {
+    display: flex; align-items: baseline; gap: 16px;
+    padding: 32px 0; border-bottom: 1px solid #eee;
+  }
+  .grade { font-size: 88px; font-weight: 300; letter-spacing: -0.06em; line-height: 1; }
+  .grade.C { color: #d97706; }
+  .score-info .score { font-size: 32px; font-weight: 400; letter-spacing: -0.02em; }
+  .score-info .label { font-size: 13px; color: #888; margin-top: 2px; }
+  .summary { padding: 24px 0; font-size: 15px; color: #444; border-bottom: 1px solid #eee; }
+  .section { padding: 24px 0; border-bottom: 1px solid #eee; }
+  .section h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #888; font-weight: 600; margin-bottom: 16px;
+  }
+  .point { display: flex; gap: 12px; padding: 8px 0; font-size: 14px; color: #333; }
+  .point .marker { color: #888; font-weight: 600; flex-shrink: 0; }
+  .point.neg .marker { color: #d97706; }
+  .ingredient { display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px; border-bottom: 1px solid #f4f4f4; }
+  .ingredient:last-child { border-bottom: none; }
+  .ingredient .level { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 3px; }
+  .level.safe { color: #555; }
+  .level.caution { color: #d97706; }
+  .level.avoid { color: #b91c1c; }
+  .actions { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: #fafafa; border-top: 1px solid #eee; }
+  .btn {
+    display: block; width: 100%; max-width: 432px; margin: 0 auto;
+    padding: 14px; font-size: 15px; font-weight: 500;
+    background: #111; color: #fff; border: none; border-radius: 8px;
+    cursor: pointer; letter-spacing: -0.01em;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <span class="brand">SafeScan</span>
+      <span>Scanned just now</span>
+    </div>
+
+    <div class="product">
+      <div class="brand">Ferrero</div>
+      <div class="name">Nutella Hazelnut Spread</div>
+    </div>
+
+    <div class="grade-block">
+      <div class="grade C">C</div>
+      <div class="score-info">
+        <div class="score">42<span style="font-size:18px;color:#888;">/100</span></div>
+        <div class="label">Safety score</div>
+      </div>
+    </div>
+
+    <div class="summary">
+      Ultra-processed food (NOVA 4) with high sugar and palm oil content. Contains soy lecithin and artificial vanillin. No banned substances.
+    </div>
+
+    <div class="section">
+      <h3>What's good</h3>
+      <div class="point"><span class="marker">+</span><span>No artificial preservatives</span></div>
+      <div class="point"><span class="marker">+</span><span>Contains hazelnuts and skimmed milk</span></div>
+    </div>
+
+    <div class="section">
+      <h3>Concerns</h3>
+      <div class="point neg"><span class="marker">!</span><span>Ultra-processed (NOVA 4) — high level of industrial processing</span></div>
+      <div class="point neg"><span class="marker">!</span><span>Palm oil — environmental concerns</span></div>
+      <div class="point neg"><span class="marker">!</span><span>Nutri-Score E — very poor nutritional quality</span></div>
+    </div>
+
+    <div class="section">
+      <h3>Ingredients</h3>
+      <div class="ingredient"><span>Sugar</span><span class="level caution">caution</span></div>
+      <div class="ingredient"><span>Palm oil</span><span class="level caution">caution</span></div>
+      <div class="ingredient"><span>Hazelnuts</span><span class="level safe">safe</span></div>
+      <div class="ingredient"><span>Skimmed milk powder</span><span class="level safe">safe</span></div>
+      <div class="ingredient"><span>Soy lecithin (E322)</span><span class="level safe">safe</span></div>
+      <div class="ingredient"><span>Vanillin</span><span class="level caution">caution</span></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn">Scan another product</button>
+  </div>
+</body>
+</html>

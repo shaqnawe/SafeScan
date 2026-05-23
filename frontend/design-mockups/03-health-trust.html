@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SafeScan — Health & Trust</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Nunito", -apple-system, system-ui, sans-serif;
+    background: #f0fdf4;
+    color: #14532d;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .header {
+    background: #fff; padding: 16px 24px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid #dcfce7;
+  }
+  .logo {
+    width: 36px; height: 36px; border-radius: 12px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    display: grid; place-items: center; color: #fff; font-weight: 800;
+  }
+  .header .title { font-weight: 700; }
+  .container { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
+  .card {
+    background: #fff; border-radius: 20px;
+    padding: 24px; margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(20,83,45,0.06);
+  }
+  .product-card { text-align: center; padding: 32px 24px; }
+  .product-brand { font-size: 13px; color: #15803d; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .product-name { font-size: 22px; font-weight: 800; color: #14532d; margin: 8px 0 24px; }
+  .grade-circle {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: conic-gradient(#f59e0b 0% 42%, #fef3c7 42% 100%);
+    display: grid; place-items: center; margin: 0 auto;
+    position: relative;
+  }
+  .grade-circle::before {
+    content: ""; position: absolute; inset: 12px;
+    background: #fff; border-radius: 50%;
+  }
+  .grade-inner { position: relative; text-align: center; }
+  .grade-letter { font-size: 56px; font-weight: 900; color: #d97706; line-height: 1; }
+  .grade-score { font-size: 13px; color: #6b7280; font-weight: 600; margin-top: 4px; }
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+  .stat { padding: 12px; border-radius: 14px; background: #f0fdf4; text-align: center; }
+  .stat .num { font-size: 22px; font-weight: 800; color: #14532d; }
+  .stat .label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+  .stat.warn .num { color: #d97706; } .stat.warn { background: #fffbeb; }
+  .stat.bad .num { color: #b91c1c; } .stat.bad { background: #fef2f2; }
+  h2 { font-size: 16px; font-weight: 800; margin-bottom: 16px; color: #14532d; display: flex; align-items: center; gap: 8px; }
+  h2 .icon { width: 24px; height: 24px; border-radius: 8px; background: #dcfce7; display: grid; place-items: center; font-size: 14px; }
+  .summary { font-size: 15px; color: #166534; }
+  .checklist { list-style: none; }
+  .checklist li { padding: 10px 0; display: flex; gap: 12px; align-items: flex-start; font-size: 14px; border-bottom: 1px solid #f0fdf4; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li .icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .checklist li.pos .icon { background: #22c55e; }
+  .checklist li.neg .icon { background: #f59e0b; }
+  .ingredient-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #f0fdf4;
+  }
+  .ingredient-row:last-child { border-bottom: none; }
+  .ingredient-row .name { flex: 1; font-weight: 600; }
+  .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .badge.safe { background: #dcfce7; color: #166534; }
+  .badge.caution { background: #fef3c7; color: #92400e; }
+  .badge.avoid { background: #fee2e2; color: #991b1b; }
+  .cta-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #dcfce7;
+    padding: 12px 16px;
+  }
+  .btn {
+    display: block; width: 100%; max-width: 432px; margin: 0 auto;
+    background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff;
+    border: none; padding: 16px; border-radius: 14px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">S</div>
+    <div class="title">SafeScan</div>
+  </div>
+
+  <div class="container">
+    <div class="card product-card">
+      <div class="product-brand">Ferrero</div>
+      <div class="product-name">Nutella Hazelnut Spread</div>
+      <div class="grade-circle">
+        <div class="grade-inner">
+          <div class="grade-letter">C</div>
+          <div class="grade-score">42 / 100</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num">3</div><div class="label">Safe</div></div>
+        <div class="stat warn"><div class="num">3</div><div class="label">Caution</div></div>
+        <div class="stat bad"><div class="num">0</div><div class="label">Avoid</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">📋</span>Summary</h2>
+      <div class="summary">
+        Ultra-processed food (NOVA 4) with high sugar and palm oil content. Contains soy lecithin and artificial vanillin. No banned substances.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">✅</span>What's Good</h2>
+      <ul class="checklist">
+        <li class="pos"><span class="icon">✓</span><span>No artificial preservatives</span></li>
+        <li class="pos"><span class="icon">✓</span><span>Contains hazelnuts and skimmed milk</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">⚠️</span>Watch Out For</h2>
+      <ul class="checklist">
+        <li class="neg"><span class="icon">!</span><span>Ultra-processed (NOVA 4)</span></li>
+        <li class="neg"><span class="icon">!</span><span>Palm oil — environmental concerns</span></li>
+        <li class="neg"><span class="icon">!</span><span>Nutri-Score E — very poor nutritional quality</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">🧪</span>Ingredients</h2>
+      <div class="ingredient-row"><span class="name">Sugar</span><span class="badge caution">Caution</span></div>
+      <div class="ingredient-row"><span class="name">Palm oil</span><span class="badge caution">Caution</span></div>
+      <div class="ingredient-row"><span class="name">Hazelnuts</span><span class="badge safe">Safe</span></div>
+      <div class="ingredient-row"><span class="name">Skimmed milk powder</span><span class="badge safe">Safe</span></div>
+      <div class="ingredient-row"><span class="name">Soy lecithin (E322)</span><span class="badge safe">Safe</span></div>
+      <div class="ingredient-row"><span class="name">Vanillin</span><span class="badge caution">Caution</span></div>
+    </div>
+  </div>
+
+  <div class="cta-bar">
+    <button class="btn">📷 Scan Another Product</button>
+  </div>
+</body>
+</html>

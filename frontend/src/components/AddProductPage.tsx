@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { submitProduct } from '../api'
 import type { SubmissionResult } from '../types'
+import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface AddProductPageProps {
   onBack:      () => void
@@ -24,16 +25,31 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
   const productInputRef     = useRef<HTMLInputElement>(null)
   const ingredientsInputRef = useRef<HTMLInputElement>(null)
 
-  const bg         = isDark ? '#000'     : '#f5f5f7'
-  const headerBg   = isDark ? '#1c1c1e'  : '#fff'
-  const cardBg     = isDark ? '#1c1c1e'  : '#fff'
-  const primary    = isDark ? '#f2f2f7'  : '#1c1c1e'
-  const secondary  = '#8e8e93'
-  const border     = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
-  const shadow     = isDark ? '0 1px 6px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)'
-  const backBg     = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
-  const inputBg    = isDark ? '#2c2c2e'  : '#f5f5f7'
-  const inputBorder = isDark ? 'rgba(255,255,255,0.1)' : '#e5e5ea'
+  const theme      = getTheme(isDark)
+  const primary    = theme.primary
+  const secondary  = theme.tertiary
+  const backBg     = theme.ingredientBg
+  const inputBg    = theme.ingredientBg
+  const inputBorder = theme.glassBorder
+  const headerStyle: React.CSSProperties = {
+    ...glassStyle(theme),
+    borderRadius: 0,
+    borderLeft: 'none',
+    borderRight: 'none',
+    borderTop: 'none',
+    boxShadow: 'none',
+  }
+  const cardStyle: React.CSSProperties = {
+    ...glassStyle(theme),
+    borderRadius: 18,
+  }
+  const rootStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    background: theme.bg,
+    backgroundImage: theme.bgGradient,
+    color: theme.primary,
+    fontFamily: FONT_STACK,
+  }
 
   const canSubmit = productFile || ingredientsFile || barcode.trim() || manualIngredients.trim()
 
@@ -76,16 +92,16 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         onClick={() => inputRef.current?.click()}
         style={{
           flex: 1,
-          background: cardBg,
+          ...cardStyle,
           borderRadius: '16px',
           padding: '16px',
-          boxShadow: shadow,
+          boxShadow: theme.glassShadow,
           cursor: 'pointer',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: '10px',
-          border: file ? '2px solid #34c759' : `2px dashed ${inputBorder}`,
+          border: file ? `2px solid ${theme.accent}` : `2px dashed ${inputBorder}`,
         }}
       >
         <input
@@ -105,14 +121,14 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         ) : (
           <div style={{
             width: '64px', height: '64px', borderRadius: '12px',
-            background: isDark ? '#2c2c2e' : '#f0f0f5',
+            background: theme.ingredientBg,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px',
           }}>
             {emoji}
           </div>
         )}
-        <p style={{ fontSize: '13px', fontWeight: '600', color: file ? '#34c759' : secondary, textAlign: 'center' }}>
+        <p style={{ fontSize: '13px', fontWeight: '600', color: file ? theme.accent : secondary, textAlign: 'center' }}>
           {file ? file.name.slice(0, 20) : label}
         </p>
       </div>
@@ -125,9 +141,9 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
     const barcodeFinal = product.barcode || barcode.trim()
 
     return (
-      <div style={{ minHeight: '100vh', background: bg }}>
+      <div style={rootStyle}>
         <div style={{
-          background: headerBg, borderBottom: `1px solid ${border}`,
+          ...headerStyle,
           padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10,
         }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -143,7 +159,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
 
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Product info */}
-          <div style={{ background: cardBg, borderRadius: '18px', padding: '18px', boxShadow: shadow }}>
+          <div style={{ ...cardStyle, padding: '20px' }}>
             <h2 style={{ fontSize: '13px', fontWeight: '600', color: secondary, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
               Extracted Product
             </h2>
@@ -168,7 +184,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
 
           {/* Ingredients */}
           {ingredients.length > 0 && (
-            <div style={{ background: cardBg, borderRadius: '18px', padding: '18px', boxShadow: shadow }}>
+            <div style={{ ...cardStyle, padding: '20px' }}>
               <h2 style={{ fontSize: '13px', fontWeight: '600', color: secondary, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
                 {ingredients.length} Ingredients Parsed
               </h2>
@@ -177,9 +193,9 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
                   <span key={i} style={{
                     fontSize: '12px', padding: '4px 10px', borderRadius: '20px',
                     background: ing.is_allergen
-                      ? (isDark ? '#330d0a' : '#ffe8e6')
-                      : (isDark ? '#2c2c2e' : '#f0f0f5'),
-                    color: ing.is_allergen ? '#ff3b30' : secondary,
+                      ? theme.redSoft
+                      : theme.ingredientBg,
+                    color: ing.is_allergen ? theme.red : secondary,
                   }}>
                     {ing.name}
                   </span>
@@ -197,15 +213,15 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
               onClick={() => onAnalyze(barcodeFinal)}
               style={{
                 width: '100%', padding: '16px', borderRadius: '16px', border: 'none',
-                background: '#34c759', color: '#fff', fontSize: '16px', fontWeight: '600', cursor: 'pointer',
+                background: theme.gradeGradient, color: theme.btnText, fontSize: '16px', fontWeight: '600', cursor: 'pointer',
               }}
             >
               Analyze Safety Now
             </button>
           ) : (
             <div style={{
-              background: cardBg, borderRadius: '16px', padding: '16px',
-              boxShadow: shadow, textAlign: 'center',
+              ...cardStyle, padding: '16px',
+              boxShadow: theme.glassShadow, textAlign: 'center',
             }}>
               <p style={{ fontSize: '14px', color: secondary }}>
                 {barcodeFinal
@@ -228,7 +244,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
                     onClick={() => barcode.trim() && onAnalyze(barcode.trim())}
                     style={{
                       padding: '12px 16px', borderRadius: '12px', border: 'none',
-                      background: '#34c759', color: '#fff', fontWeight: '600', cursor: 'pointer',
+                      background: theme.gradeGradient, color: theme.btnText, fontWeight: '600', cursor: 'pointer',
                     }}
                   >
                     Go
@@ -255,10 +271,10 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
 
   // ── Form screen ───────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: bg }}>
+    <div style={rootStyle}>
       {/* Header */}
       <div style={{
-        background: headerBg, borderBottom: `1px solid ${border}`,
+        ...headerStyle,
         padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -296,13 +312,13 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         </div>
 
         {/* Manual ingredients */}
-        <div style={{ background: cardBg, borderRadius: '16px', padding: '16px', boxShadow: shadow }}>
+        <div style={{ ...cardStyle, padding: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <p style={{ fontSize: '13px', fontWeight: '600', color: secondary }}>
               Ingredients (manual)
             </p>
             {manualIngredients.trim() && (
-              <span style={{ fontSize: '12px', color: '#34c759', fontWeight: '600' }}>
+              <span style={{ fontSize: '12px', color: theme.accent, fontWeight: '600' }}>
                 {manualIngredients.split(/[,\n;]+/).filter(s => s.trim()).length} entered
               </span>
             )}
@@ -333,7 +349,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         </div>
 
         {/* Barcode */}
-        <div style={{ background: cardBg, borderRadius: '16px', padding: '16px', boxShadow: shadow }}>
+        <div style={{ ...cardStyle, padding: '16px' }}>
           <p style={{ fontSize: '13px', fontWeight: '600', color: secondary, marginBottom: '10px' }}>
             Barcode (optional — extracted from photo if not provided)
           </p>
@@ -352,7 +368,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         </div>
 
         {/* Product type */}
-        <div style={{ background: cardBg, borderRadius: '16px', padding: '16px', boxShadow: shadow }}>
+        <div style={{ ...cardStyle, padding: '16px' }}>
           <p style={{ fontSize: '13px', fontWeight: '600', color: secondary, marginBottom: '10px' }}>
             Product Type
           </p>
@@ -363,8 +379,8 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
                 onClick={() => setProductType(t)}
                 style={{
                   flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                  background: productType === t ? '#34c759' : (isDark ? '#2c2c2e' : '#f0f0f5'),
-                  color: productType === t ? '#fff' : primary,
+                  background: productType === t ? theme.gradeGradient : theme.ingredientBg,
+                  color: productType === t ? theme.btnText : primary,
                   fontSize: '14px', fontWeight: '600', cursor: 'pointer', textTransform: 'capitalize',
                 }}
               >
@@ -375,7 +391,7 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         </div>
 
         {pageState === 'error' && (
-          <p style={{ fontSize: '14px', color: '#ff3b30', textAlign: 'center' }}>{errorMsg}</p>
+          <p style={{ fontSize: '14px', color: theme.red, textAlign: 'center' }}>{errorMsg}</p>
         )}
 
         {/* Submit */}
@@ -384,8 +400,8 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
           disabled={!canSubmit || pageState === 'loading'}
           style={{
             width: '100%', padding: '16px', borderRadius: '16px', border: 'none',
-            background: canSubmit ? '#34c759' : (isDark ? '#2c2c2e' : '#e5e5ea'),
-            color: canSubmit ? '#fff' : secondary,
+            background: canSubmit ? theme.gradeGradient : theme.ingredientBg,
+            color: canSubmit ? theme.btnText : secondary,
             fontSize: '16px', fontWeight: '600',
             cursor: canSubmit ? 'pointer' : 'not-allowed',
           }}
