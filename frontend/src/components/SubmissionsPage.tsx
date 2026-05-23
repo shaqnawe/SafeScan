@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { getSubmissions } from '../api'
 import type { UserSubmission, SafetyReport } from '../types'
+import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface SubmissionsPageProps {
@@ -88,17 +90,26 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
         padding: '20px 20px 16px', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={onBack} style={{
+          <button onClick={onBack} className="press" style={{
             background: backBg, border: 'none', borderRadius: '50%',
-            width: '36px', height: '36px', cursor: 'pointer', fontSize: '16px', color: primary,
-          }}>←</button>
+            width: '36px', height: '36px', cursor: 'pointer', color: primary,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }} aria-label="Back">
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
+          </button>
           <span style={{ flex: 1, textAlign: 'center', fontSize: '17px', fontWeight: '700', color: primary }}>
             My Submissions
           </span>
-          <button onClick={load} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '18px', padding: '4px',
-          }}>↻</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button onClick={load} className="press" style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '4px', color: secondary,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }} aria-label="Refresh">
+              <RefreshCw size={16} strokeWidth={2} aria-hidden />
+            </button>
+            <ThemeToggle variant="icon" />
+          </div>
         </div>
       </div>
 

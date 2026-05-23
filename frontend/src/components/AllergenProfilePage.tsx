@@ -1,4 +1,6 @@
+import { ArrowLeft } from 'lucide-react'
 import { ALL_ALLERGENS } from '../hooks/useAllergenProfile'
+import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface AllergenProfilePageProps {
@@ -38,11 +40,14 @@ export default function AllergenProfilePage({
         position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={onBack} style={{
+          <button onClick={onBack} className="press" style={{
             background: backBg, border: 'none', borderRadius: '50%',
             width: '36px', height: '36px', cursor: 'pointer',
-            fontSize: '16px', color: primary, flexShrink: 0,
-          }}>←</button>
+            color: primary, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }} aria-label="Back">
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
+          </button>
 
           <span style={{
             flex: 1, textAlign: 'center',
@@ -51,15 +56,18 @@ export default function AllergenProfilePage({
             Allergen Profile
           </span>
 
-          {activeIds.length > 0 && (
-            <button onClick={onClear} style={{
-              background: 'none', border: 'none',
-              fontSize: '14px', fontWeight: '600',
-              color: theme.red, cursor: 'pointer', padding: '4px 0',
-            }}>
-              Clear
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {activeIds.length > 0 && (
+              <button onClick={onClear} style={{
+                background: 'none', border: 'none',
+                fontSize: '14px', fontWeight: '600',
+                color: theme.red, cursor: 'pointer', padding: '4px 0',
+              }}>
+                Clear
+              </button>
+            )}
+            <ThemeToggle variant="icon" />
+          </div>
         </div>
       </div>
 

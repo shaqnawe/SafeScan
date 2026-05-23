@@ -1,6 +1,8 @@
 import type { SafetyReport, IngredientAnalysis, RecallAlert } from '../types'
+import { ArrowLeft } from 'lucide-react'
 import { matchAllergens } from '../hooks/useAllergenProfile'
 import type { AllergenInfo } from '../hooks/useAllergenProfile'
+import ThemeToggle from './ThemeToggle'
 import {
   getTheme,
   gradeGradient,
@@ -300,6 +302,7 @@ export default function SafetyReportView({
         >
           <button
             onClick={onScanAgain}
+            className="press"
             style={{
               width: 36,
               height: 36,
@@ -310,13 +313,18 @@ export default function SafetyReportView({
               WebkitBackdropFilter: 'blur(20px)',
               color: theme.primary,
               cursor: 'pointer',
-              fontSize: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             aria-label="Back"
           >
-            ←
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
           </button>
-          <span style={{ fontSize: 12, color: theme.tertiary }}>Just now</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: theme.tertiary }}>Just now</span>
+            <ThemeToggle variant="icon" />
+          </div>
         </div>
 
         {/* Hero — product card */}

@@ -11,10 +11,12 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import SafetyReportView from "./components/SafetyReport";
 import SubmissionsPage from "./components/SubmissionsPage";
 import ComparisonPage from "./components/ComparisonPage";
-import { useDarkMode } from "./hooks/useDarkMode";
+import { useTheme } from "./hooks/useDarkMode";
 import { useScanHistory } from "./hooks/useScanHistory";
 import { useAllergenProfile } from "./hooks/useAllergenProfile";
 import AllergenProfilePage from "./components/AllergenProfilePage";
+import ThemeToggle from "./components/ThemeToggle";
+import { AlertTriangle } from "lucide-react";
 import type { SafetyReport } from "./types";
 import * as themeImport from "./theme";
 
@@ -35,7 +37,7 @@ export default function App() {
   const [report, setReport] = useState<SafetyReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [scannedBarcode, setScannedBarcode] = useState<string>("");
-  const isDark = useDarkMode();
+  const { isDark } = useTheme();
   const { history, addEntry, clearHistory } = useScanHistory();
   const { activeIds, activeAllergens, toggleAllergen, clearAll: clearAllergens } = useAllergenProfile();
 
@@ -189,8 +191,12 @@ export default function App() {
           padding: "24px",
           gap: "16px",
           fontFamily: themeImport.FONT_STACK,
+          position: "relative",
         }}
       >
+        <div style={{ position: "fixed", top: 20, right: 20, zIndex: 10 }}>
+          <ThemeToggle />
+        </div>
         <div
           style={{
             ...themeImport.glassStyle(theme),
@@ -200,7 +206,9 @@ export default function App() {
             width: "100%",
           }}
         >
-          <div style={{ fontSize: "56px", marginBottom: "16px" }}>⚠️</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px", color: theme.accent }}>
+            <AlertTriangle size={48} strokeWidth={1.75} aria-hidden />
+          </div>
           <h2
             style={{
               fontSize: "22px",

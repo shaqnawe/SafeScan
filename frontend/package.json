@@ -21,6 +21,7 @@
     "@capacitor/status-bar": "^8.0.2",
     "@zxing/browser": "^0.1.4",
     "@zxing/library": "^0.21.3",
+    "lucide-react": "^1.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-zxing": "^2.0.0"

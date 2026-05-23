@@ -1,4 +1,8 @@
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
+import {
+  HeartPulse, ScanLine, Dna, Apple, Sparkles, Wheat, Clock,
+} from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK, FONT_DISPLAY } from '../theme'
 
 interface HomePageProps {
@@ -12,17 +16,17 @@ interface HomePageProps {
 
 const FEATURES = [
   {
-    emoji: '🧬',
+    Icon:  Dna,
     title: 'Ingredient Analysis',
     desc:  '2M+ products cross-referenced against EU safety regulations',
   },
   {
-    emoji: '🍎',
+    Icon:  Apple,
     title: 'Food Safety',
     desc:  'Nutri-Score, NOVA processing level, additives and allergens',
   },
   {
-    emoji: '✨',
+    Icon:  Sparkles,
     title: 'Cosmetic Safety',
     desc:  'Parabens, endocrine disruptors, banned EU substances',
   },
@@ -50,8 +54,37 @@ export default function HomePage({
         overflowX: 'hidden',
         fontFamily: FONT_STACK,
         WebkitFontSmoothing: 'antialiased',
+        position: 'relative',
       }}
     >
+      {/* Anchor — giant ghosted wordmark behind the hero.
+          Sits below the logo tile, breaks the centered axis, extends into the gutters.
+          Pointer-events:none so it never intercepts taps. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 200,
+          left: '50%',
+          transform: 'translateX(-50%) rotate(-3deg)',
+          fontFamily: FONT_DISPLAY,
+          fontSize: 240,
+          fontWeight: 400,
+          fontStyle: 'italic',
+          fontVariationSettings: '"opsz" 144, "SOFT" 70',
+          letterSpacing: '-0.06em',
+          lineHeight: 0.85,
+          color: theme.primary,
+          opacity: isDark ? 0.035 : 0.05,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          zIndex: 0,
+        }}
+      >
+        SafeScan
+      </div>
+
       {/* Top-right pill buttons */}
       <div
         style={{
@@ -63,6 +96,8 @@ export default function HomePage({
           gap: 8,
         }}
       >
+        <ThemeToggle />
+
         <button
           onClick={onAllergenProfile}
           style={{
@@ -80,7 +115,7 @@ export default function HomePage({
             boxShadow: 'none',
           }}
         >
-          <span>🌾</span>
+          <Wheat size={15} strokeWidth={2} aria-hidden />
           <span>
             {activeAllergenCount > 0
               ? `${activeAllergenCount} allergen${activeAllergenCount !== 1 ? 's' : ''}`
@@ -105,7 +140,7 @@ export default function HomePage({
               boxShadow: 'none',
             }}
           >
-            <span>🕐</span>
+            <Clock size={15} strokeWidth={2} aria-hidden />
             <span>
               {history.length} scan{history.length !== 1 ? 's' : ''}
             </span>
@@ -128,7 +163,7 @@ export default function HomePage({
           margin: '0 auto',
         }}
       >
-        {/* Logo tile */}
+        {/* Logo tile — HeartPulse signals "health" / "safety analysis" */}
         <div
           className="fade-up stagger-1"
           style={{
@@ -138,12 +173,12 @@ export default function HomePage({
             background: theme.gradeGradient,
             display: 'grid',
             placeItems: 'center',
-            fontSize: 42,
             marginBottom: 24,
             boxShadow: theme.ctaShadow,
+            color: theme.btnText,
           }}
         >
-          🔍
+          <HeartPulse size={44} strokeWidth={2.25} aria-hidden />
         </div>
 
         {/* Wordmark — Fraunces display face, optical-size large, italic for character.
@@ -207,8 +242,8 @@ export default function HomePage({
             fontFamily: FONT_STACK,
           }}
         >
-          <span style={{ fontSize: 20 }}>📷</span>
-          <span>Start Scanning</span>
+          <ScanLine size={20} strokeWidth={2.25} aria-hidden />
+          <span>Scan a Product</span>
         </button>
 
         <p
@@ -261,11 +296,11 @@ export default function HomePage({
                 border: `1px solid ${theme.accent}40`,
                 display: 'grid',
                 placeItems: 'center',
-                fontSize: 22,
                 flexShrink: 0,
+                color: theme.accent,
               }}
             >
-              {f.emoji}
+              <f.Icon size={22} strokeWidth={2} aria-hidden />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p

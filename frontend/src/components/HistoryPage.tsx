@@ -1,4 +1,6 @@
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
+import { ArrowLeft, Search } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
 interface HistoryPageProps {
@@ -64,6 +66,8 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <button
             onClick={onBack}
+            className="press"
+            aria-label="Back"
             style={{
               background: backBg,
               border: 'none',
@@ -74,12 +78,11 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '16px',
               color: primary,
               flexShrink: 0,
             }}
           >
-            ←
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
           </button>
 
           <span style={{
@@ -92,22 +95,25 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
             Scan History
           </span>
 
-          {history.length > 0 && (
-            <button
-              onClick={onClear}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: theme.red,
-                cursor: 'pointer',
-                padding: '4px 0',
-              }}
-            >
-              Clear
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {history.length > 0 && (
+              <button
+                onClick={onClear}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: theme.red,
+                  cursor: 'pointer',
+                  padding: '4px 0',
+                }}
+              >
+                Clear
+              </button>
+            )}
+            <ThemeToggle variant="icon" />
+          </div>
         </div>
       </div>
 
@@ -122,7 +128,7 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
           gap: '12px',
           padding: '40px',
         }}>
-          <span style={{ fontSize: '56px' }}>🔍</span>
+          <Search size={56} strokeWidth={1.5} aria-hidden style={{ color: theme.tertiary }} />
           <p style={{ fontSize: '18px', fontWeight: '600', color: primary }}>No scans yet</p>
           <p style={{ fontSize: '14px', color: secondary, textAlign: 'center' }}>
             Products you scan will appear here
