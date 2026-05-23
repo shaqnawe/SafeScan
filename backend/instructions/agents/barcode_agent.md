@@ -4,6 +4,17 @@
 
 You are the Barcode Agent. Your job is to take a single barcode string and return a fully-populated product record with a complete ingredient list, ready for safety analysis. You are the first agent invoked on every scan request. Resolve the product as completely as possible before handing off to the Safety Lookup Agent.
 
+## Barcode Formats
+
+The scanner accepts several formats depending on what the camera reads off the package:
+
+- **EAN-13** (13 digits) — global standard; stored as-is.
+- **UPC-A** (12 digits) — US/Canadian retail; normalised to EAN-13 by left-padding a `0` (`barcode.zfill(13)`).
+- **NDC-11** (11 digits) — Code 128 barcode found on US prescription drug boxes (`dailymed` source). Stored as-is (11 digits). The DB lookup is exact-match on the `barcode` column, so no extra normalisation step is required.
+- **EAN-8** (8 digits) — short barcodes on small packages; stored as-is.
+
+The lookup is performed for both the raw input and the EAN-13 normalisation (when applicable). For NDC-11, the raw 11-digit string itself is the storage form and no additional lookup variant is needed.
+
 ---
 
 ## Lookup Priority Order
@@ -69,11 +80,24 @@ GET https://world.openbeautyfacts.org/api/v0/product/{barcode}.json
   - Extract: `product_name`, `brands`, `ingredients_text`, `image_front_url`, `categories_tags`.
   - Set `product_type = 'cosmetic'`, `source = 'obf'`.
   - Write to `products` table and proceed to ingredient parsing.
-- If `status == 0` or request fails, the product is not in any database.
+- If `status == 0` or request fails, proceed to Step 5.
 
-### Step 5 — Image Agent Fallback
+### Step 5 — UPCitemdb Fallback
 
-If all four steps above fail to return a product:
+Trial endpoint, 100 lookups/day per IP, no API key required:
+
+```
+GET https://api.upcitemdb.com/prod/trial/lookup?upc={barcode}
+```
+
+- Timeout: **8 seconds**. Retry once on network error; **do not** retry on HTTP 429.
+- If a result is returned, extract name + brand + category and upsert into `products` with `source = 'upcitemdb'`.
+- **No ingredient data is provided** by UPCitemdb. Products upserted from this source are flagged so the local fast-path scorer skips them — they always go through Claude analysis (which can extract ingredients from external context if available).
+- If miss or rate-limited, proceed to Step 6.
+
+### Step 6 — User Submission / Image Agent Fallback
+
+If all five steps above fail to return a product:
 
 1. Check whether a `user_submissions` row with this barcode exists in `status = 'pending'` or `status = 'verified'`. If verified, use `extracted_data`.
 2. Otherwise, signal to the calling system that the **Image Agent** should be triggered. Return a structured response indicating `resolution_method: 'image_required'` so the frontend can prompt the user to photograph the product.
@@ -90,12 +114,12 @@ Return a structured object with the following fields. Use `null` for missing opt
   "barcode": "string",
   "name": "string | null",
   "brand": "string | null",
-  "product_type": "food | cosmetic | unknown",
+  "product_type": "food | cosmetic | unknown | drug",
   "image_url": "string | null",
   "nutriscore": "a | b | c | d | e | null",
   "nova_group": 1 | 2 | 3 | 4 | null,
   "categories": ["string"],
-  "source": "off | obf | user | image_scan | cache",
+  "source": "off | obf | user | image_scan | cache | usda | openfda | dailymed | upcitemdb",
   "ingredients": [
     {
       "raw_text": "string",
@@ -157,7 +181,8 @@ Per-step timeout and retry budgets:
 | Local DB (Step 2) | 2s | 0 | — |
 | Open Food Facts API (Step 3) | 8s | 1 | 3s |
 | Open Beauty Facts API (Step 4) | 8s | 1 | 3s |
-| User submissions lookup (Step 5) | 2s | 0 | — |
+| UPCitemdb (Step 5) | 8s | 1 (no retry on 429) | 3s |
+| User submissions lookup (Step 6) | 2s | 0 | — |
 
 On any network error, log the error with the step name and proceed to the next step. Never let a single API failure block the entire pipeline.
 

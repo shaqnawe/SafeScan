@@ -64,9 +64,9 @@ npm run open:ios   # or open:android
 ## How It Works
 
 1. **Scan a barcode** — use your camera or type it manually
-2. **Product Lookup** — checks local PostgreSQL DB first, then Open Food Facts, Open Beauty Facts, USDA FoodData Central, OpenFDA OTC drugs, and UPCitemdb (100/day trial) as a final fallback
-3. **Safety Analysis** — Claude Opus 4.6 with adaptive thinking analyzes ingredients using EU Cosmetics Regulation, EFSA assessments, NOVA classification, IARC carcinogen groups, and California Prop 65
-4. **Safety Report** — A/B/C/D grade with ingredient-by-ingredient breakdown, recall alerts, and allergen highlights
+2. **Product Lookup** — checks local PostgreSQL DB first, then Open Food Facts, Open Beauty Facts, USDA FoodData Central, OpenFDA OTC drugs, DailyMed Rx drugs (NDC-11), and UPCitemdb (100/day trial) as a final fallback
+3. **Safety Analysis** — Claude Opus 4.6 with adaptive thinking analyzes ingredients using EU Cosmetics Regulation, EFSA assessments, NOVA classification, IARC carcinogen groups, ECHA Annex VI CLP / GHS hazard codes, and California Prop 65
+4. **Safety Report** — A/B/C/D grade with ingredient-by-ingredient breakdown, food + drug + RASFF recall alerts, and allergen highlights
 
 ## Example Barcodes
 

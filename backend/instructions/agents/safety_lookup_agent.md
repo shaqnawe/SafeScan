@@ -82,79 +82,13 @@ If the Analysis Agent cannot classify the ingredient (truly unknown novel compou
 
 ## Scoring Rubric
 
-### Base Score
+The full scoring rubric is the **single source of truth at `backend/instructions/data/scoring_rubric.md`** — that file documents grade thresholds, food + cosmetic penalty tables, the shared carcinogen / reproductive / mutagen tag table (IARC, GHS, Prop 65), bonus points, and the EU-banned substance floor for cosmetics.
 
-Start at **100 points**. Apply penalties and bonuses below. Clamp final score to **0–100**.
+The Python implementation lives in `backend/agents/local_analyzer.py`:
+- `_compute_score()` walks resolved ingredients applying per-ingredient penalties and meta penalties.
+- `_carcinogen_penalty()` is the shared helper that applies IARC / GHS / Prop 65 tags to **both food and cosmetic** paths. These tags stack on top of `explicit_penalty` and `safety_level` because they are post-hoc enrichments from the IARC, GHS, and Prop 65 importers (not encoded in the seed `score_penalty`).
 
-### Grade Thresholds
-
-| Grade | Score Range | Meaning |
-|---|---|---|
-| A | 75–100 | Excellent — mostly natural/safe ingredients |
-| B | 50–74 | Good — minor concerns |
-| C | 25–49 | Average — several concerning ingredients |
-| D | 0–24 | Poor — significant safety concerns or ultra-processed |
-
-There is no E grade. D is the worst grade.
-
----
-
-### Penalties — Food Products
-
-| Condition | Penalty |
-|---|---|
-| Each ingredient with `safety_level = 'avoid'` | −15 pts |
-| Each ingredient with `safety_level = 'caution'` | −7 pts |
-| `nova_group = 4` (ultra-processed) | −20 pts |
-| `nova_group = 3` | −10 pts |
-| Nutriscore D | −10 pts |
-| Nutriscore E | −20 pts |
-| Nutriscore C | −5 pts |
-| Each declared allergen (`is_allergen = true`) | −3 pts |
-| Artificial coloring agent present (any E1xx additive) | −5 pts |
-| Artificial preservative present (E200–E299 range) | −5 pts |
-| Artificial sweetener present (E900–E999 range) | −5 pts |
-
-### Penalties — Cosmetic Products
-
-| Condition | Penalty |
-|---|---|
-| EU-banned substance (`eu_status = 'banned'`) | −30 pts AND floor score to D (max 24) immediately |
-| EU-restricted substance (`eu_status = 'restricted'`) | −15 pts |
-| Endocrine disruptor (`concerns` contains `'endocrine_disruptor'`) | −20 pts |
-| IARC Group 1 or 2A carcinogen (`concerns` contains `'carcinogen'`) | −25 pts |
-| IARC Group 2B carcinogen | −12 pts |
-| Paraben (`concerns` contains `'paraben'`) | −10 pts |
-| SLS or SLES (`concerns` contains `'sls'` or `'sles'`) | −8 pts |
-| Undisclosed fragrance blend (`is_fragrance_blend = true`) | −5 pts |
-| Formaldehyde releaser (`concerns` contains `'formaldehyde_releaser'`) | −20 pts |
-| Each declared allergen | −3 pts |
-
-### Bonus Points — All Product Types
-
-| Condition | Bonus |
-|---|---|
-| Certified organic (certification present) | +5 pts |
-| Short ingredient list (≤ 8 total ingredients) | +5 pts |
-| All ingredients classified as `safety_level = 'safe'` | +3 pts |
-
-### Score Floor
-
-The minimum possible score is **0**. Apply the EU-banned substance floor before other cosmetic penalties: if any banned substance is detected, the score cannot exceed 24 regardless of bonuses.
-
----
-
-## Applying Penalties
-
-1. Start with `score = 100`.
-2. For each ingredient in the resolved list, look up its `score_penalty` from the `ingredients` table.
-3. Apply penalties from the tables above. Multiple penalties stack additively.
-4. Apply bonuses.
-5. Clamp: `score = max(0, min(100, score))`.
-6. Apply EU-banned floor if applicable.
-7. Derive grade from score using the threshold table.
-
-Do **not** apply both the per-ingredient penalty (`score_penalty` field) AND the categorical penalty (e.g., endocrine disruptor row) for the same ingredient — pick the larger of the two to avoid double-counting. The `score_penalty` field in the DB is the ingredient-level override; the categorical penalties above are defaults when `score_penalty = 0`.
+Refer to the rubric markdown for the authoritative table; refer to `local_analyzer.py` for exact arithmetic and edge-case handling.
 
 ---
 

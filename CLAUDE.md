@@ -39,6 +39,9 @@ python -m db.importers.usda_importer --url
 # OpenFDA OTC drug labels (~17K OTC drugs)
 python -m db.importers.openfda_importer
 
+# DailyMed Rx prescription drug labels (uses same openFDA manifest; Rx-only, NDC-11 barcodes)
+python -m db.importers.dailymed_importer
+
 # IARC Monographs — enrich ingredients table with carcinogen group tags
 # (reads db/seed/data/iarc_agents_*.csv — no download needed)
 python -m db.importers.iarc_importer
@@ -46,6 +49,10 @@ python -m db.importers.iarc_importer
 # California Prop 65 — enrich ingredients table with Prop 65 concern tags
 # (reads db/seed/data/prop65_list_*.csv — no download needed)
 python -m db.importers.prop65_importer
+
+# ECHA Annex VI CLP / GHS hazard classification — enrich ingredients with GHS concern tags
+# (reads db/seed/data/ghs_*.xlsx — download from echa.europa.eu/information-on-chemicals/annex-vi-to-clp)
+python -m db.importers.ghs_importer
 
 # All of the above + FDA recall sync + IARC + Prop 65 (runs via launchd weekly)
 bash scripts/weekly_sync.sh
@@ -95,7 +102,7 @@ Called during local DB lookup to map raw label text to safety data:
 
 ### Key design decisions
 
-**Barcode format**: US phones scan 12-digit UPC-A; the DB stores 13-digit EAN-13. Scanner always tries both: `ean13 = barcode.zfill(13) if len(barcode) == 12 else None`. All importers normalize to EAN-13.
+**Barcode format**: US phones scan 12-digit UPC-A; the DB stores 13-digit EAN-13. Scanner always tries both: `ean13 = barcode.zfill(13) if len(barcode) == 12 else None`. All food/cosmetic importers normalize to EAN-13. Prescription drug boxes use Code 128 barcodes encoding NDC-11 (11 digits); `dailymed_importer.py` stores these as 11-digit strings. The scanner's existing `get_product_from_db(barcode)` exact-match handles NDC-11 natively — no extra lookup step needed.
 
 **Async client**: Use `anthropic.AsyncAnthropic()` throughout. Never use the sync `anthropic.Anthropic()` client in async FastAPI handlers — it causes `httpx.RemoteProtocolError`. The one exception is `ingredient_resolver.py:_classify_with_claude` which uses the sync client intentionally (called from a background context).
 
@@ -109,9 +116,9 @@ Called during local DB lookup to map raw label text to safety data:
 
 **CAS number column**: `ingredients.cas_number TEXT` (nullable) added in Session A. Indexed via `idx_ingredients_cas` (partial). Used by IARC and Prop 65 importers for preferred-path matching.
 
-**Concern tag vocabulary**: Canonical tags are defined in `backend/instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
+**Concern tag vocabulary**: Canonical tags are defined in `backend/instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. EPA CompTox GHS tags: `ghs_carcinogen_cat1` (−25 pts, H350), `ghs_carcinogen_cat2` (−12 pts, H351), `ghs_reproductive_toxin` (−15 pts, H360/H361), `ghs_mutagen` (−12 pts, H340/H341). The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
 
-**Ingredient enrichment importers**: `iarc_importer.py` and `prop65_importer.py` update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`. After adding new seed entries (especially with CAS numbers), re-run both importers.
+**Ingredient enrichment importers**: `iarc_importer.py`, `prop65_importer.py`, and `ghs_importer.py` are update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`. After adding new seed entries (especially with CAS numbers), re-run all three enrichment importers.
 
 **Ingredient seed files**: `db/seed/data/e_numbers.json` (187 EU additives), `cosing_flagged.json` (59 cosmetic), `food_flagged.json` (15 food contaminants), `fragrance_allergens_flagged.json` (15 EU fragrance allergens). Total ~276 entries. `ingredient_type` CHECK allows: `'food_additive'`, `'cosmetic'`, `'food'`, `'both'`.
 
@@ -119,7 +126,7 @@ Called during local DB lookup to map raw label text to safety data:
 
 **Phase 1 message serialization**: Before calling `messages.parse()` in Phase 2, all SDK `ContentBlock` objects in the Phase 1 message history are converted to plain dicts via `_to_dict()`. Passing SDK objects directly causes `RemoteProtocolError: Server disconnected without sending a response` on certain payloads (Anthropic serializes them inconsistently in `messages.parse()` vs `messages.create()`). Also: empty assistant messages (content `[]`) are never appended — they occur when `max_tokens` is hit during adaptive thinking before any visible block is produced, and the API rejects them at the protocol level.
 
-**Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`, `'upcitemdb'`.
+**Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`, `'upcitemdb'`, `'dailymed'`.
 
 **Duplicate ingredient prevention**: `product_ingredients` has a unique index on `(product_id, position)`. All importers use `ON CONFLICT (product_id, position) DO NOTHING`.
 

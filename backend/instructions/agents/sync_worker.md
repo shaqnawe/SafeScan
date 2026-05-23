@@ -10,9 +10,8 @@ You are **not** an AI agent in the conversational sense — you are a determinis
 
 ## Schedule
 
-- **Default**: Weekly, Sunday 02:00 UTC (low-traffic window)
-- **Configurable** via environment variable `SYNC_CRON_SCHEDULE`
-- Each source runs as a separate sync task so failures are isolated
+- **Default**: Weekly, Sunday 03:00 local time (low-traffic window). On the dev machine this is wired to macOS `launchd`; the manifest installer is `scripts/install_sync.sh`.
+- Each source runs as a separate sync task so failures are isolated. The orchestrator is `scripts/weekly_sync.sh` — order documented in `CLAUDE.md`.
 
 ---
 
@@ -125,17 +124,27 @@ Always log the full exception message and traceback in `error`. Truncate to 10,0
 When the same product or ingredient exists in multiple sources, use this priority order (highest to lowest):
 
 ```
-1. user          — manually verified by a human reviewer
-2. cosing        — official EU regulatory database (cosmetics)
-3. efsa          — official EU regulatory database (food additives)
-4. echa          — ECHA REACH/SVHC database (placeholder — Session B)
-5. iarc          — IARC Monographs carcinogen classifications
-6. prop65        — California Proposition 65 chemical list
-7. rasff         — EU Rapid Alert System for Food and Feed (placeholder — Session B)
-8. obf           — Open Beauty Facts (crowd-sourced cosmetics)
-9. off           — Open Food Facts (crowd-sourced food)
-10. upcitemdb    — UPC barcode lookup fallback (placeholder — Session B)
+ 1. user        — manually verified by a human reviewer
+ 2. cosing      — official EU regulatory database (cosmetics)
+ 3. efsa        — official EU regulatory database (food additives)
+ 4. echa        — ECHA REACH/SVHC database (recon only — Session E; deferred)
+ 5. ghs         — ECHA Annex VI CLP harmonised classifications (Session H)
+ 6. iarc        — IARC Monographs carcinogen classifications
+ 7. prop65      — California Proposition 65 chemical list
+ 8. rasff       — EU Rapid Alert System for Food and Feed (recalls source)
+ 9. fda         — openFDA food + drug enforcement (recalls source)
+10. usda        — USDA FoodData Central (US branded foods)
+11. openfda     — openFDA OTC drug labels (products)
+12. dailymed    — openFDA Rx drug labels (products; NDC-11 barcodes)
+13. obf         — Open Beauty Facts (crowd-sourced cosmetics)
+14. off         — Open Food Facts (crowd-sourced food)
+15. upcitemdb   — UPC barcode lookup fallback (name + brand only)
 ```
+
+Notes:
+- Ranks 8–9 (`rasff`, `fda`) apply to the `recalls` table only, not to ingredients or products.
+- Ranks 4–7 (`echa`, `ghs`, `iarc`, `prop65`) are **enrichment-only** sources for the `ingredients` table — they append to `concerns` and `sources` arrays and may fill `cas_number` when null, but never overwrite `safety_level`, `eu_status`, or `score_penalty`.
+- Ranks 2–3 (`cosing`, `efsa`) are the regulatory ground truth for ingredient classification.
 
 ### Rules
 
@@ -171,11 +180,10 @@ ON CONFLICT (name) DO UPDATE SET
     updated_at    = now();
 ```
 
-Store `source_rank` as a numeric value in the sync context:
-`user=10`, `cosing=9`, `efsa=8`, `echa=7`, `iarc=6`, `prop65=5`, `rasff=4`, `obf=3`, `off=2`, `upcitemdb=1`.
+Store `source_rank` as a numeric value in the sync context (higher = more trusted). The rank table mirrors the hierarchy above — see that section for the canonical list.
 You will need to join or subquery to compare against the existing source rank — consider storing `source` (the text label) in the ingredients table and looking up rank at sync time.
 
-**Note on IARC and Prop 65**: These sources append to the `concerns` array only — they do not set `safety_level`, `eu_status`, or `score_penalty` on rows where a higher-trust source (cosing, efsa) has already classified the ingredient. They rank above obf/off to prevent crowd-sourced data from overwriting regulatory carcinogen/toxin tags.
+**Note on enrichment-only sources (`iarc`, `prop65`, `ghs`, `echa`)**: These sources append to the `concerns` and `sources` arrays only — they do not set `safety_level`, `eu_status`, or `score_penalty` on rows where a higher-trust source (cosing, efsa) has already classified the ingredient. They rank above obf/off to prevent crowd-sourced data from overwriting regulatory carcinogen/toxin tags. Shared logic for matching (CAS → name) lives in `db/importers/_match_helpers.py`.
 
 ---
 
