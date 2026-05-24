@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from models import ScanRequest, SafetyReport
 from agents.scanner import analyze_product, analyze_submission_bg
-from agents.image_agent import process_product_photos, SubmissionResult
+from agents.image_agent import process_product_photos, SubmissionResult, validate_and_normalize_image
 from db.connection import get_pool, close_pool
 from db.recall_store import ensure_recalls_table, fetch_and_store_openfda as fetch_and_store_recalls
 from db.queries import list_user_submissions, get_submission
@@ -101,17 +101,33 @@ async def submit_product(
             detail="Provide at least one image, a barcode, or a manual ingredient list."
         )
 
-    prod_bytes  = await product_image.read()     if product_image     else None
-    ingr_bytes  = await ingredients_image.read() if ingredients_image else None
-    prod_mime   = product_image.content_type     if product_image     else "image/jpeg"
-    ingr_mime   = ingredients_image.content_type if ingredients_image else "image/jpeg"
+    # Read + validate each upload. validate_and_normalize_image() sniffs the
+    # magic bytes (ignoring the client-supplied content_type, which can lie),
+    # rejects non-image payloads, and downsizes anything over Anthropic's
+    # ~5MB base64 limit. Failures surface as a clean 400 rather than a 500.
+    prod_bytes: Optional[bytes] = None
+    ingr_bytes: Optional[bytes] = None
+    prod_mime  = "image/jpeg"
+    ingr_mime  = "image/jpeg"
+
+    if product_image:
+        try:
+            prod_bytes, prod_mime = validate_and_normalize_image(await product_image.read())
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid product image: {e}")
+
+    if ingredients_image:
+        try:
+            ingr_bytes, ingr_mime = validate_and_normalize_image(await ingredients_image.read())
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid ingredients image: {e}")
 
     try:
         result = await process_product_photos(
             product_image=prod_bytes,
-            product_media_type=prod_mime or "image/jpeg",
+            product_media_type=prod_mime,
             ingredients_image=ingr_bytes,
-            ingredients_media_type=ingr_mime or "image/jpeg",
+            ingredients_media_type=ingr_mime,
             barcode_hint=barcode,
             product_type_hint=product_type or "unknown",
             manual_ingredients_text=manual_ingredients or None,

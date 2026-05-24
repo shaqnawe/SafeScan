@@ -11,10 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import io
 from pathlib import Path
 from typing import Optional
 
 import anthropic
+from PIL import Image
 from pydantic import BaseModel
 
 from db.connection import get_conn
@@ -94,6 +96,61 @@ def _encode_image(image_bytes: bytes, media_type: str = "image/jpeg") -> dict:
             "data": base64.standard_b64encode(image_bytes).decode("utf-8"),
         },
     }
+
+
+# Anthropic's vision API rejects images whose base64-encoded form exceeds 5MB.
+# Base64 inflates raw bytes by ~33%, so 3.5MB raw is the safe ceiling.
+_MAX_RAW_BYTES = 3_500_000
+_MAX_DIMENSION = 2048  # longest side; preserves OCR-readable text
+
+
+def _sniff_media_type(image_bytes: bytes) -> Optional[str]:
+    """Detect image format from magic bytes. Returns None if unrecognized."""
+    if image_bytes.startswith(b'\xff\xd8\xff'):
+        return 'image/jpeg'
+    if image_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+        return 'image/png'
+    if image_bytes.startswith(b'GIF87a') or image_bytes.startswith(b'GIF89a'):
+        return 'image/gif'
+    if image_bytes[0:4] == b'RIFF' and image_bytes[8:12] == b'WEBP':
+        return 'image/webp'
+    return None
+
+
+def validate_and_normalize_image(image_bytes: bytes) -> tuple[bytes, str]:
+    """
+    Validate image bytes and downsize if they would exceed Anthropic's 5MB
+    base64 limit. Returns (possibly-resized bytes, magic-byte-verified MIME).
+
+    Raises ValueError if the input is not a recognized image format
+    (JPEG / PNG / GIF / WEBP) — the four formats Anthropic vision accepts.
+    """
+    if not image_bytes:
+        raise ValueError("empty image")
+    detected = _sniff_media_type(image_bytes)
+    if detected is None:
+        raise ValueError("unrecognized image format (expected JPEG/PNG/GIF/WEBP)")
+
+    if len(image_bytes) <= _MAX_RAW_BYTES:
+        return image_bytes, detected
+
+    # Downscale via Pillow. Always re-encode as JPEG quality 85 — best
+    # compression for photographs while preserving text readability.
+    img = Image.open(io.BytesIO(image_bytes))
+    if img.mode not in ('RGB', 'L'):
+        img = img.convert('RGB')
+    img.thumbnail((_MAX_DIMENSION, _MAX_DIMENSION), Image.Resampling.LANCZOS)
+
+    out: bytes = b''
+    for quality in (85, 75, 65, 55):
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=quality, optimize=True)
+        out = buf.getvalue()
+        if len(out) <= _MAX_RAW_BYTES:
+            return out, 'image/jpeg'
+    # Even quality 55 was too large — return it anyway; Anthropic will reject
+    # but the caller learns from the API error rather than a silent oversize.
+    return out, 'image/jpeg'
 
 
 # ---------------------------------------------------------------------------
