@@ -195,6 +195,13 @@ async def _call_anthropic_with_retry(
         except anthropic.APIError as e:
             print(f"  [IMAGE AGENT] {label} failed: {e}")
             return None
+        except Exception as e:
+            # Anything else — most importantly pydantic.ValidationError raised
+            # by messages.parse() when the model's structured output is truncated
+            # or malformed. Without this catch, the exception bubbles to FastAPI
+            # and the user sees a 500 error toast instead of the warning card.
+            print(f"  [IMAGE AGENT] {label} unexpected error: {type(e).__name__}: {e}")
+            return None
     return None  # unreachable; satisfies the type checker
 
 
@@ -204,12 +211,12 @@ async def _extract_product_info(image_bytes: bytes, media_type: str) -> Optional
     Returns None on permanent failure (logged by the retry helper); the
     orchestrator translates None into product_status='failed'.
     """
+    # No `thinking` parameter — same reason as _parse_ingredients above.
     response = await _call_anthropic_with_retry(
         lambda: _client.messages.parse(
             model=MODEL_LIGHT,
             max_tokens=4096,
             timeout=_VISION_TIMEOUT_S,
-            thinking={"type": "adaptive"},
             system=_IMAGE_SYSTEM_CACHED,
             messages=[{
                 "role": "user",
@@ -251,12 +258,15 @@ async def _parse_ingredients(
     Returns None on permanent failure (logged by the retry helper); the
     orchestrator translates None into ingredients_status='failed'.
     """
+    # No `thinking` parameter: this is pure structured extraction (read INCI text,
+    # emit JSON list), and adaptive thinking competes with the output for the
+    # max_tokens budget. With thinking on, a 37+ ingredient label gets truncated
+    # mid-property and pydantic raises ValidationError on the partial JSON.
     response = await _call_anthropic_with_retry(
         lambda: _client.messages.parse(
             model=MODEL_LIGHT,
             max_tokens=4096,
             timeout=_VISION_TIMEOUT_S,
-            thinking={"type": "adaptive"},
             system=_PARSER_SYSTEM_CACHED,
             messages=[{
                 "role": "user",
