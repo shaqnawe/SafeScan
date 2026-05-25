@@ -55,6 +55,34 @@ verify fixes that couldn't be tested live during implementation.
 
 ---
 
+## How to validate image-agent OCR quality
+
+After scanning a product with photos of both the front AND the ingredients
+label, compare what the image agent extracted against the real label text.
+
+```bash
+cd backend
+
+# 1. Find the submission id you just created:
+psql "$DATABASE_URL" -c "SELECT id, barcode, status FROM user_submissions ORDER BY id DESC LIMIT 3"
+
+# 2. Run the diff against ground truth (manufacturer site or transcribed label):
+/Users/npc/miniconda3/envs/myenv/bin/python -m scratch.diff_extraction \
+    --submission-id <N> --truth-stdin     # paste truth, Ctrl-D
+
+# or from a file:
+/Users/npc/miniconda3/envs/myenv/bin/python -m scratch.diff_extraction \
+    --submission-id <N> --truth-file path/to/truth.txt
+```
+
+The helper reports recall (% of real ingredients captured) + precision
+(% of extracted entries that are real) and lists each MISSED, EXTRA,
+and FUZZY-matched ingredient. Log notable findings under "Missing
+ingredients / false negatives" or "Incorrect flags / false positives"
+below.
+
+---
+
 ## Scan observations
 
 | Date | Barcode | Product | Expected grade | Actual grade | Notes |
