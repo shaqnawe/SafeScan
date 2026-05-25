@@ -2,7 +2,7 @@ import json
 import httpx
 import anthropic
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from models import SafetyReport
 from db.queries import (
     get_product_from_db, get_cached_report, cache_report, get_user_submission,
@@ -115,25 +115,43 @@ async def _upsert_upcitemdb_product(barcode: str, data: dict) -> None:
 
 async def lookup_product(barcode: str) -> dict[str, Any]:
     """
-    Look up product data. Priority order:
-    1. Local PostgreSQL database (instant, includes resolved ingredient safety data)
-    2. Open Food Facts API (food products)
-    3. Open Beauty Facts API (cosmetics)
+    Look up product data. Priority order (highest-fidelity first):
+    1. Local PostgreSQL database from a rich source (off / obf / usda / openfda
+       / dailymed) — curated ingredient data already resolved against the
+       ingredients table. UPCitemdb-cached local rows do NOT count here —
+       they're name+brand only and get held for the last-resort fallback.
+    2. User submission with parsed ingredients — a photo upload that produced
+       a real ingredient list beats UPCitemdb's name-only data and is worth
+       checking before hitting the live external APIs.
+    3. Open Food Facts API.
+    4. Open Beauty Facts API.
+    5. UPCitemdb live fetch (writes to local with db_source='upcitemdb').
+    6. User submission name+brand only (extraction may have failed on the
+       ingredient list but the product identity is still useful).
+    7. UPCitemdb-cached local row (held from step 1; name+brand only).
     """
     # UPC-A (12-digit) is EAN-13 with the leading 0 stripped.
     # The OFF/OBF imports store everything as 13-digit EAN-13, so we try both.
     ean13 = barcode.zfill(13) if len(barcode) == 12 else None
 
-    # --- Step 1: local DB ---
+    # --- Step 1: rich local DB ---
     local = await get_product_from_db(barcode) or (await get_product_from_db(ean13) if ean13 else None)
-    if local:
+    if local and local.get("db_source") != "upcitemdb":
         resolved = local["db_resolved_count"]
         total = local["total_ingredients"]
         print(f"  [DB] Found '{local['name']}' locally. "
               f"Ingredients: {total} total, {resolved} matched in safety DB.")
         return local
+    # If `local` is set here, it's a UPCitemdb-cached row — held for step 7.
 
-    # --- Step 2: Open Food Facts ---
+    # --- Step 2: user submission with ingredients ---
+    submission = await get_user_submission(barcode)
+    if submission and submission.get("total_ingredients", 0) > 0:
+        print(f"  [SUBMISSION] Using user submission for '{submission['name']}' "
+              f"with {submission['total_ingredients']} ingredients (preferred over UPCitemdb name-only data)")
+        return submission
+
+    # --- Step 3: Open Food Facts ---
     print(f"  [API] Barcode {barcode} not in local DB, querying external APIs...")
     async with httpx.AsyncClient(timeout=10.0) as http_client:
         try:
@@ -174,7 +192,7 @@ async def lookup_product(barcode: str) -> dict[str, Any]:
         except Exception as e:
             print(f"Food Facts API error: {e}")
 
-        # --- Step 3: Open Beauty Facts ---
+        # --- Step 4: Open Beauty Facts ---
         try:
             beauty_url = f"https://world.openbeautyfacts.org/api/v0/product/{barcode}.json"
             beauty_response = await http_client.get(beauty_url)
@@ -208,7 +226,7 @@ async def lookup_product(barcode: str) -> dict[str, Any]:
         except Exception as e:
             print(f"Beauty Facts API error: {e}")
 
-    # --- Step 4: UPCitemdb barcode fallback ---
+    # --- Step 5: UPCitemdb live fetch ---
     upc_result = await _upcitemdb.fetch(barcode)
     if upc_result is None and ean13:
         upc_result = await _upcitemdb.fetch(ean13)
@@ -217,13 +235,19 @@ async def lookup_product(barcode: str) -> dict[str, Any]:
         await _upsert_upcitemdb_product(barcode, upc_result)
         print(f"  [UPCITEMDB] hit — '{upc_result['name']}' upserted to local DB")
         return upc_result
-    print(f"  [UPCITEMDB] miss — proceeding to user_submissions fallback")
+    print(f"  [UPCITEMDB] miss — proceeding to user_submissions / local cache fallbacks")
 
-    # --- Step 5: user submission fallback ---
-    submission = await get_user_submission(barcode)
+    # --- Step 6: user submission with name+brand only (no ingredients) ---
+    # Already fetched in step 2; reuse it.
     if submission:
-        print(f"  [SUBMISSION] Using user submission for '{submission['name']}'")
+        print(f"  [SUBMISSION] Using user submission for '{submission['name']}' (name+brand only)")
         return submission
+
+    # --- Step 7: UPCitemdb-cached local row (held from step 1) ---
+    # Last resort before "not found" — name+brand only, no ingredients.
+    if local:
+        print(f"  [DB] Falling back to UPCitemdb-cached local row for '{local['name']}'")
+        return local
 
     return {
         "found":        False,
@@ -317,12 +341,16 @@ async def analyze_product(barcode: str) -> SafetyReport:
         # Strip thinking blocks before storing: display="omitted" removes the
         # content but leaves the ThinkingBlock wrapper, which the API rejects
         # if passed back in a subsequent call (causes APIConnectionError).
+        # Also strip redacted_thinking blocks — these slip through the type=="thinking"
+        # check, and when re-serialized for Phase 2 they're missing the `data` field
+        # the API expects, which makes the upstream silently close the connection
+        # (httpx.RemoteProtocolError: Server disconnected without sending a response).
         # Also skip empty assistant messages (can occur when max_tokens is hit
         # during adaptive thinking, leaving no visible blocks) — the Anthropic
         # API rejects content:[] at the protocol level.
         content_for_history = [
             b for b in response.content
-            if getattr(b, "type", None) != "thinking"
+            if getattr(b, "type", None) not in ("thinking", "redacted_thinking")
         ]
         if content_for_history:
             messages.append({"role": "assistant", "content": content_for_history})
@@ -367,6 +395,20 @@ async def analyze_product(barcode: str) -> SafetyReport:
             content = [_to_dict(b) for b in content]
         serialized_messages.append({"role": m["role"], "content": content})
 
+    # Ensure user/assistant alternation before appending the Phase 2 prompt.
+    # Phase 1 can legitimately end on a user message (the seeded preflight tool_result)
+    # when adaptive thinking with display="omitted" produces a response made up
+    # entirely of thinking blocks that the filter strips out. In that case Phase 2's
+    # user prompt would create two consecutive user messages, which the Anthropic
+    # API silently rejects with a TCP disconnect (httpx.RemoteProtocolError:
+    # "Server disconnected without sending a response"). A minimal synthetic
+    # assistant turn fixes the alternation without affecting the analysis.
+    if serialized_messages and serialized_messages[-1]["role"] == "user":
+        serialized_messages.append({
+            "role": "assistant",
+            "content": "Lookup complete. Ready to produce the structured safety report.",
+        })
+
     serialized_messages.append({
         "role": "user",
         "content": (
@@ -377,23 +419,52 @@ async def analyze_product(barcode: str) -> SafetyReport:
             "If resolved_ingredients were provided with pre-computed safety levels, incorporate them directly. "
             "Return a complete safety assessment following the scoring guidelines: "
             "A=75-100 (excellent), B=50-74 (good), C=25-49 (average), D=0-24 (poor). "
-            "Compute an appropriate score (0-100) and corresponding grade (A/B/C/D)."
+            "Compute an appropriate score (0-100) and corresponding grade (A/B/C/D).\n\n"
+            "Reply with ONLY a JSON object — no prose, no markdown fences — matching this exact schema:\n"
+            '{"product_name": "string", "brand": "string", "product_type": "food|cosmetic|unknown|drug", '
+            '"barcode": "string", "image_url": "string|null", "score": 0-100, "grade": "A|B|C|D", '
+            '"summary": "string", "ingredients_analysis": [{"name": "string", '
+            '"safety_level": "safe|caution|avoid", "concern": "string|null"}], '
+            '"positive_points": ["string"], "negative_points": ["string"], "not_found": false}'
         )
     })
 
+    # Phase 2 uses messages.create() + manual JSON parse rather than messages.parse(). The
+    # parse() endpoint exhibits a documented serialization quirk where non-trivial payloads
+    # (e.g. a tool_result with 40+ ingredients) cause the upstream to close the connection
+    # silently — httpx.RemoteProtocolError: "Server disconnected without sending a response".
+    # create() doesn't have this bug. We still validate the response against the SafetyReport
+    # Pydantic model immediately, so we get type-safety; we just check it post-hoc rather
+    # than enforcing it at the API level.
+    report: Optional[SafetyReport] = None
     try:
-        structured_response = await client.messages.parse(
+        response = await client.messages.create(
             model=MODEL_HEAVY,
             max_tokens=8192,
             thinking={"type": "adaptive"},
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=serialized_messages,
-            output_format=SafetyReport,  # SDK .parse() translates this to output_config internally
         )
-        report = structured_response.parsed_output
+        # Pull text out (skip thinking blocks). Strip markdown fences defensively.
+        text = "\n".join(
+            b.text for b in response.content
+            if getattr(b, "type", None) == "text" and b.text
+        ).strip()
+        if text.startswith("```"):
+            text = "\n".join(text.split("\n")[1:])
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+        data = json.loads(text)
+        report = SafetyReport(**data)
     except anthropic.APIError as e:
-        print(f"  [CLAUDE] Structured output failed: {e}")
-        report = None
+        print(f"  [CLAUDE] Phase 2 API failed: {type(e).__name__}: {e}")
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        print(f"  [CLAUDE] Phase 2 JSON/validation failed: {type(e).__name__}: {e}")
+        # Log a preview so we can diagnose without re-running the call
+        try:
+            print(f"  [CLAUDE]   response preview: {text[:300]!r}")
+        except Exception:
+            pass
 
     if report is None:
         return SafetyReport(

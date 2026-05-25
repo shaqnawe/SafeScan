@@ -88,10 +88,32 @@ DELETE FROM safety_reports WHERE barcode = '<barcode>';
 When `POST /api/scan` is called with a barcode:
 
 1. **Cache hit** → `safety_reports` table (7-day TTL) — instant return
-2. **Local fast path** → `agents/local_analyzer.py` — pure Python scoring from DB data, zero Claude calls. Used when the product is in the local DB. Falls back to Claude if `resolved_ingredients` is empty.
+2. **Local fast path** → `agents/local_analyzer.py` — pure Python scoring from DB data, zero Claude calls. Used when the product is in the local DB *with a rich source* (not UPCitemdb-cached). Falls back to Claude if `resolved_ingredients` is empty.
 3. **Claude path** (two phases):
-   - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool → fetches from local DB, then Open Food Facts API, then Open Beauty Facts API, then **UPCitemdb** (trial, 100/day, no key required), then `user_submissions` fallback. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
-   - **Phase 2** (structured output): `MODEL_HEAVY` (Opus 4.6) via `client.messages.parse()` with `thinking={"type": "adaptive"}` → returns `SafetyReport` Pydantic model. Wrapped in `try/except anthropic.APIError` with a fallback report.
+   - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
+   - **Phase 2** (synthesis): `MODEL_HEAVY` (Opus 4.6) via `client.messages.create()` with `thinking={"type": "adaptive"}` + a JSON-only response instruction, then `json.loads()` + `SafetyReport(**data)` validation. Phase 2 used to use `messages.parse(output_format=SafetyReport)` but switched to `create()` after the documented `RemoteProtocolError` serialization quirk reproduced. See **Phase 2 disconnect bug** below.
+
+### `lookup_product` priority order (`scanner.py`)
+
+Phase 1's tool. Highest-fidelity first; later steps fire only on miss:
+
+1. **Local DB, rich source** (off / obf / usda / openfda / dailymed) — curated ingredient data already resolved against `ingredients` table. UPCitemdb-cached rows do **not** count here — they have only name+brand.
+2. **`user_submissions` with parsed ingredients** — a photo upload that produced a real ingredient list. Preferred over UPCitemdb's name-only data and worth checking before the live external APIs.
+3. **Open Food Facts API** (food).
+4. **Open Beauty Facts API** (cosmetic).
+5. **UPCitemdb live fetch** (writes to local with `db_source='upcitemdb'`).
+6. **`user_submissions` name+brand only** (extraction may have failed on the ingredient list but the product identity is still useful).
+7. **UPCitemdb-cached local row** (held from step 1; last resort before `not_found`).
+
+Refactor in Session I-extended (2026-05-24) — previously a `user_submission` with 42 parsed ingredients would lose to a UPCitemdb cached row from a prior scan, producing a useless "no ingredient list available" report.
+
+### Phase 2 disconnect bug (known issue)
+
+`analyze_product()`'s Phase 2 call hangs ~280s then disconnects with `httpx.RemoteProtocolError: Server disconnected without sending a response` for **any scan where `lookup_product` returns a tool_result with non-trivial ingredient data** (>~1KB). UPCitemdb-only scans still succeed.
+
+Ruled out as causes (verified by debug calls): `parse()` vs `create()`, adaptive thinking, wire-format alternation, `redacted_thinking` block leak in serialized history. Likely remaining causes: synthetic preflight `tool_use` block (line ~322 of scanner.py) with no preceding `thinking` block violating Opus's interleaved-thinking validation, or a content-specific server filter.
+
+Workaround pending: route `user_submission` results through `local_analyzer.build_report()` instead of the Claude pipeline. See `TODO.md` "Open issues" for full notes + the next diagnostic step (`backend/scratch/repro_phase2.py` bisecting harness).
 
 ### Ingredient resolution cascade (`db/ingredient_resolver.py`)
 
