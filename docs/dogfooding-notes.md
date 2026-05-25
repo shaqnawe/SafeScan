@@ -23,6 +23,36 @@ verify fixes that couldn't be tested live during implementation.
       backend/db/ingredient_resolver.py — _IngredientClassification model,
       _CLAUDE_SYSTEM prompt, _INSERT_INGREDIENT param order, _write_back.
 
+- [ ] Verify a real photo submission end-to-end now that the silent
+      persistence bug is fixed (Session I, commit c92f9f6). Upload a
+      product front + ingredients photo via the iOS app or the web UI:
+        1. Confirm /api/submit-product returns 200 with a non-null
+           submission_id (was null before the partial-index fix)
+        2. Confirm the row appears in user_submissions table:
+             SELECT id, barcode, status, created_at
+             FROM user_submissions ORDER BY id DESC LIMIT 5;
+        3. Confirm the auto-triggered background analysis runs and the
+           safety_reports row materializes
+        4. Confirm product_status and ingredients_status are 'ok' in
+           extracted_data (or 'failed' with a visible warning card on
+           AddProductPage if Claude couldn't read the labels)
+      Costs ~$0.01 in Claude credits per attempt.
+
+- [ ] **CORS on /api/submissions when dev frontend hits Railway.**
+      Surfaced by the Session I E2E smoke test (2026-05-24). Railway's
+      CORSMiddleware doesn't include 'http://localhost:5173' in
+      allow_origins, so when frontend/.env.local is pointed at the
+      production URL the SubmissionsPage list-fetch fails with:
+        Access to fetch at 'https://...railway.app/api/submissions'
+        from origin 'http://localhost:5173' has been blocked by CORS
+        policy: No 'Access-Control-Allow-Origin' header is present
+      POST /api/submit-product is unaffected (likely because preflight
+      isn't required for the same content-type pattern).
+      Fix: add 'http://localhost:5173' and 'http://localhost:4173'
+      (preview) to backend/main.py's CORSMiddleware allow_origins.
+      Not blocking — production-only frontend has no issue. Only worth
+      fixing if dev-against-prod workflow matters.
+
 ---
 
 ## Scan observations

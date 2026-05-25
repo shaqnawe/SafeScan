@@ -78,7 +78,7 @@ DELETE FROM safety_reports WHERE barcode = '<barcode>';
 ### Stack
 
 - **Backend**: FastAPI + asyncpg (PostgreSQL) + `anthropic` SDK (`AsyncAnthropic`)
-- **Frontend**: React + TypeScript + Vite, `react-zxing` for camera barcode scanning
+- **Frontend**: React + TypeScript + Vite, `react-zxing` for camera barcode scanning, `lucide-react` for UI icons, Manrope (body) + Fraunces (display, hero typography only) from Google Fonts
 - **AI**: Claude Opus 4.6 (heavy analysis) + Sonnet 4.6 (extraction/classification) with adaptive thinking
 - **DB**: PostgreSQL with 6 tables: `products`, `product_ingredients`, `ingredients`, `ingredient_aliases`, `safety_reports`, `user_submissions`, `recalls`
 - **Ingredient seed**: ~276 curated entries across 4 JSON files in `backend/db/seed/data/` — see `backend/db/seed/README.md`
@@ -116,7 +116,7 @@ Called during local DB lookup to map raw label text to safety data:
 
 **CAS number column**: `ingredients.cas_number TEXT` (nullable) added in Session A. Indexed via `idx_ingredients_cas` (partial). Used by IARC and Prop 65 importers for preferred-path matching.
 
-**Concern tag vocabulary**: Canonical tags are defined in `backend/instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. EPA CompTox GHS tags: `ghs_carcinogen_cat1` (−25 pts, H350), `ghs_carcinogen_cat2` (−12 pts, H351), `ghs_reproductive_toxin` (−15 pts, H360/H361), `ghs_mutagen` (−12 pts, H340/H341). The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
+**Concern tag vocabulary**: Canonical tags are defined in `backend/instructions/agents/analysis_agent.md` under "Concern Tag Vocabulary". IARC-specific tags: `iarc_group_1` (−25 pts), `iarc_group_2a` (−25 pts), `iarc_group_2b` (−12 pts). Prop 65 tags: `prop65_carcinogen`, `prop65_developmental_toxin`, `prop65_reproductive_toxin`. ECHA Annex VI CLP / GHS tags: `ghs_carcinogen_cat1` (−25 pts, H350), `ghs_carcinogen_cat2` (−12 pts, H351), `ghs_reproductive_toxin` (−15 pts, H360/H361), `ghs_mutagen` (−12 pts, H340/H341). (Originally scoped against EPA CompTox; pivoted to ECHA Annex VI in Session H — see that session log for why.) The legacy `carcinogen` tag is equivalent to `iarc_group_2b` and retained for backwards compatibility. `local_analyzer.py` checks all of these.
 
 **Ingredient enrichment importers**: `iarc_importer.py`, `prop65_importer.py`, and `ghs_importer.py` are update-only — they never insert new rows. They append to `concerns` and `sources` arrays using a dedup merge (`ARRAY(SELECT DISTINCT unnest(...))`). They never touch `safety_level`, `eu_status`, or `score_penalty`. Shared logic in `db/importers/_match_helpers.py`. After adding new seed entries (especially with CAS numbers), re-run all three enrichment importers.
 
@@ -129,6 +129,8 @@ Called during local DB lookup to map raw label text to safety data:
 **Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`, `'upcitemdb'`, `'dailymed'`.
 
 **Duplicate ingredient prevention**: `product_ingredients` has a unique index on `(product_id, position)`. All importers use `ON CONFLICT (product_id, position) DO NOTHING`.
+
+**Partial unique index requirement for `ON CONFLICT ... WHERE`**: PostgreSQL requires a matching partial unique index for any `ON CONFLICT (col) WHERE predicate` upsert clause — and it checks this at **planning time**, regardless of the actual values being inserted. Without the matching index, the query fails with `InvalidColumnReferenceError: there is no unique or exclusion constraint matching the ON CONFLICT specification`. This was a silent bug for `user_submissions` until Session I — `_save_submission`'s blanket `try/except` swallowed the error, and every barcode photo submission appeared to succeed but never persisted. Fix: `CREATE UNIQUE INDEX user_submissions_barcode_unique ON user_submissions(barcode) WHERE barcode IS NOT NULL` (partial so NULL-barcode anonymous submissions can repeat). When adding any new upsert with a `WHERE` clause, verify a matching partial unique index exists in `schema.sql` AND in the live DB.
 
 ### Agent system prompts
 
@@ -150,18 +152,28 @@ Not used at runtime (reference only):
 
 - **Scan history**: `useScanHistory` hook, stored in localStorage (max 20 items)
 - **Allergen profile**: `useAllergenProfile` hook, stored in localStorage
-- **API base URL**: `VITE_API_URL` env var, defaults to `http://localhost:8000`
+- **Theme mode** (system / light / dark): `useDarkMode.tsx` exports `ThemeProvider` (mounted once in `main.tsx`) and `useTheme()` context hook. Persisted to localStorage under `safescan:theme-mode`. `'system'` follows OS `prefers-color-scheme` live. `<ThemeToggle />` component (pill + icon variants) drops into any page header without prop-drilling.
+- **Motion**: `src/motion.css` provides `.fade-up`, `.stagger-1..7`, `.lift`, `.press` utility classes. Globally imported in `main.tsx`. Respects `prefers-reduced-motion`.
+- **Display typography**: `FONT_DISPLAY` (Fraunces variable) exported from `theme.ts` — reserved for the wordmark and grade letter ONLY. Page titles stay Manrope. Don't dilute by applying Fraunces elsewhere.
+- **API base URL**: `VITE_API_URL` env var, defaults to `http://localhost:8000`. The committed `.env.local` points to the Railway production URL.
 
 ### Photo submission flow
 
-`POST /api/submit-product` (multipart) → `image_agent.process_product_photos()` → saves to `user_submissions` → triggers `analyze_submission_bg()` as a FastAPI `BackgroundTask`. The background task calls `analyze_product()` which follows the same 3-path pipeline above, using the `user_submissions` table as a final fallback in `lookup_product()`.
+`POST /api/submit-product` (multipart) → `validate_and_normalize_image()` per upload at the endpoint boundary → `image_agent.process_product_photos()` → saves to `user_submissions` → triggers `analyze_submission_bg()` as a FastAPI `BackgroundTask`. The background task calls `analyze_product()` which follows the same 3-path pipeline above, using the `user_submissions` table as a final fallback in `lookup_product()`.
+
+**Image validation at the boundary** (`image_agent.validate_and_normalize_image`): sniffs magic bytes (the client's `content_type` is ignored — file header is authoritative) and rejects anything that isn't JPEG/PNG/GIF/WEBP with a clean HTTP 400. Anything over 3.5MB raw (safe ceiling under Anthropic's 5MB base64 limit) is downsized via Pillow — thumbnail to 2048px longest side (preserves OCR-readable text), JPEG re-encode at quality 85→75→65→55 until under budget.
+
+**Image agent vision calls**: `_extract_product_info()` and `_parse_ingredients()` run **concurrently** via `asyncio.create_task` (`process_product_photos` awaits each task; both are already running). Each uses `client.messages.parse(..., output_format=PydanticClass)` with `timeout=60.0` and is wrapped by `_call_anthropic_with_retry()` which retries once on `RateLimitError | APITimeoutError` with 1s backoff (permanent `APIError` fails fast). The parser is fed `product_type_hint` from the API caller rather than the extractor's `product_type` — this is what enables parallelism. Trade-off accepted: small accuracy edge case (when `product_type_hint='unknown'` AND the extractor would have inferred a better value) for ~2× wall-clock speedup.
+
+**Submission result status**: `SubmissionResult` carries `product_status` and `ingredients_status` of type `CallStatus = 'ok' | 'failed' | 'not_attempted'`. The orchestrator translates a `None` return from either helper into `'failed'`; `'not_attempted'` means no photo was uploaded for that side. Both surface in `GET /api/submissions` for the SubmissionsPage to render an "extraction issue" badge, and on `AddProductPage`'s done view as a red warning card (with the auto-redirect-to-Submissions suppressed so the user actually sees the warning).
 
 ### Recall checking
 
 Every `SafetyReport` gets recalls attached via `_attach_recalls()` after analysis. Sources checked:
 1. Local `recalls` table (FTS query on title + description)
 2. Local `recalls` table (barcode literal ILIKE search)
-3. Real-time `openFDA` food enforcement API (catches recalls within the ~7-day indexing lag window)
+
+(The real-time per-scan openFDA call was removed in Session H — the weekly 45-day delta sync covers the openFDA ~7-day indexing lag, making the per-scan HTTP call redundant. Eliminated ~200–800ms per uncached scan.)
 
 The `recalls` table is populated from two sources and has a `source` column to distinguish them:
 - **FDA** (`source='fda'`): openFDA food enforcement API — ~28.7K records from 2012 to present, full `classification` → `risk_level` mapping (Class I=serious, Class II=high). Managed by `db/recall_store.py`. Weekly delta sync covers the last 45 days. One-time full backfill: `python -m db.recall_store --backfill`. **The FDA RSS feed was retired** — it only exposed a rolling ~20-item window with no risk classification and wrong category labels for non-food entries (medical devices labeled "food").
@@ -169,6 +181,4 @@ The `recalls` table is populated from two sources and has a `source` column to d
 
 **FDA recall coverage note**: The 28.7K openFDA food records are brand+lot specific (e.g. "Trader Joe's Vegetable Fried Rice, net wt. 1lb per bag, UPC 00617571…"). FTS match rate on a typical scan is ~5–15% (most matches are for brands with known recall histories). Class I (serious/life-threatening) and Class II (high/likely harm) are the only classifications in the dataset — no Class III records appear in food/enforcement.
 
-**Decision point (pending)**: the real-time per-scan `_query_openfda()` call in `check_product_recalls()` is now largely redundant given the 45-day delta window. Candidate for removal to eliminate per-scan latency. Evaluate after 2–3 weeks of weekly sync operation confirms the overlap is sufficient.
-
-**weekly_sync.sh order**: OFF → OBF → USDA → OpenFDA → FDA recalls → RASFF recalls → IARC → Prop 65.
+**weekly_sync.sh order**: OFF → OBF → USDA → OpenFDA → DailyMed → FDA food recalls → FDA drug recalls → RASFF recalls → IARC → Prop 65 → ECHA GHS.
