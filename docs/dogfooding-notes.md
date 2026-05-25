@@ -38,20 +38,16 @@ verify fixes that couldn't be tested live during implementation.
            AddProductPage if Claude couldn't read the labels)
       Costs ~$0.01 in Claude credits per attempt.
 
-- [ ] **CORS on /api/submissions when dev frontend hits Railway.**
-      Surfaced by the Session I E2E smoke test (2026-05-24). Railway's
-      CORSMiddleware doesn't include 'http://localhost:5173' in
-      allow_origins, so when frontend/.env.local is pointed at the
-      production URL the SubmissionsPage list-fetch fails with:
-        Access to fetch at 'https://...railway.app/api/submissions'
-        from origin 'http://localhost:5173' has been blocked by CORS
-        policy: No 'Access-Control-Allow-Origin' header is present
-      POST /api/submit-product is unaffected (likely because preflight
-      isn't required for the same content-type pattern).
-      Fix: add 'http://localhost:5173' and 'http://localhost:4173'
-      (preview) to backend/main.py's CORSMiddleware allow_origins.
-      Not blocking — production-only frontend has no issue. Only worth
-      fixing if dev-against-prod workflow matters.
+- [x] **CORS on /api/submissions when dev frontend hits Railway.** Fixed
+      Session K (2026-05-25). Actual root cause was NOT a missing localhost
+      origin — it was `allow_origins=["*"]` paired with `allow_credentials=True`,
+      which the CORS spec forbids (browsers silently reject the response).
+      `backend/main.py` now reads `ALLOWED_ORIGINS` from env (comma-separated)
+      with a default list that includes Vite dev/preview, Capacitor iOS
+      (`capacitor://localhost`), Capacitor Android (`https://localhost`), and
+      the Railway production URL. To override on Railway, set `ALLOWED_ORIGINS`
+      env var. To allow another local-network device, append its origin to the
+      env var.
 
 ---
 

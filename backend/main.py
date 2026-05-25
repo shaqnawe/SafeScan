@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,9 +30,30 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Barcode Safety Scanner API", version="1.0.0", lifespan=lifespan)
 
+
+# CORS: explicit origin list is required when allow_credentials=True. The CORS
+# spec forbids `Access-Control-Allow-Origin: *` paired with credentials, so
+# `allow_origins=["*"]` is silently rejected by browsers — that was the
+# `/api/submissions` failure surfaced in Session I dogfooding. Origins are
+# env-driven so prod can be tight and dev can include localhost. Capacitor's
+# iOS WebView uses `capacitor://localhost`, Android uses `https://localhost`.
+_DEFAULT_ORIGINS = [
+    "http://localhost:5173",        # Vite dev
+    "http://localhost:4173",        # Vite preview
+    "capacitor://localhost",        # Capacitor iOS WebView
+    "https://localhost",            # Capacitor Android WebView
+    "https://proactive-harmony-production-2735.up.railway.app",  # Railway prod
+]
+_origins_env = os.environ.get("ALLOWED_ORIGINS", "").strip()
+ALLOWED_ORIGINS = (
+    [o.strip() for o in _origins_env.split(",") if o.strip()]
+    if _origins_env
+    else _DEFAULT_ORIGINS
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
