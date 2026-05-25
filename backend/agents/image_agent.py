@@ -207,7 +207,7 @@ async def _extract_product_info(image_bytes: bytes, media_type: str) -> Optional
     response = await _call_anthropic_with_retry(
         lambda: _client.messages.parse(
             model=MODEL_LIGHT,
-            max_tokens=2048,
+            max_tokens=4096,
             timeout=_VISION_TIMEOUT_S,
             thinking={"type": "adaptive"},
             system=_IMAGE_SYSTEM_CACHED,
@@ -230,6 +230,14 @@ async def _extract_product_info(image_bytes: bytes, media_type: str) -> Optional
     )
     if response is None:
         return None
+    if response.parsed_output is None:
+        stop_reason = getattr(response, "stop_reason", "<unknown>")
+        usage = getattr(response, "usage", None)
+        print(
+            f"  [IMAGE AGENT] Product extraction returned no parsed_output. "
+            f"stop_reason={stop_reason} usage={usage}"
+        )
+        return None
     return response.parsed_output
 
 
@@ -246,7 +254,7 @@ async def _parse_ingredients(
     response = await _call_anthropic_with_retry(
         lambda: _client.messages.parse(
             model=MODEL_LIGHT,
-            max_tokens=2048,
+            max_tokens=4096,
             timeout=_VISION_TIMEOUT_S,
             thinking={"type": "adaptive"},
             system=_PARSER_SYSTEM_CACHED,
@@ -269,6 +277,18 @@ async def _parse_ingredients(
         label="Ingredient parse",
     )
     if response is None:
+        return None
+    if response.parsed_output is None:
+        # The call succeeded (no exception) but the model produced no parseable
+        # output. Most common cause: max_tokens was hit during adaptive thinking,
+        # leaving no budget for the structured response. Log stop_reason + usage
+        # so we can tell this case apart from a real refusal.
+        stop_reason = getattr(response, "stop_reason", "<unknown>")
+        usage = getattr(response, "usage", None)
+        print(
+            f"  [IMAGE AGENT] Ingredient parse returned no parsed_output. "
+            f"stop_reason={stop_reason} usage={usage}"
+        )
         return None
     return response.parsed_output
 
