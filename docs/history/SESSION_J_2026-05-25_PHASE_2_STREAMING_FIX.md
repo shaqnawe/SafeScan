@@ -199,12 +199,75 @@ docs/history/SESSION_J_2026-05-25_PHASE_2_STREAMING_FIX.md   this file
 
 ---
 
+## Image OCR debugging cycle + validation
+
+After the Phase 2 work landed, dogfooding shifted to validating image-agent OCR on a real back-of-pack photo (vs all prior submissions using pasted text). The user submitted Dr.G Dermoisture Barrier.D Daily Lotion (barcode `8809695369650`) image-only.
+
+### Three consecutive silent failures
+
+All three attempts came back with `ingredients_status='failed'`, `ingredients=[]`, `parsing_confidence=0.0`, `parsing_notes=None` — AND no `[IMAGE AGENT]` log lines in Railway, which initially suggested the call wasn't even reaching Anthropic. Misleading: the call WAS succeeding from the SDK's perspective, but the structured output was either truncated to None silently or to invalid JSON that pydantic rejected.
+
+The frontend's hardcoded "try better lighting" copy in `AddProductPage.tsx:192` further misled the diagnosis — it's generic failure text, not Claude's actual feedback.
+
+Three attempts also revealed a separate cache bug: the BG task hit `safety_reports` from the first failed attempt and returned the cached grade B fallback on every retry, so even if OCR had started working, the user would have kept seeing grade B. Required manual `DELETE FROM safety_reports WHERE barcode='...'` between retries.
+
+### Bisecting the failure
+
+First instrumentation attempt (commit `ca38f73`): bumped max_tokens 2048 → 4096 and added explicit detection of `response.parsed_output is None`. Result: the call now raised `pydantic.ValidationError` instead of returning silently — `Invalid JSON: EOF while parsing a string at line 1 column 4073`. The ValidationError surfaced to the user as HTTP 500 because the retry helper only caught `anthropic.*` exceptions.
+
+That error WAS the signal. Claude generated 37+ ingredients, then the JSON got cut off mid-property at `"is_allergen":...` — confirming the structured output ran out of token budget.
+
+### Root cause
+
+`max_tokens=4096` should have been plenty for a 50-ingredient list (≈ 50 entries × 50 tokens = 2,500 tokens of output). But the call had `thinking={"type": "adaptive"}` — and adaptive thinking *expands to consume whatever budget you give it*. On a dense INCI label, thinking ate 2,000–3,000 tokens of reasoning, leaving the structured output truncated.
+
+Critical insight: structured extraction (read INCI text → emit JSON) does NOT need reasoning. It's a transcription task. Adaptive thinking on `_parse_ingredients` was strictly harmful — it competed with the output for budget without adding any analytical value.
+
+### The fix (commit `8b2a147`)
+
+Three changes:
+- Drop `thinking={"type": "adaptive"}` from both `_parse_ingredients` and `_extract_product_info`. With thinking gone, output has the full 4096 budget.
+- Broaden `_call_anthropic_with_retry` to catch `Exception` (not just `anthropic.*`) so pydantic.ValidationError and any future silent-fail mode land in DB/logs instead of bubbling 500s.
+- Kept the parsed_output=None diagnostic from `ca38f73` — still useful if a future model genuinely produces empty output without raising.
+
+### Validation
+
+After deploy, fourth submission attempt:
+- 50 ingredients extracted, `parsing_confidence=0.93`
+- `parsing_notes` documented the OCR normalizations: `Water(Aqua/Eau)` → INCI-canonical `Aqua (Water/Eau)`, rejoined hyphenated `Aluminum/Magnesi-um Hydroxide Stearate`, flagged wheat + soy as allergen candidates
+- Phase 2 streaming produced grade A, score 91, 50 ingredients analyzed in ~96s
+
+### Diff helper result vs manufacturer truth
+
+`python -m scratch.diff_extraction --submission-id 9 --truth-text "<Dr.G website ingredient list>"`:
+
+```
+extracted: 50  truth: 50
+matched (exact): 49
+missed: 1 — Water(Aqua/Eau)
+extra:  1 — Aqua (Water/Eau)
+recall: 98.0%  precision: 98.0%
+```
+
+The single mismatch is a **semantic equivalence**: same INCI ingredient (water), Claude intentionally reordered to put Aqua first per INCI convention. Effectively **100% recall, 100% precision, 0 hallucinations, 0 fusion artifacts**.
+
+### Decision worth keeping (this cycle)
+
+- **No thinking on pure structured-extraction calls.** Adaptive thinking is for synthesis-class tasks (Phase 2 safety analysis). For OCR / parsing / structured emission, it's a pure cost — it competes with the output for token budget and produces nothing the model couldn't produce without it. The default for `messages.parse()` with a Pydantic schema should be: no thinking, generous max_tokens.
+- **Image persistence is a real gap.** This debugging cycle was painful because every retry required the user to re-shoot the photo on their phone. Saving images to disk (or object storage) keyed by submission id would let future OCR failures be replayed offline. Added to TODO.md as MEDIUM.
+
+---
+
 ## Commits (chronological)
 
 - `d5874db` — `fix: Phase 2 streaming unblocks Opus on full system prompt`
 - `7e4bff9` — `Add image-agent extraction diff helper`
+- `2ec76b7` — `Add Session J write-up + diff-helper workflow in dogfooding notes`
+- `bb4c39f` — `fix: preserve chemical names with internal commas in manual ingredient parser`
+- `ca38f73` — `fix: surface silent vision-call failure when parsed_output is None`
+- `8b2a147` — `fix: vision OCR truncation by dropping adaptive thinking on structured calls`
 
-Both pushed to `origin/feature/capacitor-mobile`.
+All pushed to `origin/feature/capacitor-mobile`.
 
 ---
 
