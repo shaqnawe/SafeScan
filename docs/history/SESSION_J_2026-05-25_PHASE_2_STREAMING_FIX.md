@@ -258,6 +258,76 @@ The single mismatch is a **semantic equivalence**: same INCI ingredient (water),
 
 ---
 
+## Food dogfooding scan — LIKESKY 띠잇 3 Layer Biscuit (id=14)
+
+After the cosmetic OCR validation, ran a second dogfood scan on a food product to test whether OCR generalized beyond cosmetic INCI labels.
+
+### Submission
+
+- Barcode: `8809247975612`
+- Product: `'띠잇 (Thin In) 3 Layer Biscuit'` by LIKESKY
+- Auto-classified as `food` (product_type detection working)
+- Image-only, ingredient panel was rotated/vertical on packaging
+- 26 ingredients extracted at `parsing_confidence=0.85` (vs 0.93 on the cosmetic — Claude self-calibrated lower for the harder image)
+
+### Parsing notes surfaced real OCR uncertainty
+
+```
+Ingredient list is rotated/printed vertically on packaging. Contains
+allergen declaration block listing WHEAT, SOYBEAN, MILK(DRY), SESAME
+SEEDS. Allergens marked accordingly. Some ingredient names were
+partially ambiguous due to text orientation and image quality.
+'Skin Milk Powder' may be 'Skim Mil...'
+```
+
+Ingredient #10 came out as `Skin Milk Powder` — Claude flagged its own uncertainty inline. "Skin Milk" isn't a thing; it's almost certainly `Skim Milk Powder` (a standard biscuit ingredient). Worth knowing the model can communicate its own OCR doubts rather than confabulating.
+
+### Phase 2 produced a substantive food analysis
+
+- Grade C, score 49 (vs cosmetic's A 91)
+- Triggered NOVA 4 ultra-processed penalty (food-rubric specific)
+- Caramel color flagged for 4-MEI via IARC + Prop 65 data we loaded
+- Artificial flavor penalized for ingredient opacity
+- Rosemary oleoresin captured as a natural-antioxidant positive
+
+Food scoring path is healthy and uses different penalty categories than cosmetic.
+
+### Diff helper result surfaced a truth-list quality issue, not OCR weakness
+
+Truth list (from a Korean retailer page) used EU regulatory category names:
+- `leavening agent(E575)`, `acidity regulator(E330)`, `modified starch`, `flavoring`, `enzyme preparation`, `mixed cooking oil`
+
+OCR captured specific chemical names:
+- `Ammonium Bicarbonate` (= E575), `Acetylated Starch`, `Artificial Flavor`, `Protease`, `Soybean Oil` + `Palm Oil`
+
+Diff at face value: ~30% recall and precision. Real effective accuracy: ~95%+. The two lists describe the same product at different abstraction levels. Truth list itself had visible copy errors (`Wheat flour sugar` missing a comma between two ingredients, `sugars Processed product` similar).
+
+### Diff helper improvement note (deferred)
+
+Token-set / regulatory-code equivalence matching would catch `leavening agent(E575)` ≈ `Ammonium Bicarbonate`. Niche but useful. Best done by having Claude run a semantic-equivalence check on residual extras+misses after exact + fuzzy passes. Not blocking — added to TODO.md as low-priority.
+
+---
+
+## Image persistence — deferred with explicit trigger
+
+The OCR debugging cycle made the case for persisting uploaded image bytes (so failures can be replayed offline). But after the validation results:
+
+- Cosmetic OCR: effectively 100% accuracy
+- Food OCR: ~95% effective accuracy, with rich self-reported confidence/notes
+- Failure modes from this session are addressed: `parsing_notes` documents ambiguities, the broadened `except` catches truncation as `ingredients_status='failed'` instead of HTTP 500
+
+Persistence pays off only when (a) OCR fails AND (b) we can't ask the user to re-shoot. Today's fixes meaningfully reduced the rate of (a), and (b) is a rare scenario. The schema already has `product_image_path` / `ingredients_image_path` columns sitting empty, so adding persistence later is a clean retrofit, not a refactor.
+
+**Trigger for revisiting**: two or more OCR failures in dogfooding where re-shooting isn't possible (product returned / one-time lighting / etc.). Until that trigger fires, the build-now cost outweighs the benefit. Logged in TODO.md "Open issues" as deferred-with-trigger.
+
+---
+
+## Decision worth keeping (image persistence)
+
+- **YAGNI on debug infrastructure when failures aren't silent anymore.** The painful part of the OCR debugging cycle was the silence (`parsing_notes=None`, no log lines, retries hit cache). Once those root causes are fixed, the impulse to "build infrastructure for next time" should be checked — the next time may never come. Wait for the second real failure before building the harness.
+
+---
+
 ## Commits (chronological)
 
 - `d5874db` — `fix: Phase 2 streaming unblocks Opus on full system prompt`
@@ -266,6 +336,7 @@ The single mismatch is a **semantic equivalence**: same INCI ingredient (water),
 - `bb4c39f` — `fix: preserve chemical names with internal commas in manual ingredient parser`
 - `ca38f73` — `fix: surface silent vision-call failure when parsed_output is None`
 - `8b2a147` — `fix: vision OCR truncation by dropping adaptive thinking on structured calls`
+- `f2303fb` — `Log image-OCR validation result + Session J debugging cycle`
 
 All pushed to `origin/feature/capacitor-mobile`.
 
