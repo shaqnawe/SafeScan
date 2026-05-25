@@ -186,8 +186,15 @@ CREATE TABLE IF NOT EXISTS user_submissions (
     ingredients_image_path  TEXT,
     -- JSON data extracted by image and ingredient parser agents
     extracted_data          JSONB,
-    -- Workflow status
-    status                  TEXT        CHECK (status IN ('pending', 'verified', 'rejected')) DEFAULT 'pending',
+    -- Workflow status — matches what analyze_submission_bg + the setters write.
+    -- ('pending' on insert; 'analyzing' while bg task runs; 'complete' on success;
+    -- 'failed' if analyze_product raises.) The 'verified'/'rejected' values from
+    -- the original schema were never actually written by any code path.
+    status                  TEXT        CHECK (status IN ('pending', 'analyzing', 'complete', 'failed')) DEFAULT 'pending',
+    -- Background-task outputs written by db/queries.py setters:
+    report                  JSONB,
+    analyzed_at             TIMESTAMPTZ,
+    error                   TEXT,
     created_at              TIMESTAMPTZ DEFAULT now()
 );
 
