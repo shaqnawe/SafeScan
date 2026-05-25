@@ -13,7 +13,7 @@ import asyncio
 import base64
 import io
 from pathlib import Path
-from typing import Optional
+from typing import Awaitable, Callable, Literal, Optional, TypeVar
 
 import anthropic
 from PIL import Image
@@ -73,13 +73,22 @@ class IngredientParseResponse(BaseModel):
     parsing_notes:      Optional[str] = None
 
 
+CallStatus = Literal['ok', 'failed', 'not_attempted']
+
+
 class SubmissionResult(BaseModel):
-    submission_id:     Optional[int] = None
-    product:           ExtractedProduct
-    ingredients:       list[ParsedIngredient]
-    parsing_confidence: float        = 0.0
-    parsing_notes:     Optional[str] = None
-    ready_for_analysis: bool         = False  # True when we have enough to scan
+    submission_id:      Optional[int] = None
+    product:            ExtractedProduct
+    # 'not_attempted' when the user didn't upload a product photo; 'failed' when
+    # the Anthropic call errored or returned nothing usable after a retry.
+    product_status:     CallStatus     = 'not_attempted'
+    ingredients:        list[ParsedIngredient]
+    # 'ok' covers both image-parsed and manual-text-parsed ingredients;
+    # 'failed' only happens on the image path.
+    ingredients_status: CallStatus     = 'not_attempted'
+    parsing_confidence: float          = 0.0
+    parsing_notes:      Optional[str]  = None
+    ready_for_analysis: bool           = False  # True when we have enough to scan
 
 
 # ---------------------------------------------------------------------------
@@ -157,10 +166,46 @@ def validate_and_normalize_image(image_bytes: bytes) -> tuple[bytes, str]:
 # Agent calls
 # ---------------------------------------------------------------------------
 
-async def _extract_product_info(image_bytes: bytes, media_type: str) -> ExtractedProduct:
-    """Call Claude vision to extract brand/name/barcode from a product photo."""
-    try:
-        response = await _client.messages.parse(
+_T = TypeVar("_T")
+
+
+async def _call_anthropic_with_retry(
+    call_factory: Callable[[], Awaitable[_T]],
+    label: str,
+) -> Optional[_T]:
+    """
+    Execute an Anthropic call (provided as a zero-arg async factory). Retries
+    once with a 1s backoff on transient errors (rate limit, timeout). Returns
+    None on any permanent failure or after the retry is exhausted.
+
+    The factory pattern (rather than passing a coroutine directly) lets us
+    rebuild the request on each attempt, which is required because awaiting
+    a coroutine twice raises RuntimeError.
+    """
+    for attempt in (1, 2):
+        try:
+            return await call_factory()
+        except (anthropic.RateLimitError, anthropic.APITimeoutError) as e:
+            if attempt == 1:
+                print(f"  [IMAGE AGENT] {label} transient error, retrying in 1s: {e}")
+                await asyncio.sleep(1.0)
+                continue
+            print(f"  [IMAGE AGENT] {label} failed after retry: {e}")
+            return None
+        except anthropic.APIError as e:
+            print(f"  [IMAGE AGENT] {label} failed: {e}")
+            return None
+    return None  # unreachable; satisfies the type checker
+
+
+async def _extract_product_info(image_bytes: bytes, media_type: str) -> Optional[ExtractedProduct]:
+    """
+    Call Claude vision to extract brand/name/barcode from a product photo.
+    Returns None on permanent failure (logged by the retry helper); the
+    orchestrator translates None into product_status='failed'.
+    """
+    response = await _call_anthropic_with_retry(
+        lambda: _client.messages.parse(
             model=MODEL_LIGHT,
             max_tokens=2048,
             timeout=_VISION_TIMEOUT_S,
@@ -180,22 +225,26 @@ async def _extract_product_info(image_bytes: bytes, media_type: str) -> Extracte
                 ],
             }],
             output_format=ExtractedProduct,
-        )
-    except anthropic.APIError as e:
-        print(f"  [IMAGE AGENT] Product extraction failed: {e}")
-        return ExtractedProduct()
-
-    return response.parsed_output or ExtractedProduct()
+        ),
+        label="Product extraction",
+    )
+    if response is None:
+        return None
+    return response.parsed_output
 
 
 async def _parse_ingredients(
     image_bytes: bytes,
     media_type: str,
     product_type: str,
-) -> tuple[list[ParsedIngredient], float, Optional[str]]:
-    """Call Claude vision to parse an ingredient list photo."""
-    try:
-        response = await _client.messages.parse(
+) -> Optional[IngredientParseResponse]:
+    """
+    Call Claude vision to parse an ingredient list photo.
+    Returns None on permanent failure (logged by the retry helper); the
+    orchestrator translates None into ingredients_status='failed'.
+    """
+    response = await _call_anthropic_with_retry(
+        lambda: _client.messages.parse(
             model=MODEL_LIGHT,
             max_tokens=2048,
             timeout=_VISION_TIMEOUT_S,
@@ -216,16 +265,12 @@ async def _parse_ingredients(
                 ],
             }],
             output_format=IngredientParseResponse,
-        )
-    except anthropic.APIError as e:
-        print(f"  [IMAGE AGENT] Ingredient parse failed: {e}")
-        return [], 0.0, "Failed to parse agent response"
-
-    parsed = response.parsed_output
-    if parsed is None:
-        return [], 0.0, "Empty agent response"
-
-    return parsed.ingredients, parsed.parsing_confidence, parsed.parsing_notes
+        ),
+        label="Ingredient parse",
+    )
+    if response is None:
+        return None
+    return response.parsed_output
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +349,8 @@ async def process_product_photos(
     ingredients: list[ParsedIngredient] = []
     parsing_confidence = 0.0
     parsing_notes: Optional[str] = None
+    product_status:     CallStatus = 'not_attempted'
+    ingredients_status: CallStatus = 'not_attempted'
 
     # Manual ingredient text overrides the photo if both are provided.
     manual_text = manual_ingredients_text.strip() if manual_ingredients_text else ""
@@ -322,16 +369,29 @@ async def process_product_photos(
     )
 
     if extract_task is not None:
-        extracted = await extract_task
+        extract_result = await extract_task
+        if extract_result is not None:
+            extracted = extract_result
+            product_status = 'ok'
+        else:
+            product_status = 'failed'
         if barcode_hint:
             extracted.barcode = barcode_hint
 
     if parse_task is not None:
-        ingredients, parsing_confidence, parsing_notes = await parse_task
+        parse_result = await parse_task
+        if parse_result is not None:
+            ingredients = parse_result.ingredients
+            parsing_confidence = parse_result.parsing_confidence
+            parsing_notes = parse_result.parsing_notes
+            ingredients_status = 'ok'
+        else:
+            ingredients_status = 'failed'
 
     if manual_text:
         pt = extracted.product_type if extracted.product_type != "unknown" else product_type_hint
         ingredients, parsing_confidence, parsing_notes = _parse_manual_ingredients(manual_text, pt)
+        ingredients_status = 'ok'
 
     # We can offer analysis if we have a barcode (extracted or hinted) + some ingredients
     barcode = extracted.barcode or barcode_hint
@@ -339,7 +399,9 @@ async def process_product_photos(
 
     result = SubmissionResult(
         product=extracted,
+        product_status=product_status,
         ingredients=ingredients,
+        ingredients_status=ingredients_status,
         parsing_confidence=parsing_confidence,
         parsing_notes=parsing_notes,
         ready_for_analysis=ready,
