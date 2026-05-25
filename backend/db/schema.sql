@@ -152,23 +152,30 @@ COMMENT ON COLUMN product_ingredients.is_allergen     IS 'True if declared as an
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS safety_reports (
     id          BIGSERIAL PRIMARY KEY,
-    -- Barcode of the product this report covers
-    barcode     TEXT        NOT NULL,
+    -- Barcode of the product this report covers. UNIQUE so cache_report's
+    -- ON CONFLICT (barcode) DO UPDATE has a matching constraint at plan time.
+    barcode     TEXT        NOT NULL UNIQUE,
     -- Full SafetyReport JSON payload
     report      JSONB       NOT NULL,
     -- True if this report was generated or supplemented by Claude
     claude_used BOOLEAN     DEFAULT false,
+    -- First-cached timestamp. Stays put across re-cache operations.
     created_at  TIMESTAMPTZ DEFAULT now(),
     -- After this timestamp the cache entry should be regenerated
-    expires_at  TIMESTAMPTZ NOT NULL
+    expires_at  TIMESTAMPTZ NOT NULL,
+    -- Bumped to NOW() on every cache_report() overwrite. Lets us see when a
+    -- cached report was last refreshed without an append-only history table.
+    updated_at  TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 COMMENT ON TABLE safety_reports IS
     'Cache of computed safety reports. Looked up first on every barcode scan. '
-    'Reports expire after a configurable TTL (default 7 days) and are regenerated on next request.';
+    'One row per barcode (UNIQUE constraint). Reports expire after a configurable '
+    'TTL (default 7 days) and are regenerated via UPSERT on next request.';
 COMMENT ON COLUMN safety_reports.report      IS 'Full SafetyReport Pydantic model serialised as JSONB.';
 COMMENT ON COLUMN safety_reports.claude_used IS 'True when the report was generated with Claude AI assistance.';
 COMMENT ON COLUMN safety_reports.expires_at  IS 'Cache expiry. Barcode agent checks this before returning cached data.';
+COMMENT ON COLUMN safety_reports.updated_at  IS 'Bumped on every cache_report() overwrite. Diverges from created_at when a barcode is re-cached.';
 
 
 -- =============================================================================
@@ -332,10 +339,8 @@ CREATE INDEX IF NOT EXISTS idx_ingredients_type
 CREATE INDEX IF NOT EXISTS idx_ingredients_safety
     ON ingredients (safety_level);
 
--- safety_reports — cache lookup by barcode and expiry check
-CREATE INDEX IF NOT EXISTS idx_safety_reports_barcode
-    ON safety_reports (barcode);
-
+-- safety_reports — cache lookup by barcode (served by the UNIQUE constraint's
+-- implicit index) and expiry check
 CREATE INDEX IF NOT EXISTS idx_safety_reports_expires
     ON safety_reports (expires_at);
 

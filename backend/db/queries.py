@@ -28,6 +28,11 @@ LIMIT 1
 _UPSERT_CACHED_REPORT = """
 INSERT INTO safety_reports (barcode, report, claude_used, expires_at)
 VALUES ($1, $2::jsonb, $3, NOW() + INTERVAL '7 days')
+ON CONFLICT (barcode) DO UPDATE
+SET report      = EXCLUDED.report,
+    claude_used = EXCLUDED.claude_used,
+    expires_at  = EXCLUDED.expires_at,
+    updated_at  = NOW()
 """
 
 
@@ -43,7 +48,9 @@ async def get_cached_report(barcode: str) -> dict | None:
 
 
 async def cache_report(barcode: str, report_json: str, claude_used: bool) -> None:
-    """Insert a safety report into the cache with a 7-day TTL."""
+    """Upsert a safety report into the cache with a 7-day TTL. One row per
+    barcode, kept in place via ON CONFLICT — `updated_at` is bumped on each
+    overwrite, `created_at` stays at first-cached time."""
     async with get_conn() as conn:
         await conn.execute(_UPSERT_CACHED_REPORT, barcode, report_json, claude_used)
 
