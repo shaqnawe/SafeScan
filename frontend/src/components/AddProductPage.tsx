@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { submitProduct } from '../api'
 import type { SubmissionResult } from '../types'
 import ThemeToggle from './ThemeToggle'
@@ -71,9 +71,12 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
       const res = await submitProduct(form)
       setResult(res)
       setPageState('done')
-      // If analysis was auto-triggered on the backend, go straight to submissions
+      // If analysis was auto-triggered on the backend, go straight to submissions —
+      // unless extraction had a failure the user should see + decide what to do about.
       const finalBarcode = res.product.barcode || barcode.trim()
-      if (finalBarcode) {
+      const extractionHadIssues =
+        res.product_status === 'failed' || res.ingredients_status === 'failed'
+      if (finalBarcode && !extractionHadIssues) {
         onSubmitted()
       }
     } catch (err) {
@@ -139,8 +142,12 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
 
   // ── Result screen ─────────────────────────────────────────────────────────
   if (pageState === 'done' && result) {
-    const { product, ingredients, ready_for_analysis } = result
+    const { product, ingredients, ready_for_analysis, product_status, ingredients_status } = result
     const barcodeFinal = product.barcode || barcode.trim()
+
+    const failedCalls: string[] = []
+    if (product_status === 'failed')     failedCalls.push('product label')
+    if (ingredients_status === 'failed') failedCalls.push('ingredient list')
 
     return (
       <div style={rootStyle}>
@@ -164,6 +171,30 @@ export default function AddProductPage({ onBack, onAnalyze, onSubmitted, isDark 
         </div>
 
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Extraction-failure warning — surfaces backend product_status / ingredients_status.
+              We tell the user what didn't read cleanly so they can retake the relevant photo. */}
+          {failedCalls.length > 0 && (
+            <div className="fade-up" style={{
+              ...cardStyle,
+              padding: '14px 16px',
+              background: theme.redSoft,
+              border: `1px solid ${theme.red}55`,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+            }}>
+              <AlertTriangle size={20} strokeWidth={2} aria-hidden style={{ color: theme.red, flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: '14px', fontWeight: '700', color: theme.red, marginBottom: 4 }}>
+                  Couldn&apos;t read the {failedCalls.join(' or ')}
+                </p>
+                <p style={{ fontSize: '13px', color: theme.secondary, lineHeight: 1.4 }}>
+                  Try retaking the photo in better lighting, holding the camera closer, or entering the data manually.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Product info */}
           <div style={{ ...cardStyle, padding: '20px' }}>
             <h2 style={{ fontSize: '13px', fontWeight: '600', color: secondary, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>

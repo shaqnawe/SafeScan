@@ -16,10 +16,14 @@ export interface ParsedIngredient {
   concerns:           string[]
 }
 
+export type CallStatus = 'ok' | 'failed' | 'not_attempted'
+
 export interface SubmissionResult {
   submission_id:      number | null
   product:            ExtractedProduct
+  product_status:     CallStatus
   ingredients:        ParsedIngredient[]
+  ingredients_status: CallStatus
   parsing_confidence: number
   parsing_notes:      string | null
   ready_for_analysis: boolean
@@ -32,15 +36,18 @@ export interface IngredientAnalysis {
 }
 
 export interface UserSubmission {
-  id:           number
-  barcode:      string | null
-  status:       'pending' | 'analyzing' | 'complete' | 'failed'
-  product_name: string | null
-  brand:        string | null
-  submitted_at: string | null  // maps to created_at in DB
-  analyzed_at:  string | null
-  error:        string | null
-  report:       SafetyReport | null
+  id:                 number
+  barcode:            string | null
+  status:             'pending' | 'analyzing' | 'complete' | 'failed'
+  product_name:       string | null
+  brand:              string | null
+  submitted_at:       string | null  // maps to created_at in DB
+  analyzed_at:        string | null
+  error:              string | null
+  report:             SafetyReport | null
+  // Per-call extraction outcomes from the image agent (orthogonal to `status`)
+  product_status:     CallStatus
+  ingredients_status: CallStatus
 }
 
 export interface RecallAlert {

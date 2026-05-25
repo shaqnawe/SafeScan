@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react'
 import { getSubmissions } from '../api'
 import type { UserSubmission, SafetyReport } from '../types'
 import ThemeToggle from './ThemeToggle'
@@ -194,6 +194,26 @@ export default function SubmissionsPage({ onBack, onViewReport, isDark = false }
                     <span style={{ fontSize: '11px', color: secondary }}>
                       {timeAgo(sub.submitted_at)}
                     </span>
+                    {/* Per-call extraction failure indicator. Orthogonal to the workflow
+                        status above — extraction can fail on either side while the
+                        overall submission still "completes" with whatever data we got. */}
+                    {(sub.product_status === 'failed' || sub.ingredients_status === 'failed') && (
+                      <span
+                        title={[
+                          sub.product_status === 'failed' ? 'product label could not be read' : null,
+                          sub.ingredients_status === 'failed' ? 'ingredient list could not be read' : null,
+                        ].filter(Boolean).join(' · ')}
+                        style={{
+                          fontSize: '11px', fontWeight: '600',
+                          color: theme.red, background: theme.redSoft,
+                          borderRadius: '6px', padding: '2px 8px',
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                        }}
+                      >
+                        <AlertTriangle size={11} strokeWidth={2.5} aria-hidden />
+                        <span>extraction issue</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Analyzing pulse */}

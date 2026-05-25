@@ -69,15 +69,18 @@ async def get_submissions():
         if report_raw:
             report = json.loads(report_raw) if isinstance(report_raw, str) else report_raw
         result.append({
-            "id":           r["id"],
-            "barcode":      r["barcode"],
-            "status":       r["status"],
-            "product_name": product.get("product_name"),
-            "brand":        product.get("brand"),
-            "submitted_at": r["created_at"].isoformat() if r["created_at"] else None,
-            "analyzed_at":  r["analyzed_at"].isoformat() if r["analyzed_at"] else None,
-            "error":        r["error"],
-            "report":       report,
+            "id":                 r["id"],
+            "barcode":            r["barcode"],
+            "status":             r["status"],
+            "product_name":       product.get("product_name"),
+            "brand":              product.get("brand"),
+            "submitted_at":       r["created_at"].isoformat() if r["created_at"] else None,
+            "analyzed_at":        r["analyzed_at"].isoformat() if r["analyzed_at"] else None,
+            "error":              r["error"],
+            "report":             report,
+            # Per-call extraction outcomes from the image agent (see image_agent.CallStatus)
+            "product_status":     (extracted or {}).get("product_status", "not_attempted"),
+            "ingredients_status": (extracted or {}).get("ingredients_status", "not_attempted"),
         })
     return result
 
