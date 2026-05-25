@@ -89,6 +89,27 @@ below.
 
 ---
 
+## Vision-model benchmark observations
+
+Same image + same prompt + same Pydantic schema through three providers in
+parallel (`backend/scratch/benchmark_vision.py`). Production currently uses
+Anthropic Sonnet 4.6.
+
+| Date | Image | Truth | Sonnet 4.6 | gpt-4o-mini | gpt-4o |
+|------|-------|-------|------------|-------------|--------|
+| 2026-05-25 | Dr.G Daily Lotion (IMG_2434.jpg, 2.6MB, iPhone 13 mini) | 50 INCI ingredients | **50 ext / 98.0% recall / 98.0% precision / conf 0.93 / $0.04469 / 26.3s** — single "miss" was Water/Aqua reorder per INCI convention (semantic-equivalent). Flagged wheat allergen in parsing_notes. | 51 ext / 96.0% recall / 94.1% precision / **conf 1.00** / $0.00568 / 50.9s — substituted `Propanediol → Propylene Glycol` (different chemical), invented `Polyglucuronic Acid` and `Polyquaternium-3 Distearate` (substitutes for Polyglyceryl-3 Distearate), typos `Timella`/`Phyto`. **Overconfident** (claimed 1.00 with real errors). | 47 ext / 80.0% recall / 85.1% precision / conf 0.90 / $0.02306 / 14.0s — **multiple confident hallucinations**: `Isododecane`, `Helianthus Annuus Seed Oil Unsaponifiables`, `Polyhydroxystearic Acid` (none on label); fused-split `Sucrose Cocoate → Sucrose + Cocoate`; misspelled `Ethlyhexylglycerin`. |
+
+**Headline findings from the first benchmark:**
+
+- **Sonnet 4.6 is the production-quality winner** at the current ~50-ingredient INCI scale. Effective 100% accuracy, calibrated confidence, semantic-aware normalization.
+- **gpt-4o (full) is the surprise loser** — worse than gpt-4o-mini AND more expensive. Skip entirely on this task class.
+- **gpt-4o-mini is ~8× cheaper than Sonnet** but ships two real risks: (1) substantive chemical confusion (Propanediol vs Propylene Glycol — *different molecules*), (2) overconfident self-rating (1.00 with real errors). Sonnet's 0.93 self-rating is calibrated; mini's 1.00 is not.
+- **The advertised "20× cheaper" for mini doesn't survive** — mini consumed 5–6× more input tokens than Sonnet on the same image (28K vs 5K — image is tiled at higher resolution). Net savings are 8×, not 20×.
+
+**Production routing recommendation (as of 2026-05-25):** stay on Sonnet. At dogfooding scale ($4.50/day at 100 scans vs $0.60/day for mini), cost savings don't justify the recall hit + the overconfidence calibration issue. Trigger to revisit: scale exceeds ~10K scans/day AND we're willing to wire a confidence-threshold fallback (`if mini.confidence < X OR result flagged risky → re-run on Sonnet`).
+
+---
+
 ## UI / rendering issues
 
 <!--
