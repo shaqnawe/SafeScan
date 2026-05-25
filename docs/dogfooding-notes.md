@@ -97,16 +97,26 @@ Anthropic Sonnet 4.6.
 
 | Date | Image | Truth | Sonnet 4.6 | gpt-4o-mini | gpt-4o |
 |------|-------|-------|------------|-------------|--------|
-| 2026-05-25 | Dr.G Daily Lotion (IMG_2434.jpg, 2.6MB, iPhone 13 mini) | 50 INCI ingredients | **50 ext / 98.0% recall / 98.0% precision / conf 0.93 / $0.04469 / 26.3s** — single "miss" was Water/Aqua reorder per INCI convention (semantic-equivalent). Flagged wheat allergen in parsing_notes. | 51 ext / 96.0% recall / 94.1% precision / **conf 1.00** / $0.00568 / 50.9s — substituted `Propanediol → Propylene Glycol` (different chemical), invented `Polyglucuronic Acid` and `Polyquaternium-3 Distearate` (substitutes for Polyglyceryl-3 Distearate), typos `Timella`/`Phyto`. **Overconfident** (claimed 1.00 with real errors). | 47 ext / 80.0% recall / 85.1% precision / conf 0.90 / $0.02306 / 14.0s — **multiple confident hallucinations**: `Isododecane`, `Helianthus Annuus Seed Oil Unsaponifiables`, `Polyhydroxystearic Acid` (none on label); fused-split `Sucrose Cocoate → Sucrose + Cocoate`; misspelled `Ethlyhexylglycerin`. |
+| 2026-05-25 | Dr.G Daily Lotion (Korean cosmetic, dense INCI) | 50 ingredients | **50 ext / 98.0% / 98.0% / conf 0.93 / $0.04469 / 26.3s** — single "miss" was Water/Aqua reorder per INCI convention (semantic-equivalent). Flagged wheat allergen in parsing_notes. | 51 ext / 96.0% / 94.1% / **conf 1.00** / $0.00568 / 50.9s — substituted `Propanediol → Propylene Glycol` (different chemical), invented `Polyglucuronic Acid` and `Polyquaternium-3 Distearate`, typos `Timella`/`Phyto`. Overconfident. | 47 ext / **80.0%** / 85.1% / conf 0.90 / $0.02306 / 14.0s — multiple confident hallucinations: `Isododecane`, `Helianthus Annuus Seed Oil Unsaponifiables`, `Polyhydroxystearic Acid` (none on label); fused-split `Sucrose Cocoate → Sucrose + Cocoate`; misspelled `Ethlyhexylglycerin`. |
+| 2026-05-25 | Cetaphil Moisturizing Lotion (Western cosmetic, short INCI) | 16 ingredients | **16 ext / 100.0% / 100.0% / conf 0.93 / $0.02558 / 12.8s** — single typo `Sodium Benzoate → Sodium Benzdate` was **self-flagged in parsing_notes** ("'Sodium Benzdate' may be..."). Real metacognition. | 16 ext / 93.8% / 93.8% / conf 1.00 / $0.00467 / 14.3s — dropped `(Water)` from `Aqua (Water)`, typo `Tocopheryl → Tocopherol Acetate`. Same overconfidence pattern. | 16 ext / 93.8% / 93.8% / conf 1.00 / $0.01339 / 7.0s — returned `Water` instead of INCI `Aqua`; typo `Pantolactone → Panolactone`. **No hallucinations this time** (vs 4+ on the 50-ingredient list). |
 
-**Headline findings from the first benchmark:**
+**Cross-scan picture (2 benchmarks):**
 
-- **Sonnet 4.6 is the production-quality winner** at the current ~50-ingredient INCI scale. Effective 100% accuracy, calibrated confidence, semantic-aware normalization.
-- **gpt-4o (full) is the surprise loser** — worse than gpt-4o-mini AND more expensive. Skip entirely on this task class.
-- **gpt-4o-mini is ~8× cheaper than Sonnet** but ships two real risks: (1) substantive chemical confusion (Propanediol vs Propylene Glycol — *different molecules*), (2) overconfident self-rating (1.00 with real errors). Sonnet's 0.93 self-rating is calibrated; mini's 1.00 is not.
-- **The advertised "20× cheaper" for mini doesn't survive** — mini consumed 5–6× more input tokens than Sonnet on the same image (28K vs 5K — image is tiled at higher resolution). Net savings are 8×, not 20×.
+| Metric | Daily Lotion (50 ingr) | Cetaphil (16 ingr) |
+|---|---|---|
+| Sonnet recall | 98% (effective 100%) | 100% |
+| mini recall | 96% | 93.8% |
+| gpt-4o recall | 80% | 93.8% |
+| Cost ratio mini:Sonnet | 7.9× cheaper | 5.5× cheaper |
 
-**Production routing recommendation (as of 2026-05-25):** stay on Sonnet. At dogfooding scale ($4.50/day at 100 scans vs $0.60/day for mini), cost savings don't justify the recall hit + the overconfidence calibration issue. Trigger to revisit: scale exceeds ~10K scans/day AND we're willing to wire a confidence-threshold fallback (`if mini.confidence < X OR result flagged risky → re-run on Sonnet`).
+**Headline findings:**
+
+- **Sonnet 4.6 is the only consistently-calibrated provider.** Confidence 0.93 on both scans, knows when it's wrong (self-flagged the Sodium Benzdate typo). Both OpenAI models reported confidence **1.00 every time** despite real errors — overconfidence is a calibration bug, not a one-off.
+- **gpt-4o's hallucination risk scales with list length.** 4+ invented ingredients on the 50-list, zero on the 16-list. Likely the model fills the structured-output schema with plausible-looking substances when token pressure rises. **Skip gpt-4o for the safety analyzer's primary path regardless of pricing.**
+- **mini is consistently ~94–96%** across both scans — predictable quality floor. Errors lean toward substantive chemical confusion (`Propanediol → Propylene Glycol` — different molecules), typos, and missed parenthetical translations.
+- **Cost spread narrows on shorter lists** because output tokens dominate cost differential. 7.9× cheaper on 50-list, 5.5× cheaper on 16-list. Mini's "20× cheaper input tokens" headline is misleading because mini tiles images at higher resolution (28K input tokens vs Sonnet's 5K on the same image).
+
+**Production routing recommendation (as of 2026-05-25):** stay on Sonnet 4.6. Two scans confirm: only Sonnet has calibrated confidence + zero hallucinations + INCI semantic awareness. Cost savings at dogfooding scale ($3.50–4.50/day at 100 scans) don't justify the safety-critical risk of mini's confident chemical confusion. Trigger to revisit: scale exceeds ~10K scans/day AND we're willing to wire a confidence-threshold fallback (`if mini.confidence < X OR result flagged risky → re-run on Sonnet`).
 
 ---
 
