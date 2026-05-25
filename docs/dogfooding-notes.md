@@ -59,7 +59,7 @@ verify fixes that couldn't be tested live during implementation.
 
 | Date | Barcode | Product | Expected grade | Actual grade | Notes |
 |------|---------|---------|---------------|--------------|-------|
-| 2026-05-24 | 8809838658313 | Dr.G R.E.D Blemish Clear Soothing Body Wash (Korean) | B (rinse-off, mostly safe ingredients with one fragrance + one salicylic acid) | D (fallback report — Phase 2 disconnect bug) | First real photo submission. Photo extraction worked (42 ingredients parsed via image agent). Persistence worked after the schema fix (id=7). But `analyze_product`'s Phase 2 call to Opus 4.6 hangs ~280s and disconnects when handed a rich tool_result. See TODO.md "Open issues" — `lookup_product` priority now correctly picks the user_submission ingredients, but Phase 2 can't synthesize the report. Workaround = route user_submission results through local_analyzer instead. |
+| 2026-05-24 | 8809838658313 | Dr.G R.E.D Blemish Clear Soothing Body Wash (Korean) | B (rinse-off, mostly safe ingredients with one fragrance + one salicylic acid) | D (fallback) → resolved later same day | First real photo submission. Photo extraction worked (42 ingredients via image agent). Persistence worked after the schema fix (id=7). Initial analysis returned fallback grade D because Phase 2 disconnected at ~60s. Root-caused with `backend/scratch/repro_phase2.py` bisecting harness: upstream LB timeout on combined system+message size, NOT a model or content-filter issue. Fix: switched Phase 2 to `messages.stream()` — keeps the connection alive past 60s. Re-analysis now produces a real Opus report. See CLAUDE.md "Phase 2 disconnect bug (resolved)". |
 
 ---
 

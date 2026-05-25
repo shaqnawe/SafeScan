@@ -91,7 +91,7 @@ When `POST /api/scan` is called with a barcode:
 2. **Local fast path** → `agents/local_analyzer.py` — pure Python scoring from DB data, zero Claude calls. Used when the product is in the local DB *with a rich source* (not UPCitemdb-cached). Falls back to Claude if `resolved_ingredients` is empty.
 3. **Claude path** (two phases):
    - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
-   - **Phase 2** (synthesis): `MODEL_HEAVY` (Opus 4.6) via `client.messages.create()` with `thinking={"type": "adaptive"}` + a JSON-only response instruction, then `json.loads()` + `SafetyReport(**data)` validation. Phase 2 used to use `messages.parse(output_format=SafetyReport)` but switched to `create()` after the documented `RemoteProtocolError` serialization quirk reproduced. See **Phase 2 disconnect bug** below.
+   - **Phase 2** (synthesis): `MODEL_HEAVY` (Opus 4.6) via `client.messages.stream()` with `thinking={"type": "adaptive"}` + a JSON-only response instruction. Text chunks are joined, markdown fences stripped, then `json.loads()` + `SafetyReport(**data)` validation. Streaming is required: a non-streaming `create()` call with the full 33K-char system prompt + any non-trivial tool_result gets killed by an upstream ~60s load-balancer timeout. Streaming keeps the connection alive via continuous token flow. Root cause was bisected in Session I-extended; `messages.parse()` was tried earlier and abandoned for unrelated serialization issues.
 
 ### `lookup_product` priority order (`scanner.py`)
 
@@ -107,13 +107,13 @@ Phase 1's tool. Highest-fidelity first; later steps fire only on miss:
 
 Refactor in Session I-extended (2026-05-24) — previously a `user_submission` with 42 parsed ingredients would lose to a UPCitemdb cached row from a prior scan, producing a useless "no ingredient list available" report.
 
-### Phase 2 disconnect bug (known issue)
+### Phase 2 disconnect bug (resolved Session I-extended, 2026-05-24)
 
-`analyze_product()`'s Phase 2 call hangs ~280s then disconnects with `httpx.RemoteProtocolError: Server disconnected without sending a response` for **any scan where `lookup_product` returns a tool_result with non-trivial ingredient data** (>~1KB). UPCitemdb-only scans still succeed.
+**Symptom:** `analyze_product()`'s Phase 2 call hung ~60s (or longer with client-side retries) and surfaced `APIConnectionError` / `httpx.RemoteProtocolError: Server disconnected without sending a response` for any scan where `lookup_product` returned a tool_result with non-trivial ingredient data. UPCitemdb-only scans still succeeded.
 
-Ruled out as causes (verified by debug calls): `parse()` vs `create()`, adaptive thinking, wire-format alternation, `redacted_thinking` block leak in serialized history. Likely remaining causes: synthetic preflight `tool_use` block (line ~322 of scanner.py) with no preceding `thinking` block violating Opus's interleaved-thinking validation, or a content-specific server filter.
+**Root cause** (bisected with `backend/scratch/repro_phase2.py`): an upstream ~60s load-balancer timeout, NOT model behavior. The non-streaming `messages.create()` call holds the connection idle while Opus generates 5K+ tokens of structured output; with the full 33K-char system prompt + a non-trivial message payload, total time-to-first-byte exceeds 60s and the LB closes the connection. Ruled out by the bisection: thinking on/off (same failure with `thinking=None`), Opus vs Sonnet (Sonnet failed identically), the synthetic preflight `tool_use` seed block (inlining failed identically), interleaved-thinking validation, `redacted_thinking` leak, wire-format alternation. The trigger was strictly combined-input-size — shrinking either the system prompt or the tool_result let baseline succeed.
 
-Workaround pending: route `user_submission` results through `local_analyzer.build_report()` instead of the Claude pipeline. See `TODO.md` "Open issues" for full notes + the next diagnostic step (`backend/scratch/repro_phase2.py` bisecting harness).
+**Fix:** switched Phase 2 to `client.messages.stream()`. Continuous token flow keeps the connection alive past the 60s LB cutoff. Verified on the failing body wash payload: passes in ~97s, returns a complete grade A report. Diagnostic harness at `backend/scratch/repro_phase2.py` is kept for regression debugging.
 
 ### Ingredient resolution cascade (`db/ingredient_resolver.py`)
 

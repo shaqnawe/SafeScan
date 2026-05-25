@@ -429,27 +429,27 @@ async def analyze_product(barcode: str) -> SafetyReport:
         )
     })
 
-    # Phase 2 uses messages.create() + manual JSON parse rather than messages.parse(). The
-    # parse() endpoint exhibits a documented serialization quirk where non-trivial payloads
-    # (e.g. a tool_result with 40+ ingredients) cause the upstream to close the connection
-    # silently — httpx.RemoteProtocolError: "Server disconnected without sending a response".
-    # create() doesn't have this bug. We still validate the response against the SafetyReport
-    # Pydantic model immediately, so we get type-safety; we just check it post-hoc rather
-    # than enforcing it at the API level.
+    # Phase 2 uses messages.stream() rather than messages.create(). Non-streaming Opus calls
+    # whose combined input (system prompt + messages) is non-trivial get killed by an upstream
+    # ~60s load-balancer timeout, surfacing as APIConnectionError. Bisected with
+    # scratch/repro_phase2.py: with the full 33K-char system prompt, any non-tiny tool_result
+    # payload triggers it; with a minimal system prompt the same payload succeeds. Streaming
+    # keeps the connection alive via continuous token flow, so the LB never closes it. We still
+    # validate the assembled response against the SafetyReport Pydantic model post-hoc.
     report: Optional[SafetyReport] = None
+    text = ""
     try:
-        response = await client.messages.create(
+        text_chunks: list[str] = []
+        async with client.messages.stream(
             model=MODEL_HEAVY,
             max_tokens=8192,
             thinking={"type": "adaptive"},
             system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=serialized_messages,
-        )
-        # Pull text out (skip thinking blocks). Strip markdown fences defensively.
-        text = "\n".join(
-            b.text for b in response.content
-            if getattr(b, "type", None) == "text" and b.text
-        ).strip()
+        ) as stream:
+            async for chunk in stream.text_stream:
+                text_chunks.append(chunk)
+        text = "".join(text_chunks).strip()
         if text.startswith("```"):
             text = "\n".join(text.split("\n")[1:])
         if text.endswith("```"):
