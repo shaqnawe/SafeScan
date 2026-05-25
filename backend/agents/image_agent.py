@@ -310,7 +310,14 @@ async def _save_submission(barcode: Optional[str], result: SubmissionResult) -> 
 def _parse_manual_ingredients(text: str, product_type: str) -> tuple[list[ParsedIngredient], float, str]:
     """Parse a comma/newline-separated ingredient string into ParsedIngredient objects."""
     import re
-    tokens = re.split(r"[,\n;]+", text)
+    # 1) Glue '1, 2-Hexanediol' back to '1,2-Hexanediol' — pasted text sometimes
+    #    introduces a stray space inside the chemical name.
+    text = re.sub(r"(\d),\s+(\d)", r"\1,\2", text)
+    # 2) Split on comma EXCEPT when the comma is followed by a digit (INCI
+    #    chemicals like '1,2-Hexanediol', '1,3-Butylene Glycol' use a bare comma
+    #    inside the name and a comma+space between ingredients). Newlines and
+    #    semicolons are unconditional separators.
+    tokens = re.split(r",(?!\d)|[\n;]+", text)
     ingredients = []
     for i, token in enumerate(tokens):
         name = token.strip().strip("*•-").strip()
