@@ -2,7 +2,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT (Browser / PWA)                             │
+│            CLIENT (Browser / PWA · Capacitor iOS & Android WebView)             │
 │                                                                                 │
 │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐  ┌──────────────────┐ │
 │  │ BarcodeScanner│  │AddProductPage│  │ SubmissionsPage │  │ ComparisonPage   │ │
@@ -13,8 +13,11 @@
 │         │                │                    │                    │           │
 │  ┌──────▼────────────────▼────────────────────▼────────────────────▼─────────┐ │
 │  │                          React App  (App.tsx)                             │ │
-│  │  AllergenProfilePage · HistoryPage · SafetyReport · useScanHistory hook  │ │
-│  │                  localStorage (scan history, allergen profile)            │ │
+│  │  HomePage · AllergenProfilePage · HistoryPage · SafetyReport · ThemeToggle│ │
+│  │  Hooks: useScanHistory · useAllergenProfile · ThemeProvider/useTheme      │ │
+│  │  Type: Manrope (body) + Fraunces (display: wordmark + grade letter only) │ │
+│  │  Motion: src/motion.css (fade-up, stagger, lift, press; respects RM pref)│ │
+│  │                  localStorage (scan history, allergen profile, theme)     │ │
 │  └───────────────────────────────────┬───────────────────────────────────────┘ │
 │                                      │ fetch / FormData                        │
 │            Service Worker (workbox)  │ NetworkFirst cache for /api/scan        │
@@ -22,6 +25,9 @@
                                        │ HTTP
                     ┌──────────────────▼──────────────────────┐
                     │         FastAPI  (main.py)               │
+                    │  CORS: env-driven explicit allowlist     │
+                    │   (capacitor://localhost, https://       │
+                    │    localhost, Vite dev/preview, prod URL)│
                     │                                          │
                     │  POST /api/submit-product                │
                     │  POST /api/scan                          │
@@ -30,46 +36,67 @@
                     │  GET  /health                            │
                     └────┬──────────────┬────────────┬─────────┘
                          │              │            │
-           ┌─────────────▼──┐    ┌──────▼──────┐    │
-           │  image_agent   │    │  scanner.py  │    │
-           │  (vision)      │    │              │    │
-           │                │    │ ┌──────────┐ │    │
-           │ _extract_      │    │ │ Cache    │ │    │
-           │  product_info  │    │ │ check    │ │    │
-           │ _parse_        │    │ └────┬─────┘ │    │
-           │  ingredients   │    │      │ miss  │    │
-           │                │    │ ┌────▼─────┐ │    │
-           │ process_       │    │ │ Local    │ │    │
-           │  product_      │    │ │ fast     │ │    │
-           │  photos()      │    │ │ path     │ │    │
-           └───────┬────────┘    │ └────┬─────┘ │    │
-                   │             │      │ <3    │    │
-                   │             │      │ ingr. │    │
-                   │             │ ┌────▼─────┐ │    │
-                   │             │ │  Claude  │ │    │
-                   │             │ │  Opus    │ │    │
-                   │             │ │  loop    │ │    │
-                   │             │ │ (tool    │ │    │
-                   │             │ │  use +   │ │    │
-                   │             │ │ adaptive │ │    │
-                   │             │ │ thinking)│ │    │
-                   │             │ └────┬─────┘ │    │
-                   │             └──────┼────────┘    │
-                   │                   │              │
-      ┌────────────▼───────────────────▼──────────────▼────────────────┐
-      │                    Anthropic API  (claude-opus-4-6)             │
-      │           Vision · Tool Use · Adaptive Thinking · Parse         │
+           ┌─────────────▼──┐    ┌──────▼──────────┐    │
+           │  image_agent   │    │  scanner.py     │    │
+           │  (vision)      │    │                 │    │
+           │                │    │ ┌─────────────┐ │    │
+           │ _extract_      │    │ │ Cache       │ │    │
+           │  product_info  │    │ │ check       │ │    │
+           │ _parse_        │    │ │ (safety_    │ │    │
+           │  ingredients   │    │ │  reports,   │ │    │
+           │   (Sonnet 4.6, │    │ │  7-day TTL) │ │    │
+           │    parse, NO   │    │ └──────┬──────┘ │    │
+           │    thinking,   │    │        │ miss   │    │
+           │    max 4096,   │    │ ┌──────▼──────┐ │    │
+           │    parallel    │    │ │ Local fast  │ │    │
+           │    via asyncio)│    │ │ path        │ │    │
+           │                │    │ │ (rich src + │ │    │
+           │ process_       │    │ │  resolved   │ │    │
+           │  product_      │    │ │  ingr ≥ 1)  │ │    │
+           │  photos()      │    │ └──────┬──────┘ │    │
+           └───────┬────────┘    │        │ skip   │    │
+                   │             │ ┌──────▼──────┐ │    │
+                   │             │ │ Phase 1     │ │    │
+                   │             │ │ Sonnet 4.6  │ │    │
+                   │             │ │ lookup_     │ │    │
+                   │             │ │  product    │ │    │
+                   │             │ │ tool loop   │ │    │
+                   │             │ │ (thinking   │ │    │
+                   │             │ │  display=   │ │    │
+                   │             │ │  omitted)   │ │    │
+                   │             │ └──────┬──────┘ │    │
+                   │             │ ┌──────▼──────┐ │    │
+                   │             │ │ Phase 2     │ │    │
+                   │             │ │ Opus 4.6    │ │    │
+                   │             │ │ synthesis   │ │    │
+                   │             │ │ via         │ │    │
+                   │             │ │ messages.   │ │    │
+                   │             │ │  stream()   │ │    │
+                   │             │ │ (keeps LB   │ │    │
+                   │             │ │  connection │ │    │
+                   │             │ │  alive past │ │    │
+                   │             │ │  60s cutoff)│ │    │
+                   │             │ └──────┬──────┘ │    │
+                   │             └────────┼────────┘    │
+                   │                      │             │
+      ┌────────────▼──────────────────────▼─────────────▼──────────────┐
+      │   Anthropic API   Opus 4.6 (synthesis) · Sonnet 4.6 (lookup,   │
+      │                   OCR, ingredient parse, classification)       │
+      │   Vision · Tool Use · Adaptive Thinking · Streaming · Parse    │
+      │   Prompt caching: ephemeral 5-min cache on all system prompts  │
       └─────────────────────────────────────────────────────────────────┘
                    │                   │              │
       ┌────────────▼───────────────────▼──────────────▼────────────────┐
       │                     PostgreSQL  (safescan)                      │
       │                                                                  │
-      │  ┌─────────────┐  ┌─────────────────┐  ┌──────────────────┐   │
-      │  │  products   │  │  safety_reports │  │ user_submissions │   │
-      │  │  (~2M food  │  │  (cache, 7-day  │  │ (barcode, status,│   │
-      │  │  ~63K cosm) │  │   TTL)          │  │  extracted_data, │   │
-      │  └──────┬──────┘  └─────────────────┘  │  report)         │   │
-      │         │                               └──────────────────┘   │
+      │  ┌─────────────┐  ┌──────────────────┐  ┌──────────────────┐  │
+      │  │  products   │  │  safety_reports  │  │ user_submissions │  │
+      │  │ (~2M food + │  │  (UNIQUE barcode,│  │ (barcode, status,│  │
+      │  │  ~63K cosm +│  │  upsert with     │  │  extracted_data, │  │
+      │  │  ~500K USDA+│  │  updated_at,     │  │  report;         │  │
+      │  │  ~17K OTC + │  │  7-day TTL)      │  │  partial UNIQUE  │  │
+      │  │  ~? Rx NDC) │  └──────────────────┘  │  on barcode)     │  │
+      │  └──────┬──────┘                         └──────────────────┘  │
       │  ┌──────▼──────────────┐  ┌────────────────────────────────┐  │
       │  │ product_ingredients │  │  ingredients                   │  │
       │  │ (position-ordered   │  │  + ingredient_aliases          │  │
@@ -100,31 +127,43 @@
  Analysis Pipeline (3 paths, fastest wins)
 ────────────────────────────────────────────────────────────────────────────────
 
-  Barcode in ──► Cache hit? ──YES──► Return cached report (~200ms)
+  Barcode in ──► Cache hit (safety_reports, not expired)? ──YES──► Return (~200ms)
                     │
                    NO
                     │
                     ▼
-             In products table? ──YES──► local_analyzer.py
-                    │                    ≥1 resolved ingredient (MIN_RESOLVED)?
-                    │                    YES ──► Grade/score locally (~500ms)
-                    │                    NO  ──► fall through to Claude
+             In products with rich source (off/obf/usda/openfda/dailymed)
+             AND ≥1 resolved ingredient with safety_level?
+                    │                    YES ──► local_analyzer.py
+                    │                            Grade/score locally (~500ms)
+                    │                    NO  ──► Claude pipeline (below)
                    NO
                     │
                     ▼
-             Open Food Facts API ──found──► Claude analysis
-             Open Beauty Facts API         (tool use loop)
-             UPCitemdb fallback              │
-             user_submissions fallback       │
-                                             ▼
-                                        Phase 1: lookup_product tool
-                                        Phase 2: messages.parse()
-                                        structured SafetyReport (~3-6 min)
-                                             │
-                                             ▼
-                                        Cache result (7 days)
-                                        Attach recall alerts
-                                        Return SafetyReport
+             Phase 1: Sonnet 4.6 tool loop — calls lookup_product()
+                      with adaptive thinking (display=omitted to keep
+                      Phase 2 payload small)
+
+                      lookup_product priority (highest fidelity first):
+                        1. Local DB row with rich source
+                        2. user_submissions with parsed ingredients
+                        3. Open Food Facts live API
+                        4. Open Beauty Facts live API
+                        5. UPCitemdb live fetch (caches as source='upcitemdb')
+                        6. user_submissions name+brand only
+                        7. UPCitemdb-cached local row (last resort)
+                    │
+                    ▼
+             Phase 2: Opus 4.6 synthesis via messages.stream()
+                      (streaming required — non-streaming hits the
+                      upstream ~60s LB cutoff on large payloads;
+                      bisected in Session I-extended, scratch/repro_phase2.py)
+                      → joined text chunks → strip fences → json.loads →
+                        SafetyReport(**data)  (~60–120s)
+                    │
+                    ▼
+             Upsert to safety_reports (UNIQUE on barcode, refreshes
+             updated_at + expires_at) · Attach recall alerts · Return
 
 ────────────────────────────────────────────────────────────────────────────────
  Scheduled Jobs  (macOS launchd — every Sunday 03:00)
