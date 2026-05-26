@@ -74,13 +74,13 @@ cleaned AS (
 ),
 exact_match AS (
     SELECT c.raw_name, i.name AS canonical_name,
-           i.safety_level, i.score_penalty, i.concerns, i.e_number, i.eu_status
+           i.safety_level, i.score_penalty, i.concerns, i.sources, i.e_number, i.eu_status
     FROM cleaned c
     JOIN ingredients i ON i.name = c.clean_name
 ),
 alias_match AS (
     SELECT c.raw_name, i.name AS canonical_name,
-           i.safety_level, i.score_penalty, i.concerns, i.e_number, i.eu_status
+           i.safety_level, i.score_penalty, i.concerns, i.sources, i.e_number, i.eu_status
     FROM cleaned c
     JOIN ingredient_aliases a ON lower(a.alias) = c.clean_name
     JOIN ingredients i ON i.id = a.ingredient_id
@@ -88,7 +88,7 @@ alias_match AS (
 ),
 e_number_match AS (
     SELECT c.raw_name, i.name AS canonical_name,
-           i.safety_level, i.score_penalty, i.concerns, i.e_number, i.eu_status
+           i.safety_level, i.score_penalty, i.concerns, i.sources, i.e_number, i.eu_status
     FROM cleaned c
     JOIN ingredients i
          ON i.e_number IS NOT NULL
@@ -109,7 +109,7 @@ SELECT * FROM e_number_match
 
 _FTS_RESOLVE = """
 SELECT i.name AS canonical_name,
-       i.safety_level, i.score_penalty, i.concerns, i.e_number, i.eu_status,
+       i.safety_level, i.score_penalty, i.concerns, i.sources, i.e_number, i.eu_status,
        ts_rank(to_tsvector('english', a.alias),
                plainto_tsquery('english', $1)) AS rank
 FROM ingredient_aliases a
@@ -261,6 +261,7 @@ def _row_to_dict(row: Any) -> dict:
         "safety_level":   row["safety_level"],
         "score_penalty":  row["score_penalty"],
         "concerns":       list(row["concerns"] or []),
+        "sources":        list(row["sources"] or []),
         "e_number":       row["e_number"],
         "eu_status":      row["eu_status"],
     }
@@ -328,6 +329,7 @@ async def resolve_ingredients(
                 "safety_level":   c.safety_level,
                 "score_penalty":  max(0, min(30, c.score_penalty)),
                 "concerns":       c.concerns or [],
+                "sources":        ["Claude classification"],
                 "e_number":       None,
                 "eu_status":      c.eu_status,
             }

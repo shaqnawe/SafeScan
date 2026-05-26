@@ -89,6 +89,69 @@ function Indicator({ level }: { level: string }) {
   )
 }
 
+// Concern tags considered "severe" — render in red rather than neutral.
+const SEVERE_TAGS = new Set<string>([
+  'iarc_group_1', 'iarc_group_2a', 'iarc_group_2b', 'carcinogen',
+  'ghs_carcinogen_cat1', 'ghs_carcinogen_cat2',
+  'ghs_reproductive_toxin', 'ghs_mutagen',
+  'prop65_carcinogen', 'prop65_developmental_toxin', 'prop65_reproductive_toxin',
+  'endocrine_disruptor', 'formaldehyde_releaser', 'neurotoxin',
+])
+
+function prettyTag(tag: string): string {
+  return tag
+    .replace(/_/g, ' ')
+    .replace(/\biarc\b/i, 'IARC')
+    .replace(/\bghs\b/i, 'GHS')
+    .replace(/\bprop65\b/i, 'Prop 65')
+    .replace(/\bsls\b/i, 'SLS')
+    .replace(/\bsles\b/i, 'SLES')
+    .replace(/\bcat(\d)\b/i, 'cat. $1')
+    .replace(/\bgroup (\d[ab]?)\b/i, (_, g) => `Group ${g.toUpperCase()}`)
+    .replace(/^\w/, c => c.toUpperCase())
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  efsa:                                'EFSA',
+  cosing:                              'CosIng',
+  iarc:                                'IARC',
+  ifra:                                'IFRA',
+  echa:                                'ECHA',
+  fda:                                 'FDA',
+  scientific_committee_on_consumer_safety: 'SCCS',
+  eu_regulation_1333_2008:             'EU 1333/2008',
+  eu_regulation_1223_2009:             'EU 1223/2009',
+  prop65:                              'Prop 65',
+  'prop 65':                           'Prop 65',
+  'claude classification':             'Claude',
+}
+
+function prettySource(src: string): string {
+  const key = src.toLowerCase().trim()
+  return SOURCE_LABELS[key] ?? src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function ConcernChip({ tag, theme }: { tag: string; theme: Theme }) {
+  const severe = SEVERE_TAGS.has(tag)
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.02em',
+        padding: '3px 8px',
+        borderRadius: 999,
+        background: severe ? 'rgba(239,68,68,0.12)' : theme.ingredientBg,
+        color: severe ? '#ef4444' : theme.secondary,
+        border: `1px solid ${severe ? 'rgba(239,68,68,0.3)' : theme.ingredientBorder}`,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {prettyTag(tag)}
+    </span>
+  )
+}
+
 function IngredientRow({
   ingredient,
   theme,
@@ -96,52 +159,109 @@ function IngredientRow({
   ingredient: IngredientAnalysis
   theme: Theme
 }) {
+  const tags    = ingredient.concerns ?? []
+  const sources = ingredient.sources ?? []
+  const impact  = ingredient.score_impact
+
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
         gap: 12,
         padding: '14px 16px',
         background: theme.ingredientBg,
         borderRadius: 12,
         marginBottom: 8,
         border: `1px solid ${theme.ingredientBorder}`,
+        alignItems: 'flex-start',
       }}
     >
-      <Indicator level={ingredient.safety_level} />
+      <div style={{ paddingTop: 4 }}>
+        <Indicator level={ingredient.safety_level} />
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 14,
-            color: theme.primary,
-            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
           }}
         >
-          {ingredient.name}
+          <div
+            style={{
+              fontSize: 14,
+              color: theme.primary,
+              fontWeight: 500,
+              flex: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {ingredient.name}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {typeof impact === 'number' && impact < 0 && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#ef4444',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {impact} pts
+              </span>
+            )}
+            <span
+              style={{
+                fontSize: 10,
+                color: theme.tertiary,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+              }}
+            >
+              {ingredient.safety_level}
+            </span>
+          </div>
         </div>
+
         {ingredient.concern && (
           <div
             style={{
               fontSize: 12,
               color: theme.tertiary,
-              marginTop: 2,
+              marginTop: 4,
+              lineHeight: 1.4,
             }}
           >
             {ingredient.concern}
           </div>
         )}
+
+        {tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {tags.map(t => (
+              <ConcernChip key={t} tag={t} theme={theme} />
+            ))}
+          </div>
+        )}
+
+        {sources.length > 0 && (
+          <div
+            style={{
+              fontSize: 10,
+              color: theme.tertiary,
+              marginTop: 8,
+              letterSpacing: '0.04em',
+            }}
+          >
+            Sources: {sources.map(prettySource).join(' · ')}
+          </div>
+        )}
       </div>
-      <span
-        style={{
-          fontSize: 11,
-          color: theme.tertiary,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-        }}
-      >
-        {ingredient.safety_level}
-      </span>
     </div>
   )
 }

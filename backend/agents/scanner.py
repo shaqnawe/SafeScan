@@ -424,8 +424,23 @@ async def analyze_product(barcode: str) -> SafetyReport:
             '{"product_name": "string", "brand": "string", "product_type": "food|cosmetic|unknown|drug", '
             '"barcode": "string", "image_url": "string|null", "score": 0-100, "grade": "A|B|C|D", '
             '"summary": "string", "ingredients_analysis": [{"name": "string", '
-            '"safety_level": "safe|caution|avoid", "concern": "string|null"}], '
-            '"positive_points": ["string"], "negative_points": ["string"], "not_found": false}'
+            '"safety_level": "safe|caution|avoid", "concern": "string|null", '
+            '"concerns": ["string"], "sources": ["string"], "score_impact": int|null}], '
+            '"positive_points": ["string"], "negative_points": ["string"], "not_found": false}\n\n'
+            "For each ingredient in ingredients_analysis:\n"
+            "- `concern` is a short human-readable phrase (e.g. \"Endocrine disruptor — restricted in EU\").\n"
+            "- `concerns` is a list of canonical tags from the Concern Tag Vocabulary "
+            "(iarc_group_1/2a/2b, ghs_carcinogen_cat1/cat2, ghs_reproductive_toxin, ghs_mutagen, "
+            "prop65_carcinogen, prop65_developmental_toxin, prop65_reproductive_toxin, "
+            "allergen, endocrine_disruptor, paraben, sulfate, sls, sles, preservative, "
+            "artificial_color, artificial_flavor, formaldehyde_releaser, microplastic, "
+            "nitrite, high_sugar, high_sodium, trans_fat, neurotoxin). Empty list if safe.\n"
+            "- `sources` is a list of authorities cited (e.g. [\"IARC\", \"Prop 65\", \"ECHA Annex VI\", "
+            "\"EU CosIng\", \"EFSA\"]). Empty list if none.\n"
+            "- `score_impact` is the negative integer this ingredient deducts from the score "
+            "(e.g. -25 for an IARC Group 1 carcinogen). Use null for safe ingredients with no impact.\n"
+            "When resolved_ingredients were pre-computed, copy their `concerns` and `sources` arrays "
+            "rather than inventing new ones."
         )
     })
 

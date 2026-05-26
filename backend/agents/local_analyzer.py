@@ -91,6 +91,60 @@ def _carcinogen_penalty(concerns: list[str]) -> int:
     return penalty
 
 
+def _ingredient_score_impact(ing: dict, product_type: str) -> int | None:
+    """
+    Per-ingredient point deduction (negative number) that this ingredient
+    contributes to the product score. Mirrors the deductions inside
+    `_compute_score`. Returns None if no deduction applies.
+
+    Used to populate `IngredientAnalysis.score_impact` so the UI can show
+    "Octocrylene  −15" next to each flagged ingredient.
+    """
+    safety           = ing.get('safety_level')
+    if not safety:
+        return None
+    concerns         = ing.get('concerns') or []
+    eu_status        = ing.get('eu_status') or 'unknown'
+    explicit_penalty = ing.get('score_penalty') or 0
+
+    impact = 0
+    if product_type == 'food':
+        if explicit_penalty > 0:
+            impact += explicit_penalty
+        elif safety == 'avoid':
+            impact += 15
+        elif safety == 'caution':
+            impact += 7
+        impact += _carcinogen_penalty(concerns)
+    else:  # cosmetic
+        if eu_status == 'banned':
+            impact += 30
+        elif explicit_penalty > 0:
+            impact += explicit_penalty
+        else:
+            if eu_status == 'restricted':
+                impact += 15
+            if 'endocrine_disruptor' in concerns:
+                impact += 20
+            if 'paraben' in concerns:
+                impact += 10
+            if 'sls' in concerns:
+                impact += 8
+            if 'sles' in concerns:
+                impact += 8
+            if 'formaldehyde_releaser' in concerns:
+                impact += 20
+            if safety == 'avoid':
+                impact += 15
+            elif safety == 'caution':
+                impact += 7
+        impact += _carcinogen_penalty(concerns)
+    if ing.get('is_allergen'):
+        impact += 3
+
+    return -impact if impact > 0 else None
+
+
 def _compute_score(
     product_type: str,
     resolved: list[dict],
@@ -379,6 +433,9 @@ def build_report(product_data: dict[str, Any], barcode: str) -> SafetyReport | N
             name=i.get('canonical_name') or i.get('name') or '',
             safety_level=i['safety_level'],
             concern=', '.join(i['concerns']) if i.get('concerns') else None,
+            concerns=list(i.get('concerns') or []),
+            sources=list(i.get('sources') or []),
+            score_impact=_ingredient_score_impact(i, product_type),
         )
         for i in resolved
     ]

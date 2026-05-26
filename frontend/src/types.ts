@@ -32,7 +32,10 @@ export interface SubmissionResult {
 export interface IngredientAnalysis {
   name: string
   safety_level: 'safe' | 'caution' | 'avoid'
-  concern?: string | null
+  concern?: string | null         // free-text human-readable explanation
+  concerns?: string[]             // structured tags from Concern Tag Vocabulary
+  sources?: string[]              // authorities cited (IARC, Prop 65, ECHA, etc.)
+  score_impact?: number | null    // negative point delta this ingredient contributes
 }
 
 export interface UserSubmission {

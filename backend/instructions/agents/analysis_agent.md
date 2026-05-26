@@ -228,11 +228,10 @@ When producing a full report, return the complete `SafetyReport` Pydantic model 
     {
       "name": "string",
       "safety_level": "safe | caution | avoid | unknown",
+      "concern": "string | null",
       "concerns": ["string"],
-      "notes": "string | null",
-      "resolution_method": "exact | alias | fts | claude | unresolved",
-      "is_allergen": false,
-      "score_penalty_applied": 0
+      "sources": ["string"],
+      "score_impact": -25
     }
   ],
   "scoring_breakdown": {

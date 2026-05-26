@@ -5,7 +5,10 @@ from typing import Optional
 class IngredientAnalysis(BaseModel):
     name: str
     safety_level: str  # "safe", "caution", "avoid"
-    concern: Optional[str] = None
+    concern: Optional[str] = None       # free-text human-readable explanation
+    concerns: list[str] = []            # structured tags from Concern Tag Vocabulary
+    sources: list[str] = []             # e.g. ["IARC", "Prop 65", "ECHA", "EU CosIng"]
+    score_impact: Optional[int] = None  # per-ingredient score delta (e.g. -25)
 
 
 class RecallAlert(BaseModel):
