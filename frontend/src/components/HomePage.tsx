@@ -164,8 +164,12 @@ export default function HomePage({
           margin: '0 auto',
         }}
       >
-        {/* Wordmark — designer-supplied IngrediQ SVG with icon + text. Replaces
-            both the prior HeartPulse tile and the Newsreader text rendering. */}
+        {/* Wordmark — designer-supplied SVG inlined so the four neutral colors
+            (brand text, tagline, divider, rule) can adapt to dark mode via
+            theme values. Brand colors (terracotta hex + green sprout) stay
+            fixed because they're brand identity. The canonical SVG file at
+            /public/ingrediq-wordmark.svg keeps its hardcoded light-mode
+            colors for share-card / social-preview / non-React contexts. */}
         <h1
           className="fade-up stagger-1"
           style={{
@@ -174,15 +178,40 @@ export default function HomePage({
           }}
           aria-label="IngrediQ"
         >
-          <img
-            src="/ingrediq-wordmark.svg"
-            alt="IngrediQ"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 310 80"
+            role="img"
+            aria-label="IngrediQ — Health, Food, Cosmetics"
             style={{
               width: 'min(320px, 80vw)',
               height: 'auto',
               display: 'block',
             }}
-          />
+          >
+            {/* Hex icon */}
+            <polygon points="74,40 57,69 23,69 6,40 23,11 57,11" fill="none" stroke="#C4603A" strokeWidth="1.6" />
+            <polygon points="60,40 50,57 30,57 20,40 30,23 50,23" fill="none" stroke="#C4603A" strokeWidth="0.6" opacity="0.4" />
+            <circle cx="74" cy="40" r="3" fill="#E8A870" />
+            <circle cx="57" cy="69" r="3" fill="#E8A870" />
+            <circle cx="23" cy="69" r="3" fill="#E8A870" />
+            <circle cx="6"  cy="40" r="3" fill="#E8A870" />
+            <circle cx="23" cy="11" r="3" fill="#E8A870" />
+            <circle cx="57" cy="11" r="3" fill="#E8A870" />
+            {/* Sprout */}
+            <line x1="40" y1="54" x2="40" y2="27" stroke="#7A9E50" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M40 46 C33 41 26 43 25 48 C30 51 38 49 40 46 Z" fill="#7A9E50" />
+            <path d="M40 36 C47 31 54 33 55 38 C50 41 42 39 40 36 Z" fill="#7A9E50" />
+            <circle cx="40" cy="27" r="3" fill="#7A9E50" />
+            {/* Vertical divider — theme-aware */}
+            <line x1="92" y1="18" x2="92" y2="62" stroke={theme.glassBorder} strokeWidth="1" />
+            {/* Brand name */}
+            <text x="104" y="38" fontSize="22" fontWeight="500" letterSpacing="1.5" fill={theme.primary} fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif">IngrediQ</text>
+            {/* Thin rule */}
+            <line x1="104" y1="46" x2="300" y2="46" stroke={theme.divider} strokeWidth="0.5" />
+            {/* Tagline */}
+            <text x="104" y="60" fontSize="9" letterSpacing="1" fill={theme.tertiary} fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif">HEALTH · FOOD · COSMETICS</text>
+          </svg>
         </h1>
 
         {/* Tagline */}
