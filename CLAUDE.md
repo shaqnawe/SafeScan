@@ -93,6 +93,8 @@ When `POST /api/scan` is called with a barcode:
    - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
    - **Phase 2** (synthesis): `MODEL_HEAVY` (Opus 4.6) via `client.messages.stream()` with `thinking={"type": "adaptive"}` + a JSON-only response instruction. Text chunks are joined, markdown fences stripped, then `json.loads()` + `SafetyReport(**data)` validation. Streaming is required: a non-streaming `create()` call with the full 33K-char system prompt + any non-trivial tool_result gets killed by an upstream ~60s load-balancer timeout. Streaming keeps the connection alive via continuous token flow. Root cause was bisected in Session I-extended; `messages.parse()` was tried earlier and abandoned for unrelated serialization issues.
 
+After the report is materialized (any of the three paths), `main.py /api/scan` attaches up to 3 cached alternatives matching on `category_slug` — see "Recommended alternatives" below. Skipped for grade A and `not_found=true` reports.
+
 ### `lookup_product` priority order (`scanner.py`)
 
 Phase 1's tool. Highest-fidelity first; later steps fire only on miss:
@@ -114,6 +116,27 @@ Refactor in Session I-extended (2026-05-24) — previously a `user_submission` w
 **Root cause** (bisected with `backend/scratch/repro_phase2.py`): an upstream ~60s load-balancer timeout, NOT model behavior. The non-streaming `messages.create()` call holds the connection idle while Opus generates 5K+ tokens of structured output; with the full 33K-char system prompt + a non-trivial message payload, total time-to-first-byte exceeds 60s and the LB closes the connection. Ruled out by the bisection: thinking on/off (same failure with `thinking=None`), Opus vs Sonnet (Sonnet failed identically), the synthetic preflight `tool_use` seed block (inlining failed identically), interleaved-thinking validation, `redacted_thinking` leak, wire-format alternation. The trigger was strictly combined-input-size — shrinking either the system prompt or the tool_result let baseline succeed.
 
 **Fix:** switched Phase 2 to `client.messages.stream()`. Continuous token flow keeps the connection alive past the 60s LB cutoff. Verified on the failing body wash payload: passes in ~97s, returns a complete grade A report. Diagnostic harness at `backend/scratch/repro_phase2.py` is kept for regression debugging.
+
+### Recommended alternatives (`db/queries.py::find_alternatives`)
+
+Every non-A-grade scan returns up to 3 cached alternatives in the same use-case bucket with a strictly higher score. Matching is on `SafetyReport.category_slug` (a canonical slug like `hand_soap`, `body_lotion`, `soda`) — NOT on the raw `products.categories` array. Broad category overlap (`Health & Beauty > Personal Care > Cosmetics`) used to surface a moisturizer as an alternative to a hand soap; the slug filter drops that false positive.
+
+The slug is derived deterministically in `agents/category.py::derive_category_slug` from the product name + product_type via ordered regex patterns (~40 cosmetic slugs, ~30 food slugs). Drugs always return None — brand-name vs generic Rx alternatives is a different domain. Populated in three places so it's consistent across paths:
+- `local_analyzer.build_report` (local fast path)
+- `scanner.analyze_product` after Phase 2 completes (Claude path)
+- `scanner.analyze_product` cache-hit branch (backfill for pre-slug cached reports)
+
+The TTL filter (`expires_at > NOW()`) is intentionally NOT applied to `find_alternatives` — slightly stale "this product in your category scored well last time" is still useful info. The 7-day TTL is meant to gate the user's own freshly-shown scan, not the alternatives panel.
+
+**Deferred upgrade**: Claude-emitted slug via Phase 2 prompt (handles brand-specific names that the keyword heuristic can't, e.g., Korean K-beauty "Treatment Essence"). The matching query stays identical so it's a clean swap. Trigger: when keyword heuristic mis-classifies more than ~20% of dogfooding scans.
+
+### Product name search (`db/queries.py::search_products`)
+
+`GET /api/search?q=...&product_type=...&limit=...` returns ranked product matches by name or brand. Backed by `pg_trgm` GIN indexes on `products.name` and `products.brand` (~281 MB total over 4.6M rows). Sub-2ms queries.
+
+Relevance ranking: `brand-exact (100) > name-prefix (80) > brand-prefix (60) > name-substring (40) > brand-substring (30)`. Filters out rows where `name IS NULL` (mostly UPCitemdb stubs). Optional `product_type` filter.
+
+Frontend: debounced (300ms) search input on the scanner page above the manual barcode entry. Each result is a tappable row with brand chip + name + product type — tapping triggers the existing `onScan(barcode)` flow.
 
 ### Ingredient resolution cascade (`db/ingredient_resolver.py`)
 
@@ -151,6 +174,12 @@ Called during local DB lookup to map raw label text to safety data:
 **Product type constraints**: `products.product_type` CHECK constraint allows: `'food'`, `'cosmetic'`, `'unknown'`, `'drug'`. `products.source` CHECK allows: `'off'`, `'obf'`, `'user'`, `'image_scan'`, `'usda'`, `'openfda'`, `'upcitemdb'`, `'dailymed'`.
 
 **Duplicate ingredient prevention**: `product_ingredients` has a unique index on `(product_id, position)`. All importers use `ON CONFLICT (product_id, position) DO NOTHING`.
+
+**Category slug vocabulary**: Defined in `backend/agents/category.py` as ordered regex tuples — more specific patterns first so "hand soap" beats "soap". Cosmetic slugs include `hand_soap`, `body_wash`, `bar_soap`, `shampoo`, `conditioner`, `face_moisturizer`, `body_lotion`, `face_cleanser`, `face_serum`, `sunscreen`, `toothpaste`, `deodorant`, `fragrance`, `lip`, `mascara`, etc. Food slugs include `soda`, `juice`, `coffee`, `milk`, `plant_milk`, `yogurt`, `bread`, `cookie`, `candy`, `chocolate`, `snack_chip`, `pasta`, `condiment`, `sauce`, etc. To add a slug: insert a tuple before any more-general pattern that would otherwise capture it. Adding a slug does not require a backfill — the slug is derived on every read from the cache-hit branch in `scanner.analyze_product`.
+
+**Slim partial migration (local → Railway)**: `backend/scripts/migrate_products_to_railway.py` streams the `products` table only (no `product_ingredients`, no `ingredients` beyond a 10-row gap sync) from local Postgres to Railway in 10K-row batches. Idempotent (`ON CONFLICT (barcode) DO NOTHING`), preserves Railway-only rows. Ran 2026-05-26 — pushed 4.55M rows (OFF + USDA + OBF + OpenFDA diff) in ~6 min. `product_ingredients` (9 GB on disk) intentionally NOT migrated; would exceed Railway storage headroom and the local fast path on prod isn't unlocked by the alternatives feature anyway.
+
+**Pg_trgm extension on Railway**: `CREATE EXTENSION pg_trgm` enabled, with GIN trigram indexes on `products.name` and `products.brand` for the name search feature. Combined ~281 MB. Supports both `ILIKE '%query%'` substring matching and the `similarity()` function. Out-of-band SQL — not in `schema.sql` yet.
 
 **Partial unique index requirement for `ON CONFLICT ... WHERE`**: PostgreSQL requires a matching partial unique index for any `ON CONFLICT (col) WHERE predicate` upsert clause — and it checks this at **planning time**, regardless of the actual values being inserted. Without the matching index, the query fails with `InvalidColumnReferenceError: there is no unique or exclusion constraint matching the ON CONFLICT specification`. This was a silent bug for `user_submissions` until Session I — `_save_submission`'s blanket `try/except` swallowed the error, and every barcode photo submission appeared to succeed but never persisted. Fix: `CREATE UNIQUE INDEX user_submissions_barcode_unique ON user_submissions(barcode) WHERE barcode IS NOT NULL` (partial so NULL-barcode anonymous submissions can repeat). When adding any new upsert with a `WHERE` clause, verify a matching partial unique index exists in `schema.sql` AND in the live DB.
 

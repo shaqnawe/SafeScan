@@ -31,6 +31,7 @@
                     │                                          │
                     │  POST /api/submit-product                │
                     │  POST /api/scan                          │
+                    │  GET  /api/search?q=...                  │
                     │  GET  /api/submissions                   │
                     │  POST /api/recalls/refresh               │
                     │  GET  /health                            │
@@ -164,6 +165,27 @@
                     ▼
              Upsert to safety_reports (UNIQUE on barcode, refreshes
              updated_at + expires_at) · Attach recall alerts · Return
+                    │
+                    ▼
+             /api/scan: attach up to 3 recommended alternatives
+             matching report.category_slug + strictly higher score
+             (skipped for grade A and not_found). Slug derived via
+             agents/category.py keyword heuristic on name + type.
+
+────────────────────────────────────────────────────────────────────────────────
+ Name Search  (GET /api/search?q=...&product_type=...&limit=...)
+────────────────────────────────────────────────────────────────────────────────
+
+  query in ──► search_products() — pg_trgm GIN on products.name + brand
+                                   (281 MB total over 4.6M rows, ~1-2 ms)
+                    │
+                    ▼
+             Rank: brand-exact > name-prefix > brand-prefix >
+                   name-substring > brand-substring
+                    │
+                    ▼
+             Return list[SearchResult] {barcode, name, brand,
+                                        image_url, product_type}
 
 ────────────────────────────────────────────────────────────────────────────────
  Scheduled Jobs  (macOS launchd — every Sunday 03:00)
