@@ -336,16 +336,18 @@ const NOVA_COLORS: Record<number, string> = {
 function NutritionCard({
   nutriscore,
   novaGroup,
+  isVegan,
   theme,
   className,
 }: {
   nutriscore: string | null | undefined
   novaGroup:  number | null | undefined
+  isVegan:    boolean | null | undefined
   theme:      Theme
   className?: string
 }) {
-  // Hide the whole card if neither metric is present
-  if (!nutriscore && !novaGroup) return null
+  // Hide the whole card if all three metrics are absent
+  if (!nutriscore && !novaGroup && isVegan === null) return null
 
   return (
     <Glass theme={theme} className={className} style={{ marginBottom: 16 }}>
@@ -451,6 +453,54 @@ function NutritionCard({
           </div>
         </div>
       </div>
+
+      {/* Vegan chip — only rendered when we can answer confidently
+          (null = uncertain origin like lecithin without a plant source) */}
+      {isVegan === true && (
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-start' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 999,
+              background: 'rgba(34,197,94,0.14)',
+              border: '1px solid rgba(34,197,94,0.36)',
+              color: '#16a34a',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <span style={{ fontSize: 13, lineHeight: 1 }}>✓</span>
+            <span>Vegan</span>
+          </span>
+        </div>
+      )}
+      {isVegan === false && (
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-start' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 999,
+              background: theme.ingredientBg,
+              border: `1px solid ${theme.ingredientBorder}`,
+              color: theme.tertiary,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Not Vegan
+          </span>
+        </div>
+      )}
     </Glass>
   )
 }
@@ -936,11 +986,12 @@ export default function SafetyReportView({
           <div style={{ fontSize: 15, color: theme.secondary, lineHeight: 1.5 }}>{report.summary}</div>
         </Glass>
 
-        {/* Nutrition (food only — auto-hidden if neither metric is present) */}
+        {/* Nutrition (food only — auto-hidden if all metrics are absent) */}
         {report.product_type === 'food' && (
           <NutritionCard
             nutriscore={report.nutriscore}
             novaGroup={report.nova_group}
+            isVegan={report.is_vegan}
             theme={theme}
             className="fade-up stagger-3"
           />

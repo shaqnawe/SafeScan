@@ -98,4 +98,5 @@ export interface SafetyReport {
   category_slug?: string | null
   nutriscore?: 'A' | 'B' | 'C' | 'D' | 'E' | string | null
   nova_group?: 1 | 2 | 3 | 4 | number | null
+  is_vegan?:   boolean | null
 }

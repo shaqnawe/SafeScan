@@ -221,6 +221,15 @@ async def scan_product(request: ScanRequest) -> SafetyReport:
                 report.nutriscore = nut["nutriscore"]
             if report.nova_group is None:
                 report.nova_group = nut["nova_group"]
+        # Vegan classification — derived deterministically from the
+        # report's own ingredients_analysis on every request so the
+        # answer reflects the latest vocabulary in agents/vegan.py.
+        # Food-only for v1 (cosmetic vegan = future enhancement).
+        if report.product_type == "food" and report.ingredients_analysis:
+            from agents.vegan import assess_vegan
+            report.is_vegan = assess_vegan(
+                [i.name for i in report.ingredients_analysis]
+            )
         return report
     except Exception as e:
         print(f"Error analyzing product {barcode}: {e}")

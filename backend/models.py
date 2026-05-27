@@ -55,6 +55,10 @@ class SafetyReport(BaseModel):
     #              4=ultra-processed.
     nutriscore: Optional[str] = None
     nova_group: Optional[int] = None
+    # Vegan classification from ingredient-keyword scan (food only).
+    # True = confident vegan, False = confident not vegan, None = uncertain
+    # (e.g. lecithin / mono-and-diglycerides without a plant source qualifier).
+    is_vegan:   Optional[bool] = None
 
 
 class ScanRequest(BaseModel):
