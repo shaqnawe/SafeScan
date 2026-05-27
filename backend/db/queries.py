@@ -56,6 +56,131 @@ async def cache_report(barcode: str, report_json: str, claude_used: bool) -> Non
 
 
 # ---------------------------------------------------------------------------
+# Recommended alternatives
+# ---------------------------------------------------------------------------
+#
+# Returns up to N already-cached products in the same product_type with a
+# strictly better score than the current scan. Optionally filters to products
+# sharing at least one category label.  Pure SQL — no model invocation —
+# so it's cheap to call on every scan and naturally improves as the cache
+# grows.  When the cache is sparse this returns an empty list and the UI
+# hides the panel.
+
+_FIND_ALTERNATIVES = """
+SELECT r.barcode,
+       r.report->>'product_name'                                  AS product_name,
+       r.report->>'brand'                                         AS brand,
+       r.report->>'image_url'                                     AS image_url,
+       COALESCE(r.report->>'product_type', p.product_type, 'unknown') AS product_type,
+       r.report->>'grade'                                         AS grade,
+       (r.report->>'score')::int                                  AS score
+FROM safety_reports r
+LEFT JOIN products p ON p.barcode = r.barcode
+WHERE r.barcode <> $1
+  -- expires_at intentionally NOT filtered: a slightly-stale "this product
+  -- in your category scored well last time" is still useful info, and the
+  -- TTL is meant to gate the user's own freshly-shown report.
+  AND (r.report->>'product_type') = $2
+  AND (r.report->>'score')::int > $3
+  AND (r.report->>'category_slug') = $4
+ORDER BY (r.report->>'score')::int DESC,
+         r.updated_at DESC
+LIMIT $5
+"""
+
+
+async def find_alternatives(
+    barcode:        str,
+    product_type:   str,
+    score:          int,
+    category_slug:  str | None,
+    limit:          int = 3,
+) -> list[dict[str, Any]]:
+    """
+    Return up to `limit` cached alternative products with the same
+    `category_slug` (use-case bucket) and a strictly higher score than
+    the current scan.
+
+    Returns [] when the current product has no slug (cannot match a peer
+    safely) or product_type is "unknown"/"drug".  Drug alternatives are
+    intentionally out of scope — brand-name vs generic Rx similarity is a
+    different domain.
+    """
+    if not category_slug:
+        return []
+    if product_type in ("unknown", "drug", "", None):
+        return []
+
+    async with get_conn() as conn:
+        rows = await conn.fetch(
+            _FIND_ALTERNATIVES, barcode, product_type, score, category_slug, limit,
+        )
+    return [dict(r) for r in rows]
+
+
+_GET_PRODUCT_CATEGORIES = """
+SELECT categories FROM products WHERE barcode = $1 LIMIT 1
+"""
+
+
+_SEARCH_PRODUCTS = """
+SELECT barcode,
+       name,
+       COALESCE(brand, '')           AS brand,
+       image_url,
+       COALESCE(product_type, 'unknown') AS product_type,
+       -- Relevance: brand exact > name prefix > brand prefix > substring
+       CASE
+         WHEN lower(brand) = lower($1)             THEN 100
+         WHEN lower(name)  LIKE lower($1) || '%'   THEN  80
+         WHEN lower(brand) LIKE lower($1) || '%'   THEN  60
+         WHEN lower(name)  LIKE '%' || lower($1) || '%' THEN 40
+         WHEN lower(brand) LIKE '%' || lower($1) || '%' THEN 30
+         ELSE 0
+       END AS rank
+FROM products
+WHERE (name ILIKE '%' || $1 || '%' OR brand ILIKE '%' || $1 || '%')
+  AND name IS NOT NULL
+  AND ($2::text IS NULL OR product_type = $2)
+ORDER BY rank DESC, LENGTH(COALESCE(name,'')) ASC
+LIMIT $3
+"""
+
+
+async def search_products(
+    query:        str,
+    product_type: str | None = None,
+    limit:        int = 20,
+) -> list[dict[str, Any]]:
+    """
+    Fuzzy product search by name/brand via pg_trgm GIN index.
+
+    Returns ranked results: brand-exact > name-prefix > brand-prefix >
+    substring. Filters out rows with NULL name (mostly UPCitemdb stubs).
+    Optional product_type filter.
+    """
+    q = (query or "").strip()
+    if len(q) < 2:
+        return []
+    async with get_conn() as conn:
+        rows = await conn.fetch(_SEARCH_PRODUCTS, q, product_type, limit)
+    return [
+        {k: r[k] for k in ("barcode", "name", "brand", "image_url", "product_type")}
+        for r in rows
+    ]
+
+
+async def get_product_categories(barcode: str) -> list[str]:
+    """Return the categories array for a barcode, or [] if not in the
+    products table."""
+    async with get_conn() as conn:
+        row = await conn.fetchrow(_GET_PRODUCT_CATEGORIES, barcode)
+    if row is None:
+        return []
+    return list(row["categories"] or [])
+
+
+# ---------------------------------------------------------------------------
 # Product lookup
 # ---------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-import type { SafetyReport, IngredientAnalysis, RecallAlert } from '../types'
+import type { SafetyReport, IngredientAnalysis, RecallAlert, Alternative } from '../types'
 import { ArrowLeft } from 'lucide-react'
 import { matchAllergens } from '../hooks/useAllergenProfile'
 import type { AllergenInfo } from '../hooks/useAllergenProfile'
@@ -16,6 +16,7 @@ import {
 interface SafetyReportProps {
   report: SafetyReport
   onScanAgain: () => void
+  onSelectAlternative?: (barcode: string) => void
   isDark?: boolean
   activeAllergens?: AllergenInfo[]
 }
@@ -309,6 +310,125 @@ function PointRow({
   )
 }
 
+function AlternativeCard({
+  alt,
+  theme,
+  isDark,
+  onSelect,
+}: {
+  alt: Alternative
+  theme: Theme
+  isDark: boolean
+  onSelect: (barcode: string) => void
+}) {
+  return (
+    <button
+      onClick={() => onSelect(alt.barcode)}
+      className="press"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        width: '100%',
+        padding: '12px 14px',
+        background: theme.ingredientBg,
+        borderRadius: 12,
+        border: `1px solid ${theme.ingredientBorder}`,
+        marginBottom: 8,
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontFamily: 'inherit',
+        color: 'inherit',
+      }}
+    >
+      {alt.image_url ? (
+        <img
+          src={alt.image_url}
+          alt={alt.product_name}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            objectFit: 'contain',
+            background: theme.glass,
+            flexShrink: 0,
+            padding: 2,
+            border: `1px solid ${theme.glassBorder}`,
+          }}
+          onError={e => {
+            (e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            background: theme.glass,
+            flexShrink: 0,
+            border: `1px solid ${theme.glassBorder}`,
+          }}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {alt.brand && (
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: theme.tertiary,
+            }}
+          >
+            {alt.brand}
+          </div>
+        )}
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: theme.primary,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            marginTop: 2,
+          }}
+        >
+          {alt.product_name}
+        </div>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 4,
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: FONT_DISPLAY,
+            fontSize: 28,
+            fontWeight: 400,
+            background: gradeGradient(alt.grade, isDark),
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            lineHeight: 1,
+          }}
+        >
+          {alt.grade}
+        </span>
+        <span style={{ fontSize: 11, color: theme.tertiary, fontVariantNumeric: 'tabular-nums' }}>
+          {alt.score}
+        </span>
+      </div>
+    </button>
+  )
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Main
 // ──────────────────────────────────────────────────────────────────────────────
@@ -316,6 +436,7 @@ function PointRow({
 export default function SafetyReportView({
   report,
   onScanAgain,
+  onSelectAlternative,
   isDark = false,
   activeAllergens = [],
 }: SafetyReportProps) {
@@ -733,6 +854,25 @@ export default function SafetyReportView({
                 <IngredientRow key={`${level}-${i}`} ingredient={ing} theme={theme} />
               ))
             })}
+          </Glass>
+        )}
+
+        {/* Recommended alternatives */}
+        {report.alternatives && report.alternatives.length > 0 && (
+          <Glass theme={theme} className="fade-up stagger-6" style={{ marginBottom: 16 }}>
+            <SectionLabel theme={theme}>Better Alternatives</SectionLabel>
+            <div style={{ fontSize: 12, color: theme.tertiary, marginBottom: 14, marginTop: -6, lineHeight: 1.4 }}>
+              Same category, higher safety score. Tap to view full report.
+            </div>
+            {report.alternatives.map(alt => (
+              <AlternativeCard
+                key={alt.barcode}
+                alt={alt}
+                theme={theme}
+                isDark={isDark}
+                onSelect={bc => onSelectAlternative?.(bc)}
+              />
+            ))}
           </Glass>
         )}
 

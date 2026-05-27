@@ -170,6 +170,7 @@ export default function App() {
       <SafetyReportView
         report={report}
         onScanAgain={handleScanAgain}
+        onSelectAlternative={handleBarcodeScan}
         isDark={isDark}
         activeAllergens={activeAllergens}
       />

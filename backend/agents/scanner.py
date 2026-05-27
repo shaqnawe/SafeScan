@@ -273,6 +273,12 @@ async def analyze_product(barcode: str) -> SafetyReport:
         print(f"  [CACHE] Returning cached report for {barcode}")
         report = SafetyReport(**cached)
         report.recalls = await _attach_recalls(report)
+        # Backfill category_slug on cache reads from pre-slug reports
+        if not report.category_slug:
+            from agents.category import derive_category_slug
+            report.category_slug = derive_category_slug(
+                report.product_name, report.product_type, None,
+            )
         return report
 
     # --- Local fast path (no Claude) ---
@@ -498,6 +504,15 @@ async def analyze_product(barcode: str) -> SafetyReport:
 
     report.barcode = barcode
     report.recalls = await _attach_recalls(report)
+
+    # Use-case slug — derived from name + product_type so cached and fresh
+    # reports agree (deterministic heuristic). Phase 2 doesn't currently
+    # emit a slug, so this is always populated here for the Claude path.
+    if not report.category_slug:
+        from agents.category import derive_category_slug
+        report.category_slug = derive_category_slug(
+            report.product_name, report.product_type, None,
+        )
 
     # --- Cache the result ---
     try:

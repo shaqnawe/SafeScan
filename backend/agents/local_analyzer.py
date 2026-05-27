@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 from models import SafetyReport, IngredientAnalysis
+from agents.category import derive_category_slug
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -453,4 +454,5 @@ def build_report(product_data: dict[str, Any], barcode: str) -> SafetyReport | N
         positive_points=positive,
         negative_points=negative,
         not_found=False,
+        category_slug=derive_category_slug(name, product_type, categories),
     )

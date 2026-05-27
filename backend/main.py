@@ -7,12 +7,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-from models import ScanRequest, SafetyReport
+from models import ScanRequest, SafetyReport, SearchResult
 from agents.scanner import analyze_product, analyze_submission_bg
 from agents.image_agent import process_product_photos, SubmissionResult, validate_and_normalize_image
 from db.connection import get_pool, close_pool
 from db.recall_store import ensure_recalls_table, fetch_and_store_openfda as fetch_and_store_recalls
-from db.queries import list_user_submissions, get_submission
+from db.queries import list_user_submissions, get_submission, find_alternatives, search_products
+from models import Alternative
 
 
 @asynccontextmanager
@@ -169,6 +170,23 @@ async def submit_product(
         raise HTTPException(status_code=500, detail=f"Failed to process images: {str(e)}")
 
 
+@app.get("/api/search", response_model=list[SearchResult])
+async def search(
+    q:            str = "",
+    product_type: Optional[str] = None,
+    limit:        int = 20,
+) -> list[SearchResult]:
+    """Fuzzy product search by name or brand. Returns ranked matches with
+    barcode/name/brand/image so the client can tap one to launch a scan."""
+    if not q or len(q.strip()) < 2:
+        return []
+    if product_type and product_type not in ("food", "cosmetic", "drug"):
+        product_type = None
+    limit = max(1, min(limit, 50))
+    rows = await search_products(q.strip(), product_type, limit)
+    return [SearchResult(**r) for r in rows]
+
+
 @app.post("/api/scan", response_model=SafetyReport)
 async def scan_product(request: ScanRequest) -> SafetyReport:
     if not request.barcode or not request.barcode.strip():
@@ -178,6 +196,18 @@ async def scan_product(request: ScanRequest) -> SafetyReport:
 
     try:
         report = await analyze_product(barcode)
+        # Alternatives are computed fresh per request rather than cached,
+        # because they should improve as the cache grows. Skipped for
+        # grade A products (no point recommending alternatives when the
+        # current one is already excellent) and for not_found / unknown.
+        if not report.not_found and report.grade != "A":
+            alts = await find_alternatives(
+                barcode       = barcode,
+                product_type  = report.product_type,
+                score         = report.score,
+                category_slug = report.category_slug,
+            )
+            report.alternatives = [Alternative(**a) for a in alts]
         return report
     except Exception as e:
         print(f"Error analyzing product {barcode}: {e}")

@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { BarcodeScanner as NativeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useZxing } from 'react-zxing'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
+import type { SearchResult } from '../types'
+import { searchProducts } from '../api'
 import { FONT_STACK } from '../theme'
 
 // Camera UI stays dark regardless of OS theme — it's a fullscreen viewfinder
@@ -146,6 +148,16 @@ function WebScannerView({ onScan }: { onScan: (barcode: string) => void }) {
 
   const { ref } = useZxing({
     paused: !cameraActive,
+    constraints: {
+      video: {
+        width:     { ideal: 1920 },
+        height:    { ideal: 1080 },
+        facingMode: { ideal: 'environment' },
+        // @ts-expect-error — non-standard but honored by Chromium-based browsers
+        focusMode: { ideal: 'continuous' },
+      },
+      audio: false,
+    },
     onDecodeResult(result) {
       const now = Date.now()
       const text = result.getText()
@@ -282,12 +294,34 @@ export default function BarcodeScanner({
   onCompare,
 }: BarcodeScannerProps) {
   const [manualBarcode, setManualBarcode] = useState('')
+  const [searchQuery,   setSearchQuery]   = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching,   setIsSearching]   = useState(false)
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = manualBarcode.trim()
     if (trimmed) onScan(trimmed)
   }
+
+  // Debounced name search. Cancels in-flight on each keystroke via AbortController.
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (q.length < 2) { setSearchResults([]); setIsSearching(false); return }
+    const controller = new AbortController()
+    const t = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const rows = await searchProducts(q, controller.signal)
+        setSearchResults(rows)
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') setSearchResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300)
+    return () => { clearTimeout(t); controller.abort() }
+  }, [searchQuery])
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column' }}>
@@ -355,7 +389,112 @@ export default function BarcodeScanner({
         padding: '20px 24px 32px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}>
+        {/* Name search */}
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px', textAlign: 'center' }}>
+          Search by name or brand
+        </p>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="e.g. cetaphil, diet coke, sriracha"
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(255,255,255,0.08)',
+            color: '#fff',
+            fontSize: '16px',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+
+        {searchQuery.trim().length >= 2 && (
+          <div
+            style={{
+              marginTop: 10,
+              maxHeight: 280,
+              overflowY: 'auto',
+              background: 'rgba(0,0,0,0.4)',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {isSearching && searchResults.length === 0 && (
+              <div style={{ padding: 14, color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center' }}>
+                Searching…
+              </div>
+            )}
+            {!isSearching && searchResults.length === 0 && (
+              <div style={{ padding: 14, color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center' }}>
+                No products match "{searchQuery.trim()}"
+              </div>
+            )}
+            {searchResults.map(r => (
+              <button
+                key={r.barcode}
+                onClick={() => onScan(r.barcode)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  width: '100%',
+                  padding: '12px 14px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  color: '#fff',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {r.image_url ? (
+                  <img
+                    src={r.image_url}
+                    alt=""
+                    style={{
+                      width: 38, height: 38, borderRadius: 6, objectFit: 'contain',
+                      background: 'rgba(255,255,255,0.04)', flexShrink: 0, padding: 2,
+                    }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 6,
+                    background: 'rgba(255,255,255,0.04)', flexShrink: 0,
+                  }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {r.brand && (
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
+                      textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)',
+                    }}>
+                      {r.brand}
+                    </div>
+                  )}
+                  <div style={{
+                    fontSize: 13, fontWeight: 500, color: '#fff', marginTop: 2,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {r.name}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 10, color: 'rgba(255,255,255,0.4)',
+                  textTransform: 'uppercase', letterSpacing: '0.1em', flexShrink: 0,
+                }}>
+                  {r.product_type}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: '20px', marginBottom: '12px', textAlign: 'center' }}>
           Or enter barcode manually
         </p>
         <form onSubmit={handleManualSubmit} style={{ display: 'flex', gap: '10px' }}>

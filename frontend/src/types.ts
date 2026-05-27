@@ -53,6 +53,24 @@ export interface UserSubmission {
   ingredients_status: CallStatus
 }
 
+export interface SearchResult {
+  barcode:      string
+  name:         string
+  brand?:       string | null
+  image_url?:   string | null
+  product_type: string
+}
+
+export interface Alternative {
+  barcode:      string
+  product_name: string
+  brand?:       string | null
+  image_url?:   string | null
+  product_type: string
+  grade:        'A' | 'B' | 'C' | 'D'
+  score:        number
+}
+
 export interface RecallAlert {
   title: string
   description?: string | null
@@ -76,4 +94,5 @@ export interface SafetyReport {
   negative_points: string[]
   not_found: boolean
   recalls: RecallAlert[]
+  alternatives?: Alternative[]
 }
