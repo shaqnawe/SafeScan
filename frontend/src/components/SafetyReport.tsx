@@ -693,7 +693,7 @@ function AlternativeCard({
           style={{
             fontFamily: FONT_DISPLAY,
             fontSize: 28,
-            fontWeight: 400,
+            fontWeight: 600,
             background: gradeGradient(alt.grade, isDark),
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -1095,9 +1095,9 @@ export default function SafetyReportView({
               style={{
                 fontFamily: FONT_DISPLAY,
                 fontSize: 120,
-                fontWeight: 300,
-                fontVariationSettings: '"opsz" 144, "SOFT" 30',
-                letterSpacing: '-0.06em',
+                fontWeight: 600,
+                fontVariationSettings: '"opsz" 72',
+                letterSpacing: '-0.04em',
                 background: gradeGradient(report.grade, isDark),
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',

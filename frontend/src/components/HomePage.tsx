@@ -98,10 +98,9 @@ export default function HomePage({
           transform: 'translateX(-50%) rotate(-3deg)',
           fontFamily: FONT_DISPLAY,
           fontSize: 240,
-          fontWeight: 400,
-          fontStyle: 'italic',
-          fontVariationSettings: '"opsz" 144, "SOFT" 70',
-          letterSpacing: '-0.06em',
+          fontWeight: 600,
+          fontVariationSettings: '"opsz" 72',
+          letterSpacing: '-0.04em',
           lineHeight: 0.85,
           color: theme.primary,
           opacity: isDark ? 0.035 : 0.05,
@@ -210,20 +209,19 @@ export default function HomePage({
           <HeartPulse size={44} strokeWidth={2.25} aria-hidden />
         </div>
 
-        {/* Wordmark — Fraunces display face, optical-size large, italic for character.
-            Horizontal padding gives the italic 'n' exit stroke room inside the
-            background-clip: text mask (otherwise the trailing glyph is chopped). */}
+        {/* Wordmark — Newsreader display face, optical-size 72 (max), upright
+            at weight 600. Less ornate than the previous Fraunces italic and
+            reads as editorial/news-authority for a health-data app. */}
         <h1
           className="fade-up stagger-2"
           style={{
             fontFamily: FONT_DISPLAY,
             fontSize: 56,
-            fontWeight: 500,
-            fontStyle: 'italic',
-            fontVariationSettings: '"opsz" 144, "SOFT" 50',
-            letterSpacing: '-0.035em',
+            fontWeight: 600,
+            fontVariationSettings: '"opsz" 72',
+            letterSpacing: '-0.03em',
             marginBottom: 12,
-            padding: '0 0.18em',
+            padding: '0 0.1em',
             background: isDark
               ? 'linear-gradient(135deg, #fafafa 40%, #fbbf24 100%)'
               : 'linear-gradient(135deg, #1a1a1f 40%, #d97706 100%)',

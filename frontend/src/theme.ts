@@ -141,7 +141,10 @@ export const FONT_STACK =
 
 /**
  * Display face for hero typography only — wordmark, grade letter, page titles.
- * Fraunces is a variable serif with optical sizing; pair sparingly with Manrope body.
+ * Newsreader is Google's editorial/news-style serif; reads as authoritative
+ * rather than ornamental. Variable opsz axis (6–72) handles display sizes;
+ * we mostly use the upright (roman) cut at weight 600. Pair sparingly with
+ * Manrope body.
  */
 export const FONT_DISPLAY =
-  '"Fraunces", "Iowan Old Style", "Palatino", Georgia, serif'
+  '"Newsreader", "Iowan Old Style", "Palatino", Georgia, serif'
