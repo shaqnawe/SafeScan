@@ -49,6 +49,12 @@ class SafetyReport(BaseModel):
     # alternatives by actual product use case rather than broad category
     # parents like "Health & Beauty". Null when no confident classification.
     category_slug: Optional[str] = None
+    # Nutrition lens (food only). Sourced from products.nutriscore / nova_group.
+    # nutriscore: single letter "A"–"E" (best → worst).
+    # nova_group:  1=unprocessed, 2=culinary ingredient, 3=processed,
+    #              4=ultra-processed.
+    nutriscore: Optional[str] = None
+    nova_group: Optional[int] = None
 
 
 class ScanRequest(BaseModel):

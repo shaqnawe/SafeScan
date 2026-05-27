@@ -170,6 +170,27 @@ async def search_products(
     ]
 
 
+_GET_PRODUCT_NUTRITION = """
+SELECT nutriscore, nova_group FROM products WHERE barcode = $1 LIMIT 1
+"""
+
+
+async def get_product_nutrition(barcode: str) -> dict[str, Any]:
+    """Return {'nutriscore': str|None, 'nova_group': int|None} for a barcode,
+    or both None if not in the products table. Used to backfill the
+    Nutri-Score / NOVA fields on cached reports that pre-date those fields
+    in the SafetyReport schema."""
+    async with get_conn() as conn:
+        row = await conn.fetchrow(_GET_PRODUCT_NUTRITION, barcode)
+    if row is None:
+        return {"nutriscore": None, "nova_group": None}
+    raw = row["nutriscore"]
+    return {
+        "nutriscore": raw.upper() if raw else None,
+        "nova_group": row["nova_group"],
+    }
+
+
 async def get_product_categories(barcode: str) -> list[str]:
     """Return the categories array for a barcode, or [] if not in the
     products table."""

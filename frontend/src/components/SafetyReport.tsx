@@ -310,6 +310,151 @@ function PointRow({
   )
 }
 
+// Nutri-Score color ramp — same A-E semantic as the OFF official palette.
+const NUTRISCORE_COLORS: Record<string, string> = {
+  A: '#038141',  // dark green — best
+  B: '#85bb2f',  // light green
+  C: '#fecb02',  // yellow
+  D: '#ee8100',  // orange
+  E: '#e63e11',  // red — worst
+}
+
+const NOVA_DESCRIPTIONS: Record<number, string> = {
+  1: 'Unprocessed',
+  2: 'Culinary ingredient',
+  3: 'Processed',
+  4: 'Ultra-processed',
+}
+
+const NOVA_COLORS: Record<number, string> = {
+  1: '#22c55e',   // green
+  2: '#84cc16',   // light green
+  3: '#f59e0b',   // amber
+  4: '#ef4444',   // red
+}
+
+function NutritionCard({
+  nutriscore,
+  novaGroup,
+  theme,
+  className,
+}: {
+  nutriscore: string | null | undefined
+  novaGroup:  number | null | undefined
+  theme:      Theme
+  className?: string
+}) {
+  // Hide the whole card if neither metric is present
+  if (!nutriscore && !novaGroup) return null
+
+  return (
+    <Glass theme={theme} className={className} style={{ marginBottom: 16 }}>
+      <SectionLabel theme={theme}>Nutrition</SectionLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {/* Nutri-Score */}
+        <div
+          style={{
+            padding: '14px 16px',
+            borderRadius: 12,
+            background: theme.ingredientBg,
+            border: `1px solid ${theme.ingredientBorder}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: nutriscore
+                ? NUTRISCORE_COLORS[nutriscore.toUpperCase()] || theme.glass
+                : theme.glass,
+              color: '#fff',
+              display: 'grid',
+              placeItems: 'center',
+              fontFamily: FONT_DISPLAY,
+              fontSize: 28,
+              fontWeight: 700,
+              lineHeight: 1,
+              flexShrink: 0,
+              opacity: nutriscore ? 1 : 0.3,
+            }}
+          >
+            {nutriscore?.toUpperCase() || '—'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: theme.tertiary,
+              }}
+            >
+              Nutri-Score
+            </div>
+            <div style={{ fontSize: 13, color: theme.secondary, marginTop: 3, lineHeight: 1.3 }}>
+              {nutriscore ? 'Nutritional quality' : 'No data'}
+            </div>
+          </div>
+        </div>
+
+        {/* NOVA */}
+        <div
+          style={{
+            padding: '14px 16px',
+            borderRadius: 12,
+            background: theme.ingredientBg,
+            border: `1px solid ${theme.ingredientBorder}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: novaGroup ? NOVA_COLORS[novaGroup] || theme.glass : theme.glass,
+              color: '#fff',
+              display: 'grid',
+              placeItems: 'center',
+              fontFamily: FONT_DISPLAY,
+              fontSize: 28,
+              fontWeight: 700,
+              lineHeight: 1,
+              flexShrink: 0,
+              opacity: novaGroup ? 1 : 0.3,
+            }}
+          >
+            {novaGroup ?? '—'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: theme.tertiary,
+              }}
+            >
+              NOVA Group
+            </div>
+            <div style={{ fontSize: 13, color: theme.secondary, marginTop: 3, lineHeight: 1.3 }}>
+              {novaGroup ? NOVA_DESCRIPTIONS[novaGroup] || 'Processing level' : 'No data'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Glass>
+  )
+}
+
 function AlternativeCard({
   alt,
   theme,
@@ -790,6 +935,16 @@ export default function SafetyReportView({
           <SectionLabel theme={theme}>Summary</SectionLabel>
           <div style={{ fontSize: 15, color: theme.secondary, lineHeight: 1.5 }}>{report.summary}</div>
         </Glass>
+
+        {/* Nutrition (food only — auto-hidden if neither metric is present) */}
+        {report.product_type === 'food' && (
+          <NutritionCard
+            nutriscore={report.nutriscore}
+            novaGroup={report.nova_group}
+            theme={theme}
+            className="fade-up stagger-3"
+          />
+        )}
 
         {/* Ingredient stats */}
         {report.ingredients_analysis.length > 0 && (

@@ -12,7 +12,7 @@ from agents.scanner import analyze_product, analyze_submission_bg
 from agents.image_agent import process_product_photos, SubmissionResult, validate_and_normalize_image
 from db.connection import get_pool, close_pool
 from db.recall_store import ensure_recalls_table, fetch_and_store_openfda as fetch_and_store_recalls
-from db.queries import list_user_submissions, get_submission, find_alternatives, search_products
+from db.queries import list_user_submissions, get_submission, find_alternatives, search_products, get_product_nutrition
 from models import Alternative
 
 
@@ -208,6 +208,19 @@ async def scan_product(request: ScanRequest) -> SafetyReport:
                 category_slug = report.category_slug,
             )
             report.alternatives = [Alternative(**a) for a in alts]
+        # Backfill Nutri-Score / NOVA on food reports — covers cache-hit
+        # of pre-feature reports + Claude-path reports where Phase 2
+        # didn't emit them. Source of truth is products.nutriscore /
+        # products.nova_group (from OFF + USDA imports).
+        if (
+            report.product_type == "food"
+            and (report.nutriscore is None or report.nova_group is None)
+        ):
+            nut = await get_product_nutrition(barcode)
+            if report.nutriscore is None:
+                report.nutriscore = nut["nutriscore"]
+            if report.nova_group is None:
+                report.nova_group = nut["nova_group"]
         return report
     except Exception as e:
         print(f"Error analyzing product {barcode}: {e}")

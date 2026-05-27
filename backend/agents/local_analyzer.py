@@ -455,4 +455,6 @@ def build_report(product_data: dict[str, Any], barcode: str) -> SafetyReport | N
         negative_points=negative,
         not_found=False,
         category_slug=derive_category_slug(name, product_type, categories),
+        nutriscore=(nutriscore.upper() if nutriscore else None),
+        nova_group=nova_group,
     )

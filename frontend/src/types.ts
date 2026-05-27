@@ -95,4 +95,7 @@ export interface SafetyReport {
   not_found: boolean
   recalls: RecallAlert[]
   alternatives?: Alternative[]
+  category_slug?: string | null
+  nutriscore?: 'A' | 'B' | 'C' | 'D' | 'E' | string | null
+  nova_group?: 1 | 2 | 3 | 4 | number | null
 }
