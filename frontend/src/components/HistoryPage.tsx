@@ -1,7 +1,21 @@
+import { useMemo, useState } from 'react'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
 import { ArrowLeft, Search } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK } from '../theme'
+
+type GradeFilter = 'all' | 'A' | 'B' | 'C' | 'D'
+type SortBy      = 'recent' | 'grade-best' | 'grade-worst' | 'name'
+
+const GRADE_ORDER_BEST_FIRST: Record<string, number>  = { A: 0, B: 1, C: 2, D: 3 }
+const GRADE_ORDER_WORST_FIRST: Record<string, number> = { D: 0, C: 1, B: 2, A: 3 }
+
+const SORT_LABELS: Record<SortBy, string> = {
+  'recent':      'Most recent',
+  'grade-best':  'Best grade',
+  'grade-worst': 'Worst grade',
+  'name':        'A–Z by name',
+}
 
 interface HistoryPageProps {
   history: ScanHistoryEntry[]
@@ -41,6 +55,30 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
   const primary   = theme.primary
   const secondary = theme.tertiary
   const backBg    = theme.ingredientBg
+
+  const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all')
+  const [sortBy,      setSortBy]      = useState<SortBy>('recent')
+
+  // Counts per grade — drives both the chip badges and the "0 of N" UI
+  const gradeCounts = useMemo(() => {
+    const counts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 }
+    for (const e of history) if (counts[e.grade] !== undefined) counts[e.grade]++
+    return counts
+  }, [history])
+
+  const visible = useMemo(() => {
+    let arr = gradeFilter === 'all' ? history : history.filter(e => e.grade === gradeFilter)
+    arr = [...arr].sort((a, b) => {
+      if (sortBy === 'recent')
+        return new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime()
+      if (sortBy === 'grade-best')
+        return (GRADE_ORDER_BEST_FIRST[a.grade] ?? 4) - (GRADE_ORDER_BEST_FIRST[b.grade] ?? 4)
+      if (sortBy === 'grade-worst')
+        return (GRADE_ORDER_WORST_FIRST[a.grade] ?? 4) - (GRADE_ORDER_WORST_FIRST[b.grade] ?? 4)
+      return (a.name || '').localeCompare(b.name || '')
+    })
+    return arr
+  }, [history, gradeFilter, sortBy])
 
   return (
     <div style={{
@@ -154,14 +192,121 @@ export default function HistoryPage({ history, onBack, onRescan, onClear, isDark
         </div>
       )}
 
-      {/* List */}
+      {/* Filter + sort */}
       {history.length > 0 && (
-        <div className="fade-up stagger-1" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ fontSize: '13px', color: secondary, marginBottom: '4px' }}>
-            {history.length} product{history.length !== 1 ? 's' : ''} scanned
-          </p>
+        <div
+          className="fade-up stagger-1"
+          style={{
+            padding: '14px 16px 6px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {/* Grade pill row — All + A/B/C/D, single-select */}
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+            {(['all', 'A', 'B', 'C', 'D'] as const).map(g => {
+              const active = gradeFilter === g
+              const tint   = g === 'all' ? secondary : (GRADE_COLOR[g] ?? secondary)
+              const count  = g === 'all' ? history.length : (gradeCounts[g] ?? 0)
+              return (
+                <button
+                  key={g}
+                  onClick={() => setGradeFilter(g)}
+                  className="press"
+                  disabled={g !== 'all' && count === 0}
+                  style={{
+                    flexShrink: 0,
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: active
+                      ? `1px solid ${tint}`
+                      : `1px solid ${theme.glassBorder}`,
+                    background: active
+                      ? (g === 'all' ? theme.ingredientBg : `${tint}22`)
+                      : 'transparent',
+                    color: g !== 'all' && count === 0
+                      ? theme.tertiary
+                      : (active ? tint : theme.secondary),
+                    fontSize: 13,
+                    fontWeight: active ? 700 : 600,
+                    cursor: g !== 'all' && count === 0 ? 'default' : 'pointer',
+                    opacity: g !== 'all' && count === 0 ? 0.45 : 1,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span>{g === 'all' ? 'All' : g}</span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      opacity: 0.7,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
 
-          {history.map(entry => {
+          {/* Sort selector */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <p style={{ fontSize: 13, color: secondary }}>
+              {gradeFilter === 'all'
+                ? `${visible.length} product${visible.length !== 1 ? 's' : ''} scanned`
+                : `${visible.length} of ${history.length} shown`}
+            </p>
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                color: theme.tertiary,
+              }}
+            >
+              <span style={{ letterSpacing: '0.04em' }}>Sort:</span>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortBy)}
+                style={{
+                  ...glassStyle(theme),
+                  borderRadius: 8,
+                  padding: '5px 10px',
+                  fontSize: 12,
+                  color: theme.primary,
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: 'none',
+                  appearance: 'auto',
+                }}
+              >
+                {(Object.keys(SORT_LABELS) as SortBy[]).map(k => (
+                  <option key={k} value={k}>{SORT_LABELS[k]}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Empty filter state */}
+      {history.length > 0 && visible.length === 0 && (
+        <div style={{ padding: '40px 24px', textAlign: 'center', color: theme.tertiary, fontSize: 14 }}>
+          No scans match this filter.
+        </div>
+      )}
+
+      {/* List */}
+      {visible.length > 0 && (
+        <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {visible.map(entry => {
             const gradeColor = GRADE_COLOR[entry.grade] || '#8e8e93'
             const gradeBg = isDark
               ? (GRADE_BG_DARK[entry.grade] || '#2c2c2e')
