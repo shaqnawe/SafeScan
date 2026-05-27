@@ -73,6 +73,8 @@ _COSMETIC_PATTERNS: list[tuple[str, str]] = [
     (r"\btooth[- ]?paste\b",                        "toothpaste"),
     (r"\bdentif",                                   "toothpaste"),
     (r"\bmouth[- ]?(wash|rinse)\b",                 "mouthwash"),
+    (r"\banti[- ]?cavity\b",                        "mouthwash"),
+    (r"\b(fluoride|treatment|oral|dental)[- ]?rinse\b", "mouthwash"),
     (r"\bdeodorant\b",                              "deodorant"),
     (r"\b(anti[- ]?perspirant|antiperspirant)\b",   "deodorant"),
     (r"\bshav(e|ing)\b",                            "shaving"),
@@ -176,6 +178,7 @@ _FOOD_PATTERNS: list[tuple[str, str]] = [
     (r"\b(honey|syrup|agave|maple)\b",              "sweetener_syrup"),
     (r"\b(sauce|gravy|salsa|pesto|hummus|tapenade)\b", "sauce"),
     (r"\b(salad[- ]?dressing|vinaigrette)\b",       "dressing"),
+    (r"\b(marinade|dressing)\b",                    "dressing"),
     (r"\b(oil|olive[- ]?oil|vegetable[- ]?oil|coconut[- ]?oil)\b", "cooking_oil"),
     (r"\b(vinegar|balsamic)\b",                     "vinegar"),
 
