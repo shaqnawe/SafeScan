@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
-import { ALL_ALLERGENS } from '../hooks/useAllergenProfile'
+import { ALL_ALLERGENS, ALLERGEN_PRESETS } from '../hooks/useAllergenProfile'
 import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK } from '../theme'
 
@@ -8,11 +8,20 @@ interface AllergenProfilePageProps {
   onToggle:       (id: string) => void
   onClear:        () => void
   onBack:         () => void
+  onApplyPreset:  (ids: string[]) => void
   isDark?:        boolean
 }
 
+// Does the current selection EXACTLY match a preset's id list?
+// Used to highlight the active preset chip.
+function matchesPreset(activeIds: string[], preset: { ids: string[] }): boolean {
+  if (activeIds.length !== preset.ids.length) return false
+  const set = new Set(activeIds)
+  return preset.ids.every(id => set.has(id))
+}
+
 export default function AllergenProfilePage({
-  activeIds, onToggle, onClear, onBack, isDark = false,
+  activeIds, onToggle, onClear, onBack, onApplyPreset, isDark = false,
 }: AllergenProfilePageProps) {
   const theme = getTheme(isDark)
   const primary  = theme.primary
@@ -82,6 +91,68 @@ export default function AllergenProfilePage({
         }}>
           <p style={{ fontSize: '14px', color: theme.accent, lineHeight: 1.5, fontWeight: 500 }}>
             Select the allergens you want to watch for. Any product containing these ingredients will show a warning on its safety report.
+          </p>
+        </div>
+
+        {/* Quick-start preset packs */}
+        <div className="fade-up stagger-2" style={{ marginBottom: 20 }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: secondary,
+              marginBottom: 10,
+            }}
+          >
+            Quick start
+          </p>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+            {ALLERGEN_PRESETS.map(preset => {
+              const active = matchesPreset(activeIds, preset)
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => onApplyPreset(preset.ids)}
+                  className="press"
+                  title={preset.description}
+                  style={{
+                    flexShrink: 0,
+                    padding: '8px 14px',
+                    borderRadius: 14,
+                    border: active
+                      ? `1.5px solid ${theme.accent}`
+                      : `1px solid ${theme.glassBorder}`,
+                    background: active ? theme.accentSoft : theme.glass,
+                    color: active ? theme.accent : primary,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: FONT_STACK,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: active ? `0 4px 16px ${theme.accent}33` : 'none',
+                  }}
+                >
+                  <span>{preset.label}</span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      opacity: 0.7,
+                      fontWeight: 600,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {preset.ids.length}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <p style={{ fontSize: 11, color: secondary, marginTop: 8, lineHeight: 1.4 }}>
+            Replaces your current selection — fine-tune individually below.
           </p>
         </div>
 

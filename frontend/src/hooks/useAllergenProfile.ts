@@ -112,6 +112,37 @@ function save(ids: string[]) {
   } catch {}
 }
 
+// Preset packs — one-tap quick-start for the allergen profile. Selecting a
+// preset replaces the current selection (cleaner mental model than "add to";
+// users can fine-tune via individual toggles after).
+export interface AllergenPreset {
+  id:          string
+  label:       string
+  description: string
+  ids:         string[]
+}
+
+export const ALLERGEN_PRESETS: AllergenPreset[] = [
+  {
+    id:    'common',
+    label: 'Common',
+    description: 'The 5 most prevalent everyday allergens',
+    ids:   ['gluten', 'dairy', 'eggs', 'peanuts', 'tree_nuts'],
+  },
+  {
+    id:    'us9',
+    label: 'US Big-9',
+    description: 'FDA major food allergens (incl. sesame, added 2023)',
+    ids:   ['gluten', 'dairy', 'eggs', 'peanuts', 'soy', 'tree_nuts', 'fish', 'shellfish', 'sesame'],
+  },
+  {
+    id:    'eu14',
+    label: 'All EU 14',
+    description: 'Every regulated EU allergen',
+    ids:   ALL_ALLERGENS.map(a => a.id),
+  },
+]
+
 export function useAllergenProfile() {
   const [activeIds, setActiveIds] = useState<string[]>(load)
 
@@ -128,9 +159,15 @@ export function useAllergenProfile() {
     setActiveIds([])
   }, [])
 
+  // Replace current selection wholesale. Used by preset packs.
+  const setProfile = useCallback((ids: string[]) => {
+    save(ids)
+    setActiveIds(ids)
+  }, [])
+
   const activeAllergens = ALL_ALLERGENS.filter(a => activeIds.includes(a.id))
 
-  return { activeIds, activeAllergens, toggleAllergen, clearAll }
+  return { activeIds, activeAllergens, toggleAllergen, clearAll, setProfile }
 }
 
 /** Check which active allergens appear in a list of ingredient name strings. */

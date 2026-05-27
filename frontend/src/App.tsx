@@ -39,7 +39,7 @@ export default function App() {
   const [scannedBarcode, setScannedBarcode] = useState<string>("");
   const { isDark } = useTheme();
   const { history, addEntry, clearHistory } = useScanHistory();
-  const { activeIds, activeAllergens, toggleAllergen, clearAll: clearAllergens } = useAllergenProfile();
+  const { activeIds, activeAllergens, toggleAllergen, clearAll: clearAllergens, setProfile: setAllergenProfile } = useAllergenProfile();
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -93,6 +93,7 @@ export default function App() {
         activeIds={activeIds}
         onToggle={toggleAllergen}
         onClear={clearAllergens}
+        onApplyPreset={setAllergenProfile}
         onBack={() => setState("home")}
         isDark={isDark}
       />
