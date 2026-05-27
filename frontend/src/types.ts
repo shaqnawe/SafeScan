@@ -61,6 +61,19 @@ export interface SearchResult {
   product_type: string
 }
 
+export interface ScoreLineItem {
+  reason: string
+  points: number  // negative for penalties, positive for bonuses
+}
+
+export interface ScoringBreakdown {
+  base_score:              number
+  penalties:               ScoreLineItem[]
+  bonuses:                 ScoreLineItem[]
+  eu_banned_floor_applied: boolean
+  final_score:             number
+}
+
 export interface Alternative {
   barcode:      string
   product_name: string
@@ -99,4 +112,5 @@ export interface SafetyReport {
   nutriscore?: 'A' | 'B' | 'C' | 'D' | 'E' | string | null
   nova_group?: 1 | 2 | 3 | 4 | number | null
   is_vegan?:   boolean | null
+  scoring_breakdown?: ScoringBreakdown | null
 }

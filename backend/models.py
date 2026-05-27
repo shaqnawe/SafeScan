@@ -21,6 +21,19 @@ class Alternative(BaseModel):
     score:        int
 
 
+class ScoreLineItem(BaseModel):
+    reason: str
+    points: int  # negative for penalties, positive for bonuses
+
+
+class ScoringBreakdown(BaseModel):
+    base_score:              int = 100
+    penalties:               list[ScoreLineItem] = []
+    bonuses:                 list[ScoreLineItem] = []
+    eu_banned_floor_applied: bool = False
+    final_score:             int   # base + sum, post-clamp
+
+
 class RecallAlert(BaseModel):
     title: str
     description: Optional[str] = None
@@ -59,6 +72,10 @@ class SafetyReport(BaseModel):
     # True = confident vegan, False = confident not vegan, None = uncertain
     # (e.g. lecithin / mono-and-diglycerides without a plant source qualifier).
     is_vegan:   Optional[bool] = None
+    # Per-line explanation of how the score was reached. Populated by
+    # local_analyzer or by Claude's Phase 2 emit. Null on legacy cached
+    # reports — UI hides the breakdown panel in that case.
+    scoring_breakdown: Optional[ScoringBreakdown] = None
 
 
 class ScanRequest(BaseModel):

@@ -1,5 +1,6 @@
-import type { SafetyReport, IngredientAnalysis, RecallAlert, Alternative } from '../types'
-import { ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
+import type { SafetyReport, IngredientAnalysis, RecallAlert, Alternative, ScoringBreakdown } from '../types'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { matchAllergens } from '../hooks/useAllergenProfile'
 import type { AllergenInfo } from '../hooks/useAllergenProfile'
 import ThemeToggle from './ThemeToggle'
@@ -624,6 +625,131 @@ function AlternativeCard({
   )
 }
 
+function ScoreBreakdownPanel({
+  breakdown,
+  theme,
+}: {
+  breakdown: ScoringBreakdown
+  theme:     Theme
+}) {
+  const { base_score, penalties, bonuses, eu_banned_floor_applied, final_score } = breakdown
+  return (
+    <Glass theme={theme} style={{ marginBottom: 16, padding: 20 }}>
+      <SectionLabel theme={theme}>Why this grade?</SectionLabel>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Base */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            fontSize: 14,
+            color: theme.tertiary,
+            paddingBottom: 8,
+            borderBottom: `1px solid ${theme.divider}`,
+          }}
+        >
+          <span>Base score</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: theme.secondary }}>
+            {base_score}
+          </span>
+        </div>
+
+        {/* Bonuses */}
+        {bonuses.map((b, i) => (
+          <div
+            key={`b-${i}`}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 12,
+              fontSize: 14,
+            }}
+          >
+            <span style={{ color: theme.secondary, flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+              {b.reason}
+            </span>
+            <span
+              style={{
+                color: '#22c55e',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                flexShrink: 0,
+              }}
+            >
+              +{b.points}
+            </span>
+          </div>
+        ))}
+
+        {/* Penalties */}
+        {penalties.map((p, i) => (
+          <div
+            key={`p-${i}`}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 12,
+              fontSize: 14,
+            }}
+          >
+            <span style={{ color: theme.secondary, flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+              {p.reason}
+            </span>
+            <span
+              style={{
+                color: '#ef4444',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                flexShrink: 0,
+              }}
+            >
+              {p.points}
+            </span>
+          </div>
+        ))}
+
+        {/* Final */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            fontSize: 14,
+            paddingTop: 8,
+            borderTop: `1px solid ${theme.divider}`,
+            color: theme.primary,
+            fontWeight: 700,
+          }}
+        >
+          <span>Final score</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{final_score} / 100</span>
+        </div>
+
+        {eu_banned_floor_applied && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.25)',
+              color: '#ef4444',
+              fontSize: 12,
+              lineHeight: 1.4,
+            }}
+          >
+            EU-banned ingredient detected — grade is capped at D regardless of other factors.
+          </div>
+        )}
+      </div>
+    </Glass>
+  )
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Main
 // ──────────────────────────────────────────────────────────────────────────────
@@ -636,6 +762,7 @@ export default function SafetyReportView({
   activeAllergens = [],
 }: SafetyReportProps) {
   const theme = getTheme(isDark)
+  const [breakdownOpen, setBreakdownOpen] = useState(false)
 
   // ── Not-found state ────────────────────────────────────────────────────────
   if (report.not_found) {
@@ -815,14 +942,30 @@ export default function SafetyReportView({
             {report.product_name || 'Unknown Product'}
           </div>
 
-          {/* Grade display */}
-          <div
+          {/* Grade display — tap to expand the breakdown panel below the hero */}
+          <button
+            type="button"
+            onClick={() => report.scoring_breakdown && setBreakdownOpen(v => !v)}
+            disabled={!report.scoring_breakdown}
+            className={report.scoring_breakdown ? 'press' : undefined}
+            aria-expanded={breakdownOpen}
+            aria-label={
+              report.scoring_breakdown
+                ? `Grade ${report.grade}, score ${report.score} of 100. Tap to see score breakdown.`
+                : `Grade ${report.grade}, score ${report.score} of 100`
+            }
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 24,
               padding: '8px 0',
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              cursor: report.scoring_breakdown ? 'pointer' : 'default',
+              fontFamily: 'inherit',
+              color: 'inherit',
             }}
           >
             <div
@@ -856,13 +999,32 @@ export default function SafetyReportView({
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
                   marginTop: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
                 }}
               >
-                Safety Score
+                <span>Safety Score</span>
+                {report.scoring_breakdown && (
+                  <ChevronDown
+                    size={12}
+                    strokeWidth={2.5}
+                    aria-hidden
+                    style={{
+                      transform: breakdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 200ms ease',
+                    }}
+                  />
+                )}
               </div>
             </div>
-          </div>
+          </button>
         </Glass>
+
+        {/* Score breakdown — expands inline when the user taps the grade card above */}
+        {report.scoring_breakdown && breakdownOpen && (
+          <ScoreBreakdownPanel breakdown={report.scoring_breakdown} theme={theme} />
+        )}
 
         {/* Allergen warning banner */}
         {triggeredAllergens.length > 0 && (

@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from models import SafetyReport, IngredientAnalysis
+from models import SafetyReport, IngredientAnalysis, ScoringBreakdown, ScoreLineItem
 from agents.category import derive_category_slug
 
 # ---------------------------------------------------------------------------
@@ -152,9 +152,26 @@ def _compute_score(
     total_ingredients: int,
     nova_group: int | None,
     nutriscore: str,
-) -> int:
+) -> tuple[int, ScoringBreakdown]:
+    """
+    Compute final score AND a per-line breakdown explaining how it got
+    there. Per-ingredient deductions are tallied by category and emitted
+    as one summary line per category to keep the breakdown UI-friendly
+    (typically 4–8 lines vs. 50 ingredient rows).
+    """
     score = 100
     has_banned = False
+
+    # Per-ingredient deduction tallies, keyed by reason → (count, total points).
+    # Aggregated and emitted at the end so the breakdown stays compact.
+    tally: dict[str, list[int]] = {}  # reason → [count, total_neg_points]
+
+    def add_ing(reason: str, points: int) -> None:
+        """Record a per-ingredient deduction (points should be negative)."""
+        if reason not in tally:
+            tally[reason] = [0, 0]
+        tally[reason][0] += 1
+        tally[reason][1] += points
 
     for ing in resolved:
         safety = ing.get('safety_level')
@@ -168,83 +185,132 @@ def _compute_score(
         if product_type == 'food':
             if explicit_penalty > 0:
                 score -= explicit_penalty
+                add_ing('Flagged food ingredients', -explicit_penalty)
             elif safety == 'avoid':
                 score -= 15
+                add_ing('Ingredients to avoid', -15)
             elif safety == 'caution':
                 score -= 7
+                add_ing('Caution ingredients', -7)
 
-            # Carcinogen / reproductive / mutagen tags applied by the
-            # IARC, GHS (CompTox/ECHA CLP), and Prop 65 importers. These
-            # stack on top of explicit_penalty and safety_level because
-            # the seed score_penalty was authored before post-hoc
-            # enrichment and does not include their weight.
-            score -= _carcinogen_penalty(concerns)
+            carc = _carcinogen_penalty(concerns)
+            if carc > 0:
+                score -= carc
+                add_ing('Carcinogen / reproductive / mutagen tags', -carc)
 
         else:  # cosmetic
             if eu_status == 'banned':
                 has_banned = True
                 score -= 30
+                add_ing('EU-banned cosmetic ingredients', -30)
             elif explicit_penalty > 0:
                 score -= explicit_penalty
+                add_ing('Flagged cosmetic ingredients', -explicit_penalty)
             else:
-                # Categorical cosmetic penalties
                 if eu_status == 'restricted':
                     score -= 15
+                    add_ing('EU-restricted ingredients', -15)
                 if 'endocrine_disruptor' in concerns:
                     score -= 20
+                    add_ing('Endocrine disruptors', -20)
                 if 'paraben' in concerns:
                     score -= 10
+                    add_ing('Parabens', -10)
                 if 'sls' in concerns:
                     score -= 8
+                    add_ing('Sulfates (SLS)', -8)
                 if 'sles' in concerns:
                     score -= 8
+                    add_ing('Sulfates (SLES)', -8)
                 if 'formaldehyde_releaser' in concerns:
                     score -= 20
+                    add_ing('Formaldehyde releasers', -20)
                 if safety == 'avoid' and explicit_penalty == 0:
                     score -= 15
+                    add_ing('Ingredients to avoid', -15)
                 elif safety == 'caution' and explicit_penalty == 0:
                     score -= 7
+                    add_ing('Caution ingredients', -7)
 
-                # Carcinogen / reproductive / mutagen tags — shared logic
-                # with food path. See _carcinogen_penalty() for details.
-                score -= _carcinogen_penalty(concerns)
+                carc = _carcinogen_penalty(concerns)
+                if carc > 0:
+                    score -= carc
+                    add_ing('Carcinogen / reproductive / mutagen tags', -carc)
 
-        # Allergen penalty (both types)
         if ing.get('is_allergen'):
             score -= 3
+            add_ing('Allergens present', -3)
 
     # ── Food-only meta penalties ─────────────────────────────────────────────
-    if product_type == 'food':
-        score -= _NOVA_PENALTY.get(nova_group or 0, 0)
-        score -= _NUTRISCORE_PENALTY.get(nutriscore.lower(), 0)
+    breakdown = ScoringBreakdown(base_score=100, final_score=0)
 
-        # Additive category penalties (once per category)
+    # Roll up per-ingredient tallies into compact breakdown lines.
+    for reason, (count, total) in tally.items():
+        label = f"{reason} ({count})" if count > 1 else reason
+        breakdown.penalties.append(ScoreLineItem(reason=label, points=total))
+
+    if product_type == 'food':
+        nova_pen = _NOVA_PENALTY.get(nova_group or 0, 0)
+        if nova_pen > 0:
+            score -= nova_pen
+            label = (f"Ultra-processed food (NOVA {nova_group})"
+                     if nova_group == 4 else f"Processed food (NOVA {nova_group})")
+            breakdown.penalties.append(ScoreLineItem(reason=label, points=-nova_pen))
+
+        nutri_pen = _NUTRISCORE_PENALTY.get(nutriscore.lower(), 0)
+        if nutri_pen > 0:
+            score -= nutri_pen
+            breakdown.penalties.append(ScoreLineItem(
+                reason=f"Poor nutritional quality (Nutri-Score {nutriscore.upper()})",
+                points=-nutri_pen,
+            ))
+
         e_ranges = set()
         for ing in resolved:
             n = _e_number_range(ing.get('e_number') or ing.get('name') or '')
             if n:
-                if 100 <= n <= 199: e_ranges.add('color')
-                elif 200 <= n <= 299: e_ranges.add('preservative')
-                elif 900 <= n <= 999: e_ranges.add('sweetener')
-        score -= len(e_ranges) * 5
+                if 100 <= n <= 199: e_ranges.add('artificial colorants')
+                elif 200 <= n <= 299: e_ranges.add('artificial preservatives')
+                elif 900 <= n <= 999: e_ranges.add('artificial sweeteners')
+        if e_ranges:
+            score -= len(e_ranges) * 5
+            breakdown.penalties.append(ScoreLineItem(
+                reason=f"Additive categories ({len(e_ranges)}): {', '.join(sorted(e_ranges))}",
+                points=-len(e_ranges) * 5,
+            ))
 
     # ── Bonuses ──────────────────────────────────────────────────────────────
-    safe_resolved = [i for i in resolved if i.get('safety_level') == 'safe']
     caution_or_worse = [i for i in resolved if i.get('safety_level') in ('caution', 'avoid')]
 
-    if total_ingredients <= 8:
-        score += 5  # short ingredient list
+    if total_ingredients and total_ingredients <= 8:
+        score += 5
+        breakdown.bonuses.append(ScoreLineItem(
+            reason=f"Short ingredient list ({total_ingredients})",
+            points=5,
+        ))
     if resolved and not caution_or_worse:
-        score += 3  # all analyzed ingredients are safe
+        score += 3
+        breakdown.bonuses.append(ScoreLineItem(
+            reason="All analyzed ingredients are safe",
+            points=3,
+        ))
 
     # ── Clamp ────────────────────────────────────────────────────────────────
     score = max(0, min(100, score))
 
     # ── EU-banned floor (cosmetics) ──────────────────────────────────────────
     if has_banned:
-        score = min(score, 24)
+        clamped = min(score, 24)
+        if clamped < score:
+            breakdown.penalties.append(ScoreLineItem(
+                reason="EU-banned floor applied (max grade D)",
+                points=clamped - score,
+            ))
+        score = clamped
+        breakdown.eu_banned_floor_applied = True
 
-    return score
+    breakdown.final_score = score
+    return score, breakdown
 
 
 # ---------------------------------------------------------------------------
@@ -418,7 +484,7 @@ def build_report(product_data: dict[str, Any], barcode: str) -> SafetyReport | N
     if not has_enough_signal:
         return None
 
-    score = _compute_score(product_type, resolved, total, nova_group, nutriscore)
+    score, breakdown = _compute_score(product_type, resolved, total, nova_group, nutriscore)
     grade = _score_to_grade(score)
 
     summary = _generate_summary(
@@ -457,4 +523,5 @@ def build_report(product_data: dict[str, Any], barcode: str) -> SafetyReport | N
         category_slug=derive_category_slug(name, product_type, categories),
         nutriscore=(nutriscore.upper() if nutriscore else None),
         nova_group=nova_group,
+        scoring_breakdown=breakdown,
     )

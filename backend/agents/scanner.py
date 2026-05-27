@@ -432,7 +432,15 @@ async def analyze_product(barcode: str) -> SafetyReport:
             '"summary": "string", "ingredients_analysis": [{"name": "string", '
             '"safety_level": "safe|caution|avoid", "concern": "string|null", '
             '"concerns": ["string"], "sources": ["string"], "score_impact": int|null}], '
-            '"positive_points": ["string"], "negative_points": ["string"], "not_found": false}\n\n'
+            '"positive_points": ["string"], "negative_points": ["string"], "not_found": false, '
+            '"scoring_breakdown": {"base_score": 100, '
+            '"penalties": [{"reason": "string", "points": negative_int}], '
+            '"bonuses":   [{"reason": "string", "points": positive_int}], '
+            '"eu_banned_floor_applied": false, "final_score": 0-100}}\n\n'
+            "scoring_breakdown should aggregate per-ingredient deductions by category "
+            "(e.g. \"Endocrine disruptors (3)\" with summed points, not 3 separate lines). "
+            "Meta penalties (NOVA, Nutri-Score, EU-banned floor) get their own lines. "
+            "Each bonus also gets a line. final_score must equal the top-level `score`.\n\n"
             "For each ingredient in ingredients_analysis:\n"
             "- `concern` is a short human-readable phrase (e.g. \"Endocrine disruptor — restricted in EU\").\n"
             "- `concerns` is a list of canonical tags from the Concern Tag Vocabulary "
