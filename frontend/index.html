@@ -10,11 +10,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="IngrediQ" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- iOS home screen — light + dark variants. Older iOS ignores media= and uses the first link. -->
+    <link rel="apple-touch-icon" href="/ingrediq-app-icon.svg" media="(prefers-color-scheme: light)" />
+    <link rel="apple-touch-icon" href="/ingrediq-app-icon-dark.svg" media="(prefers-color-scheme: dark)" />
 
-    <!-- Icons -->
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" href="/ingrediq-icon.svg" type="image/svg+xml" />
+    <!-- Browser tab favicon — SVG covers any-size requests. Light/dark variants via media. -->
+    <link rel="icon" href="/ingrediq-icon.svg" type="image/svg+xml" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="/ingrediq-app-icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
 
     <!-- Manrope (body) + Newsreader (display) — matches FONT_STACK and FONT_DISPLAY in src/theme.ts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

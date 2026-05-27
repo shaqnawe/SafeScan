@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <title>IngrediQ App Icon</title>
+  <!-- Rounded square background -->
+  <rect x="0" y="0" width="120" height="120" rx="26" fill="#FDF6EE"/>
+  <!-- Subtle inner border -->
+  <rect x="0" y="0" width="120" height="120" rx="26" fill="none" stroke="#E8A870" stroke-width="1.5" opacity="0.5"/>
+  <!-- Outer hexagon, center (60,60), flat-top r=44 -->
+  <!-- Vertices: 0°=(104,60), 60°=(82,98), 120°=(38,98), 180°=(16,60), 240°=(38,22), 300°=(82,22) -->
+  <polygon points="104,60 82,98 38,98 16,60 38,22 82,22" fill="none" stroke="#C4603A" stroke-width="1.8"/>
+  <!-- Inner hexagon, r=28 -->
+  <!-- Vertices: 0°=(88,60), 60°=(74,84), 120°=(46,84), 180°=(32,60), 240°=(46,36), 300°=(74,36) -->
+  <polygon points="88,60 74,84 46,84 32,60 46,36 74,36" fill="none" stroke="#C4603A" stroke-width="0.7" opacity="0.4"/>
+  <!-- Vertex dots -->
+  <circle cx="104" cy="60" r="4" fill="#E8A870"/>
+  <circle cx="82"  cy="98" r="4" fill="#E8A870"/>
+  <circle cx="38"  cy="98" r="4" fill="#E8A870"/>
+  <circle cx="16"  cy="60" r="4" fill="#E8A870"/>
+  <circle cx="38"  cy="22" r="4" fill="#E8A870"/>
+  <circle cx="82"  cy="22" r="4" fill="#E8A870"/>
+  <!-- Sprout stem -->
+  <line x1="60" y1="82" x2="60" y2="40" stroke="#7A9E50" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Left leaf -->
+  <path d="M60 68 C50 61 40 63 38 70 C45 74 57 71 60 68 Z" fill="#7A9E50"/>
+  <!-- Right leaf -->
+  <path d="M60 54 C70 47 80 49 82 56 C75 60 63 57 60 54 Z" fill="#7A9E50"/>
+  <!-- Bud -->
+  <circle cx="60" cy="40" r="4" fill="#7A9E50"/>
+</svg>

@@ -10,38 +10,26 @@ export default defineConfig({
     react(),
     !isNativeBuild && VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['ingrediq-icon.svg', 'ingrediq-wordmark.svg', 'apple-touch-icon-180x180.png', 'favicon.ico'],
+      includeAssets: ['ingrediq-icon.svg', 'ingrediq-wordmark.svg', 'ingrediq-app-icon.svg', 'ingrediq-app-icon-dark.svg'],
       manifest: {
         name: 'IngrediQ — Barcode Safety Scanner',
         short_name: 'IngrediQ',
         description: "Scan any product. Know exactly what's inside.",
-        theme_color: '#34c759',
-        background_color: '#000000',
+        theme_color: '#d97706',
+        background_color: '#FDF6EE',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        // Single SVG serves every install context — modern browsers + iOS 16+
+        // honor "any maskable" + size="any" for vector icons. If raster sizes
+        // become necessary for older Androids, regenerate from
+        // ingrediq-app-icon.svg via a one-off script.
         icons: [
           {
-            src: 'pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any',
-          },
-          {
-            src: 'maskable-icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
+            src: 'ingrediq-app-icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
           },
         ],
       },
