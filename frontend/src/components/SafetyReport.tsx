@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SafetyReport, IngredientAnalysis, RecallAlert, Alternative, ScoringBreakdown } from '../types'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
-import { matchAllergens } from '../hooks/useAllergenProfile'
+import { matchAllergens, buildIngredientAllergenMap } from '../hooks/useAllergenProfile'
 import type { AllergenInfo } from '../hooks/useAllergenProfile'
 import ThemeToggle from './ThemeToggle'
 import {
@@ -157,13 +157,16 @@ function ConcernChip({ tag, theme }: { tag: string; theme: Theme }) {
 function IngredientRow({
   ingredient,
   theme,
+  triggeredAllergens = [],
 }: {
   ingredient: IngredientAnalysis
   theme: Theme
+  triggeredAllergens?: AllergenInfo[]
 }) {
   const tags    = ingredient.concerns ?? []
   const sources = ingredient.sources ?? []
   const impact  = ingredient.score_impact
+  const hasAllergen = triggeredAllergens.length > 0
 
   return (
     <div
@@ -171,11 +174,14 @@ function IngredientRow({
         display: 'flex',
         gap: 12,
         padding: '14px 16px',
-        background: theme.ingredientBg,
+        background: hasAllergen ? 'rgba(239,68,68,0.06)' : theme.ingredientBg,
         borderRadius: 12,
         marginBottom: 8,
-        border: `1px solid ${theme.ingredientBorder}`,
+        border: hasAllergen
+          ? '1px solid rgba(239,68,68,0.45)'
+          : `1px solid ${theme.ingredientBorder}`,
         alignItems: 'flex-start',
+        boxShadow: hasAllergen ? '0 0 0 1px rgba(239,68,68,0.12)' : 'none',
       }}
     >
       <div style={{ paddingTop: 4 }}>
@@ -240,6 +246,33 @@ function IngredientRow({
             }}
           >
             {ingredient.concern}
+          </div>
+        )}
+
+        {hasAllergen && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {triggeredAllergens.map(a => (
+              <span
+                key={a.id}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '3px 9px',
+                  borderRadius: 999,
+                  background: 'rgba(239,68,68,0.14)',
+                  border: '1px solid rgba(239,68,68,0.36)',
+                  color: '#ef4444',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontSize: 11, lineHeight: 1 }}>⚠</span>
+                <span>{a.label} allergen</span>
+              </span>
+            ))}
           </div>
         )}
 
@@ -833,6 +866,7 @@ export default function SafetyReportView({
 
   const allIngredientNames = report.ingredients_analysis.map(i => i.name)
   const allergenMatches = matchAllergens(allIngredientNames, activeAllergens)
+  const ingredientAllergens = buildIngredientAllergenMap(allergenMatches, activeAllergens)
   const triggeredAllergens = activeAllergens.filter(a => allergenMatches.has(a.id))
 
   const statItems = [
@@ -1219,7 +1253,12 @@ export default function SafetyReportView({
               const items = report.ingredients_analysis.filter(i => i.safety_level === level)
               if (items.length === 0) return null
               return items.map((ing, i) => (
-                <IngredientRow key={`${level}-${i}`} ingredient={ing} theme={theme} />
+                <IngredientRow
+                  key={`${level}-${i}`}
+                  ingredient={ing}
+                  theme={theme}
+                  triggeredAllergens={ingredientAllergens.get(ing.name.toLowerCase()) ?? []}
+                />
               ))
             })}
           </Glass>

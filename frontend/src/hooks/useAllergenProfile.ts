@@ -157,3 +157,30 @@ export function matchAllergens(
 
   return result
 }
+
+/**
+ * Inverse of `matchAllergens`: build a per-ingredient map of which
+ * allergens this ingredient triggers. Keys are LOWERCASE ingredient
+ * names so IngredientRow can look itself up with `name.toLowerCase()`.
+ *
+ * Used to draw a red border + warning chip on the specific row(s) that
+ * triggered the report-level allergen banner.
+ */
+export function buildIngredientAllergenMap(
+  allergenMatches: Map<string, string[]>,
+  activeAllergens: AllergenInfo[],
+): Map<string, AllergenInfo[]> {
+  const byId = new Map(activeAllergens.map(a => [a.id, a]))
+  const out  = new Map<string, AllergenInfo[]>()
+  for (const [allergenId, ingredientNames] of allergenMatches) {
+    const info = byId.get(allergenId)
+    if (!info) continue
+    for (const name of ingredientNames) {
+      const key  = name.toLowerCase()
+      const list = out.get(key) ?? []
+      list.push(info)
+      out.set(key, list)
+    }
+  }
+  return out
+}
