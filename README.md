@@ -1,4 +1,6 @@
-# SafeScan — Barcode Safety Scanner
+# IngrediQ — Barcode Safety Scanner
+
+*Formerly SafeScan. Repo + Postgres DB names retained for stability; user-facing brand is IngrediQ.*
 
 A consumer first barcode safety scanner that analyzes food and cosmetic products using AI.
 Available as a **PWA** (web), **iOS app**, and **Android app** via Capacitor.

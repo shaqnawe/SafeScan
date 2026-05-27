@@ -102,7 +102,7 @@ function buildShareText(report: SafetyReport): string {
     : report.product_name
   const lines: string[] = [
     `${headline}`,
-    `Grade ${report.grade} · ${report.score}/100 on SafeScan`,
+    `Grade ${report.grade} · ${report.score}/100 on IngrediQ`,
   ]
   const avoidNames = (report.ingredients_analysis ?? [])
     .filter(i => i.safety_level === 'avoid')

@@ -6,7 +6,7 @@ const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
 const config: CapacitorConfig = {
   appId: 'com.safescan.app',
-  appName: 'SafeScan',
+  appName: 'IngrediQ',
   webDir: 'dist',
   ...(serverUrl ? { server: { url: serverUrl, cleartext: true } } : {}),
   plugins: {

@@ -10,10 +10,10 @@ export default defineConfig({
     react(),
     !isNativeBuild && VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['safescan-icon.svg', 'apple-touch-icon-180x180.png', 'favicon.ico'],
+      includeAssets: ['ingrediq-icon.svg', 'ingrediq-wordmark.svg', 'apple-touch-icon-180x180.png', 'favicon.ico'],
       manifest: {
-        name: 'SafeScan — Barcode Safety Scanner',
-        short_name: 'SafeScan',
+        name: 'IngrediQ — Barcode Safety Scanner',
+        short_name: 'IngrediQ',
         description: "Scan any product. Know exactly what's inside.",
         theme_color: '#34c759',
         background_color: '#000000',

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
 import {
-  HeartPulse, ScanLine, Dna, Apple, Sparkles, Wheat, Clock, Search,
+  ScanLine, Dna, Apple, Sparkles, Wheat, Clock, Search,
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
-import { getTheme, glassStyle, FONT_STACK, FONT_DISPLAY } from '../theme'
+import { getTheme, glassStyle, FONT_STACK } from '../theme'
 import { searchProducts } from '../api'
 import type { SearchResult } from '../types'
 
@@ -86,33 +86,6 @@ export default function HomePage({
         position: 'relative',
       }}
     >
-      {/* Anchor — giant ghosted wordmark behind the hero.
-          Sits below the logo tile, breaks the centered axis, extends into the gutters.
-          Pointer-events:none so it never intercepts taps. */}
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          top: 200,
-          left: '50%',
-          transform: 'translateX(-50%) rotate(-3deg)',
-          fontFamily: FONT_DISPLAY,
-          fontSize: 240,
-          fontWeight: 600,
-          fontVariationSettings: '"opsz" 72',
-          letterSpacing: '-0.04em',
-          lineHeight: 0.85,
-          color: theme.primary,
-          opacity: isDark ? 0.035 : 0.05,
-          pointerEvents: 'none',
-          userSelect: 'none',
-          whiteSpace: 'nowrap',
-          zIndex: 0,
-        }}
-      >
-        SafeScan
-      </div>
-
       {/* Top-right pill buttons */}
       <div
         style={{
@@ -191,47 +164,25 @@ export default function HomePage({
           margin: '0 auto',
         }}
       >
-        {/* Logo tile — HeartPulse signals "health" / "safety analysis" */}
-        <div
+        {/* Wordmark — designer-supplied IngrediQ SVG with icon + text. Replaces
+            both the prior HeartPulse tile and the Newsreader text rendering. */}
+        <h1
           className="fade-up stagger-1"
           style={{
-            width: 88,
-            height: 88,
-            borderRadius: 24,
-            background: theme.gradeGradient,
-            display: 'grid',
-            placeItems: 'center',
-            marginBottom: 24,
-            boxShadow: theme.ctaShadow,
-            color: theme.btnText,
+            margin: '8px 0 16px',
+            lineHeight: 0,
           }}
+          aria-label="IngrediQ"
         >
-          <HeartPulse size={44} strokeWidth={2.25} aria-hidden />
-        </div>
-
-        {/* Wordmark — Newsreader display face, optical-size 72 (max), upright
-            at weight 600. Less ornate than the previous Fraunces italic and
-            reads as editorial/news-authority for a health-data app. */}
-        <h1
-          className="fade-up stagger-2"
-          style={{
-            fontFamily: FONT_DISPLAY,
-            fontSize: 56,
-            fontWeight: 600,
-            fontVariationSettings: '"opsz" 72',
-            letterSpacing: '-0.03em',
-            marginBottom: 12,
-            padding: '0 0.1em',
-            background: isDark
-              ? 'linear-gradient(135deg, #fafafa 40%, #fbbf24 100%)'
-              : 'linear-gradient(135deg, #1a1a1f 40%, #d97706 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            lineHeight: 1,
-          }}
-        >
-          SafeScan
+          <img
+            src="/ingrediq-wordmark.svg"
+            alt="IngrediQ"
+            style={{
+              width: 'min(320px, 80vw)',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
         </h1>
 
         {/* Tagline */}

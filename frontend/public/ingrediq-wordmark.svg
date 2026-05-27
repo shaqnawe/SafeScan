@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 80" width="310" height="80">
+  <title>IngrediQ Horizontal Wordmark</title>
+  <!-- Hex icon, center (40,40), flat-top r=34 -->
+  <polygon points="74,40 57,69 23,69 6,40 23,11 57,11" fill="none" stroke="#C4603A" stroke-width="1.6"/>
+  <!-- Inner hex -->
+  <polygon points="60,40 50,57 30,57 20,40 30,23 50,23" fill="none" stroke="#C4603A" stroke-width="0.6" opacity="0.4"/>
+  <!-- Vertex dots -->
+  <circle cx="74" cy="40" r="3" fill="#E8A870"/>
+  <circle cx="57" cy="69" r="3" fill="#E8A870"/>
+  <circle cx="23" cy="69" r="3" fill="#E8A870"/>
+  <circle cx="6"  cy="40" r="3" fill="#E8A870"/>
+  <circle cx="23" cy="11" r="3" fill="#E8A870"/>
+  <circle cx="57" cy="11" r="3" fill="#E8A870"/>
+  <!-- Sprout stem -->
+  <line x1="40" y1="54" x2="40" y2="27" stroke="#7A9E50" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Left leaf -->
+  <path d="M40 46 C33 41 26 43 25 48 C30 51 38 49 40 46 Z" fill="#7A9E50"/>
+  <!-- Right leaf -->
+  <path d="M40 36 C47 31 54 33 55 38 C50 41 42 39 40 36 Z" fill="#7A9E50"/>
+  <!-- Bud -->
+  <circle cx="40" cy="27" r="3" fill="#7A9E50"/>
+  <!-- Vertical divider -->
+  <line x1="92" y1="18" x2="92" y2="62" stroke="#CCCCCC" stroke-width="1"/>
+  <!-- Brand name -->
+  <text x="104" y="38" font-size="22" font-weight="500" letter-spacing="1.5" fill="#1A1A1A" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">IngrediQ</text>
+  <!-- Thin rule -->
+  <line x1="104" y1="46" x2="300" y2="46" stroke="#AAAAAA" stroke-width="0.5"/>
+  <!-- Tagline -->
+  <text x="104" y="60" font-size="9" letter-spacing="1" fill="#888888" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">HEALTH · FOOD · COSMETICS</text>
+</svg>
