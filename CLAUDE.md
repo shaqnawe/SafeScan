@@ -93,7 +93,11 @@ When `POST /api/scan` is called with a barcode:
    - **Phase 1** (tool use loop): `MODEL_LIGHT` (Sonnet 4.6) calls `lookup_product` tool. Uses `thinking={"type": "adaptive", "display": "omitted"}` — thinking runs but content is stripped from the response, preventing large blocks from bloating the Phase 2 round-trip.
    - **Phase 2** (synthesis): `MODEL_HEAVY` (Opus 4.6) via `client.messages.stream()` with `thinking={"type": "adaptive"}` + a JSON-only response instruction. Text chunks are joined, markdown fences stripped, then `json.loads()` + `SafetyReport(**data)` validation. Streaming is required: a non-streaming `create()` call with the full 33K-char system prompt + any non-trivial tool_result gets killed by an upstream ~60s load-balancer timeout. Streaming keeps the connection alive via continuous token flow. Root cause was bisected in Session I-extended; `messages.parse()` was tried earlier and abandoned for unrelated serialization issues.
 
-After the report is materialized (any of the three paths), `main.py /api/scan` attaches up to 3 cached alternatives matching on `category_slug` — see "Recommended alternatives" below. Skipped for grade A and `not_found=true` reports.
+After the report is materialized (any of the three paths), `main.py /api/scan` attaches several extras in a fixed order:
+1. Up to 3 cached alternatives matching on `category_slug` (see "Recommended alternatives" — skipped for grade A and `not_found=true`).
+2. Nutri-Score + NOVA backfill from `products` if the report is food and either field is null (covers cache-hit + Claude-path; source is `products.nutriscore` / `products.nova_group` from OFF/USDA imports).
+3. `is_vegan` derived deterministically from the report's `ingredients_analysis` via `agents/vegan.py::assess_vegan` (food only; True/False/None tri-state).
+4. `scoring_breakdown` is populated by `local_analyzer` or by Claude's Phase 2 emit — main.py doesn't backfill it (it requires the original deduction math, which a cache-hit can't reconstruct cheaply).
 
 ### `lookup_product` priority order (`scanner.py`)
 
@@ -116,6 +120,44 @@ Refactor in Session I-extended (2026-05-24) — previously a `user_submission` w
 **Root cause** (bisected with `backend/scratch/repro_phase2.py`): an upstream ~60s load-balancer timeout, NOT model behavior. The non-streaming `messages.create()` call holds the connection idle while Opus generates 5K+ tokens of structured output; with the full 33K-char system prompt + a non-trivial message payload, total time-to-first-byte exceeds 60s and the LB closes the connection. Ruled out by the bisection: thinking on/off (same failure with `thinking=None`), Opus vs Sonnet (Sonnet failed identically), the synthetic preflight `tool_use` seed block (inlining failed identically), interleaved-thinking validation, `redacted_thinking` leak, wire-format alternation. The trigger was strictly combined-input-size — shrinking either the system prompt or the tool_result let baseline succeed.
 
 **Fix:** switched Phase 2 to `client.messages.stream()`. Continuous token flow keeps the connection alive past the 60s LB cutoff. Verified on the failing body wash payload: passes in ~97s, returns a complete grade A report. Diagnostic harness at `backend/scratch/repro_phase2.py` is kept for regression debugging.
+
+### Score breakdown (`models.ScoringBreakdown` + UI panel)
+
+Every report carries an optional `scoring_breakdown: ScoringBreakdown | None` field explaining how the score was reached. Shape: `{base_score, penalties[], bonuses[], eu_banned_floor_applied, final_score}`. Each line item is `{reason, points}` (negative for penalties, positive for bonuses). `final_score == score` is an invariant.
+
+Populated by:
+- `local_analyzer._compute_score` returns `(score, breakdown)` — per-ingredient deductions are tallied by reason category and emitted as one summary line each ("Endocrine disruptors (3): -60") to keep the UI compact. Meta penalties (NOVA, Nutri-Score, additive category count, EU-banned floor) get their own lines. Bonuses too.
+- Phase 2 inline prompt asks Claude to emit the same shape; rule says `final_score` must equal `score`.
+- Cached pre-feature reports lack the field → UI hides the panel gracefully (chevron + tap target both disabled).
+
+Frontend: `ScoreBreakdownPanel` in `SafetyReport.tsx`. The grade letter in the hero card is now a `<button>` with a chevron next to "Safety Score"; tap toggles the panel inline. ARIA-labeled.
+
+### Per-allergen ingredient highlighting
+
+`useAllergenProfile.buildIngredientAllergenMap(allergenMatches, activeAllergens) → Map<lowercase_name, AllergenInfo[]>` inverts the existing `matchAllergens` output so each `IngredientRow` can look itself up in O(1). When a row's name appears in the map, it renders with a red border + subtle red background + one `⚠ <Allergen> allergen` chip per matching allergen.
+
+The top-level allergen alert banner still fires for any triggered allergens — the per-row highlight is additional.
+
+### Vegan classification (`agents/vegan.py`)
+
+Tri-state classification (`True` / `False` / `None`) from a deterministic keyword scan over the report's `ingredients_analysis` names:
+- `True` — confident vegan, no non-vegan or uncertain-origin entries
+- `False` — confident non-vegan (clear animal-derived ingredient found)
+- `None` — uncertain (e.g. lecithin without a plant qualifier — could be soy or egg). Conservative — UI hides the badge rather than guess.
+
+Word-boundary matching so "soy milk" doesn't false-positive on "milk". Plant-hedge prefixes (`soy`, `oat`, `almond`, `coconut`, `rice`, `cashew`, etc.) suppress downstream dairy/butter/cream matches.
+
+Non-vegan list covers dairy, eggs, honey + bee products, gelatin/collagen/isinglass, animal fats, meat/fish/seafood, carmine/cochineal/shellac/lanolin, rennet, and animal-origin E-numbers (E120, E441, E542, E901, E904, E913). Uncertain list catches lecithin, mono-/diglycerides, E471/E472/E481/E482, stearates, generic "natural flavoring", unsourced enzymes.
+
+Food-only for v1. Cosmetic vegan deferred (same heuristic applies — lanolin/beeswax/carmine are common cosmetic ingredients — but the UI placement decision wasn't worth the scope).
+
+### Nutri-Score + NOVA UI surface
+
+For food products, the report renders a Nutrition glass card with two metrics in a 2-column grid plus an optional Vegan/Not Vegan chip below:
+- **Nutri-Score**: A–E letter in a badge using OFF's official color ramp (A green → E red), labeled "Nutritional quality".
+- **NOVA Group**: 1–4 in a badge with a processing-severity red ramp (1 green → 4 red), labeled with `NOVA_DESCRIPTIONS[n]` ("Unprocessed", "Culinary ingredient", "Processed", "Ultra-processed").
+
+Card auto-hides for cosmetics, drugs, and food products where all three metrics are absent. Per-metric badge greys out + says "No data" when only that one is missing.
 
 ### Recommended alternatives (`db/queries.py::find_alternatives`)
 
@@ -201,12 +243,13 @@ Not used at runtime (reference only):
 
 ### Frontend state
 
-- **Scan history**: `useScanHistory` hook, stored in localStorage (max 20 items)
-- **Allergen profile**: `useAllergenProfile` hook, stored in localStorage
+- **Scan history**: `useScanHistory` hook, stored in localStorage (max 20 items). `HistoryPage` provides a grade filter (All / A / B / C / D pills, counts in badges, disabled when 0) + sort selector (Most recent / Best grade / Worst grade / A–Z) above the list.
+- **Allergen profile**: `useAllergenProfile` hook, stored in localStorage. Three one-tap presets exposed via `ALLERGEN_PRESETS`: **Common** (5: gluten, dairy, eggs, peanuts, tree nuts), **US Big-9** (FDA majors incl. sesame), **All EU 14**. `setProfile(ids)` replaces the selection wholesale; the matching preset chip auto-highlights when active. The hook also exports `buildIngredientAllergenMap(allergenMatches, activeAllergens)` — an inverse map used to highlight the specific `IngredientRow`(s) that trigger each active allergen with a red border + `⚠ <Allergen> allergen` chip.
 - **Theme mode** (system / light / dark): `useDarkMode.tsx` exports `ThemeProvider` (mounted once in `main.tsx`) and `useTheme()` context hook. Persisted to localStorage under `safescan:theme-mode`. `'system'` follows OS `prefers-color-scheme` live. `<ThemeToggle />` component (pill + icon variants) drops into any page header without prop-drilling.
 - **Motion**: `src/motion.css` provides `.fade-up`, `.stagger-1..7`, `.lift`, `.press` utility classes. Globally imported in `main.tsx`. Respects `prefers-reduced-motion`.
-- **Display typography**: `FONT_DISPLAY` (Fraunces variable) exported from `theme.ts` — reserved for the wordmark and grade letter ONLY. Page titles stay Manrope. Don't dilute by applying Fraunces elsewhere.
+- **Display typography**: `FONT_DISPLAY` (Newsreader variable serif) exported from `theme.ts` — reserved for the wordmark, the giant ghost backdrop on Home, the 120px grade letter on the report, alternative-card grade letters (28px), and the Nutri-Score / NOVA badges. Page titles stay Manrope. Don't dilute by applying it elsewhere. Switched from Fraunces in Session M — Fraunces italic + SOFT-axis read as wedding-invitation ornate; Newsreader at opsz 72 weight 600 reads as editorial/news-authority, a better fit for surfacing health-safety data.
 - **API base URL**: `VITE_API_URL` env var, defaults to `http://localhost:8000`. The committed `.env.local` points to the Railway production URL.
+- **Share scan**: top-right Share2 icon button on `SafetyReportView`. Calls `navigator.share()` (native iOS/Android sheet via Capacitor WebView + Web Share API on supporting browsers), falls back to `navigator.clipboard.writeText()` + a 2s transient toast on desktop. Shared text: `<Brand> — <Product>\nGrade B · 57/100 on SafeScan\n\nIngredients to avoid: <up to 2>\n\nBarcode: <bc>`. No hosted URL routing yet — recipient with SafeScan re-scans the barcode.
 
 ### Photo submission flow
 

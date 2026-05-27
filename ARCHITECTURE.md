@@ -167,10 +167,15 @@
              updated_at + expires_at) · Attach recall alerts · Return
                     │
                     ▼
-             /api/scan: attach up to 3 recommended alternatives
-             matching report.category_slug + strictly higher score
-             (skipped for grade A and not_found). Slug derived via
-             agents/category.py keyword heuristic on name + type.
+             /api/scan post-processing (food path also fills 2 + 3):
+              1. Attach up to 3 alternatives by category_slug + better
+                 score (skipped grade A + not_found)
+              2. Backfill nutriscore + nova_group from products if
+                 missing on the cached/Claude report
+              3. Derive is_vegan from ingredients_analysis via
+                 agents/vegan.py (food only; True/False/None tri-state)
+             scoring_breakdown is populated upstream by either
+             local_analyzer or Claude Phase 2 — never backfilled here.
 
 ────────────────────────────────────────────────────────────────────────────────
  Name Search  (GET /api/search?q=...&product_type=...&limit=...)
