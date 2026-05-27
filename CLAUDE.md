@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Brand naming note
+
+User-facing brand is **IngrediQ** (rebranded from SafeScan in Session M, commit `c36522d`). The following identifiers retain the old `SafeScan` / `safescan` name intentionally — changing each carries real cost with no user-visible benefit:
+
+| Identifier | Why retained |
+|---|---|
+| GitHub repo name | Renaming breaks deep links + clone URLs |
+| Local Postgres DB name (`safescan`) | Internal only |
+| Capacitor `appId` (`com.safescan.app`) | Changing requires fresh iOS/Android store provisioning, essentially shipping a new app |
+| localStorage keys (`safescan_history`, `safescan_allergens`, `safescan:theme-mode`) | Renaming wipes existing users' data without a migration step |
+| Session history log filenames + body | Frozen historical record |
+
+If you see `SafeScan` in the codebase, assume it's one of the above unless it's clearly user-visible string content. User-visible references (app titles, wordmark, share text, manifest, README) should all read **IngrediQ**.
+
 ## Commands
 
 ### Backend
@@ -249,7 +263,7 @@ Not used at runtime (reference only):
 - **Motion**: `src/motion.css` provides `.fade-up`, `.stagger-1..7`, `.lift`, `.press` utility classes. Globally imported in `main.tsx`. Respects `prefers-reduced-motion`.
 - **Display typography**: `FONT_DISPLAY` (Newsreader variable serif) exported from `theme.ts` — reserved for the wordmark, the giant ghost backdrop on Home, the 120px grade letter on the report, alternative-card grade letters (28px), and the Nutri-Score / NOVA badges. Page titles stay Manrope. Don't dilute by applying it elsewhere. Switched from Fraunces in Session M — Fraunces italic + SOFT-axis read as wedding-invitation ornate; Newsreader at opsz 72 weight 600 reads as editorial/news-authority, a better fit for surfacing health-safety data.
 - **API base URL**: `VITE_API_URL` env var, defaults to `http://localhost:8000`. The committed `.env.local` points to the Railway production URL.
-- **Share scan**: top-right Share2 icon button on `SafetyReportView`. Calls `navigator.share()` (native iOS/Android sheet via Capacitor WebView + Web Share API on supporting browsers), falls back to `navigator.clipboard.writeText()` + a 2s transient toast on desktop. Shared text: `<Brand> — <Product>\nGrade B · 57/100 on SafeScan\n\nIngredients to avoid: <up to 2>\n\nBarcode: <bc>`. No hosted URL routing yet — recipient with SafeScan re-scans the barcode.
+- **Share scan**: top-right Share2 icon button on `SafetyReportView`. Calls `navigator.share()` (native iOS/Android sheet via Capacitor WebView + Web Share API on supporting browsers), falls back to `navigator.clipboard.writeText()` + a 2s transient toast on desktop. Shared text: `<Brand> — <Product>\nGrade B · 57/100 on IngrediQ\n\nIngredients to avoid: <up to 2>\n\nBarcode: <bc>`. No hosted URL routing yet — recipient with IngrediQ re-scans the barcode.
 
 ### Photo submission flow
 

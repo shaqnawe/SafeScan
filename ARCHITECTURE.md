@@ -1,4 +1,4 @@
-# SafeScan — Architecture Diagram
+# IngrediQ — Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
