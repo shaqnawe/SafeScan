@@ -1,12 +1,16 @@
+import { useEffect, useState } from 'react'
 import type { ScanHistoryEntry } from '../hooks/useScanHistory'
 import {
-  HeartPulse, ScanLine, Dna, Apple, Sparkles, Wheat, Clock,
+  HeartPulse, ScanLine, Dna, Apple, Sparkles, Wheat, Clock, Search,
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { getTheme, glassStyle, FONT_STACK, FONT_DISPLAY } from '../theme'
+import { searchProducts } from '../api'
+import type { SearchResult } from '../types'
 
 interface HomePageProps {
   onStartScanning:     () => void
+  onSelectProduct:     (barcode: string) => void
   onViewHistory:       () => void
   onAllergenProfile:   () => void
   history:             ScanHistoryEntry[]
@@ -34,6 +38,7 @@ const FEATURES = [
 
 export default function HomePage({
   onStartScanning,
+  onSelectProduct,
   onViewHistory,
   onAllergenProfile,
   history,
@@ -41,6 +46,30 @@ export default function HomePage({
   isDark = false,
 }: HomePageProps) {
   const theme = getTheme(isDark)
+
+  const [searchQuery,   setSearchQuery]   = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching,   setIsSearching]   = useState(false)
+
+  // Debounced fuzzy search via /api/search (pg_trgm). Cancels in-flight
+  // requests on each keystroke via AbortController.
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (q.length < 2) { setSearchResults([]); setIsSearching(false); return }
+    const controller = new AbortController()
+    const t = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const rows = await searchProducts(q, controller.signal)
+        setSearchResults(rows)
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') setSearchResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300)
+    return () => { clearTimeout(t); controller.abort() }
+  }, [searchQuery])
 
   return (
     <div
@@ -246,17 +275,160 @@ export default function HomePage({
           <span>Scan a Product</span>
         </button>
 
-        <p
+        {/* Divider — "or search by name" */}
+        <div
           className="fade-up stagger-5"
           style={{
-            marginTop: 16,
-            fontSize: 12,
-            color: theme.tertiary,
-            letterSpacing: '0.05em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+            maxWidth: 320,
+            margin: '24px auto 14px',
           }}
         >
-          Point at a barcode — results in seconds
-        </p>
+          <div style={{ flex: 1, height: 1, background: theme.divider }} />
+          <span
+            style={{
+              fontSize: 11,
+              color: theme.tertiary,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+            }}
+          >
+            or
+          </span>
+          <div style={{ flex: 1, height: 1, background: theme.divider }} />
+        </div>
+
+        {/* Name / brand search */}
+        <div
+          className="fade-up stagger-5"
+          style={{ width: '100%', maxWidth: 380, position: 'relative' }}
+        >
+          <Search
+            size={16}
+            strokeWidth={2}
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.tertiary,
+              pointerEvents: 'none',
+            }}
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search by name or brand…"
+            style={{
+              ...glassStyle(theme),
+              width: '100%',
+              padding: '14px 16px 14px 42px',
+              borderRadius: 14,
+              fontSize: 15,
+              color: theme.primary,
+              outline: 'none',
+              boxSizing: 'border-box',
+              fontFamily: FONT_STACK,
+              boxShadow: 'none',
+            }}
+          />
+        </div>
+
+        {/* Results list */}
+        {searchQuery.trim().length >= 2 && (
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 380,
+              marginTop: 10,
+              maxHeight: 320,
+              overflowY: 'auto',
+              ...glassStyle(theme),
+              borderRadius: 14,
+              padding: 4,
+              boxShadow: theme.ctaShadow,
+            }}
+          >
+            {isSearching && searchResults.length === 0 && (
+              <div style={{ padding: 16, color: theme.tertiary, fontSize: 13, textAlign: 'center' }}>
+                Searching…
+              </div>
+            )}
+            {!isSearching && searchResults.length === 0 && (
+              <div style={{ padding: 16, color: theme.tertiary, fontSize: 13, textAlign: 'center' }}>
+                No products match "{searchQuery.trim()}"
+              </div>
+            )}
+            {searchResults.map(r => (
+              <button
+                key={r.barcode}
+                onClick={() => onSelectProduct(r.barcode)}
+                className="press"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                  color: theme.primary,
+                }}
+              >
+                {r.image_url ? (
+                  <img
+                    src={r.image_url}
+                    alt=""
+                    style={{
+                      width: 36, height: 36, borderRadius: 8, objectFit: 'contain',
+                      background: theme.ingredientBg, flexShrink: 0, padding: 2,
+                      border: `1px solid ${theme.glassBorder}`,
+                    }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: theme.ingredientBg, flexShrink: 0,
+                    border: `1px solid ${theme.glassBorder}`,
+                  }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {r.brand && (
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
+                      textTransform: 'uppercase', color: theme.tertiary,
+                    }}>
+                      {r.brand}
+                    </div>
+                  )}
+                  <div style={{
+                    fontSize: 13, fontWeight: 500, color: theme.primary, marginTop: 2,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {r.name}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 10, color: theme.tertiary,
+                  textTransform: 'uppercase', letterSpacing: '0.1em', flexShrink: 0,
+                }}>
+                  {r.product_type}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Feature glass cards */}

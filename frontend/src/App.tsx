@@ -77,6 +77,7 @@ export default function App() {
     return (
       <HomePage
         onStartScanning={() => setState("scanning")}
+        onSelectProduct={handleBarcodeScan}
         onViewHistory={() => setState("history")}
         onAllergenProfile={() => setState("allergens")}
         history={history}
