@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { SafetyReport, IngredientAnalysis, RecallAlert, Alternative, ScoringBreakdown } from '../types'
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Share2 } from 'lucide-react'
 import { matchAllergens, buildIngredientAllergenMap } from '../hooks/useAllergenProfile'
 import type { AllergenInfo } from '../hooks/useAllergenProfile'
 import ThemeToggle from './ThemeToggle'
@@ -89,6 +89,59 @@ function Indicator({ level }: { level: string }) {
       }}
     />
   )
+}
+
+/**
+ * Build a tweet/SMS-friendly text summary of a SafetyReport for sharing.
+ * Includes product name, grade/score, the top 2 avoid-level ingredients (if
+ * any), and the barcode so a recipient can re-scan to see the full report.
+ */
+function buildShareText(report: SafetyReport): string {
+  const headline = report.brand
+    ? `${report.brand} — ${report.product_name}`
+    : report.product_name
+  const lines: string[] = [
+    `${headline}`,
+    `Grade ${report.grade} · ${report.score}/100 on SafeScan`,
+  ]
+  const avoidNames = (report.ingredients_analysis ?? [])
+    .filter(i => i.safety_level === 'avoid')
+    .slice(0, 2)
+    .map(i => i.name)
+  if (avoidNames.length > 0) {
+    lines.push('', `Ingredients to avoid: ${avoidNames.join(', ')}`)
+  }
+  lines.push('', `Barcode: ${report.barcode}`)
+  return lines.join('\n')
+}
+
+/**
+ * Share the report via the native share sheet when available
+ * (iOS/Android via Web Share API; Capacitor WebView supports it natively
+ * on iOS 12+ and Android Chrome). Falls back to clipboard copy on
+ * desktop. Returns the action taken so the caller can show a toast.
+ */
+async function shareReport(report: SafetyReport): Promise<'shared' | 'copied' | 'failed'> {
+  const text = buildShareText(report)
+  if (typeof navigator !== 'undefined' && 'share' in navigator) {
+    try {
+      await navigator.share({
+        title: report.product_name,
+        text,
+      })
+      return 'shared'
+    } catch (e) {
+      // AbortError = user cancelled the share sheet; treat as no-op.
+      if ((e as Error).name === 'AbortError') return 'shared'
+      // Other errors fall through to clipboard
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text)
+    return 'copied'
+  } catch {
+    return 'failed'
+  }
 }
 
 // Concern tags considered "severe" — render in red rather than neutral.
@@ -796,6 +849,21 @@ export default function SafetyReportView({
 }: SafetyReportProps) {
   const theme = getTheme(isDark)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
+  const [shareToast, setShareToast] = useState<string | null>(null)
+
+  // Auto-dismiss the toast after 2s. Re-runs whenever a new toast appears.
+  useEffect(() => {
+    if (!shareToast) return
+    const t = setTimeout(() => setShareToast(null), 2000)
+    return () => clearTimeout(t)
+  }, [shareToast])
+
+  const handleShare = async () => {
+    const result = await shareReport(report)
+    if (result === 'copied')      setShareToast('Copied to clipboard')
+    else if (result === 'failed') setShareToast('Could not share')
+    // 'shared' = native share sheet handled it, no toast needed
+  }
 
   // ── Not-found state ────────────────────────────────────────────────────────
   if (report.not_found) {
@@ -920,6 +988,27 @@ export default function SafetyReportView({
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 12, color: theme.tertiary }}>Just now</span>
+            <button
+              onClick={handleShare}
+              className="press"
+              aria-label="Share this scan"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 12,
+                border: `1px solid ${theme.glassBorder}`,
+                background: theme.glass,
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                color: theme.primary,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Share2 size={16} strokeWidth={2} aria-hidden />
+            </button>
             <ThemeToggle variant="icon" />
           </div>
         </div>
@@ -1299,6 +1388,31 @@ export default function SafetyReportView({
           </span>
         </Glass>
       </div>
+
+      {/* Share toast (auto-dismisses after 2s via useEffect above) */}
+      {shareToast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            ...glassStyle(theme),
+            borderRadius: 999,
+            padding: '8px 18px',
+            color: theme.primary,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: theme.ctaShadow,
+            pointerEvents: 'none',
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          {shareToast}
+        </div>
+      )}
 
       {/* Fixed CTA */}
       <div
